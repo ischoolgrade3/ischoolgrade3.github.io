@@ -5,280 +5,164 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Time · 管理后台</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <style>
   * { box-sizing: border-box; }
-  body {
-    margin: 0; background: #eef3f9; color: #1e2f4b;
-    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
-    font-size: 14px;
-  }
-  .hidden { display: none !important; }
+  body { margin:0; background:#eef3f9; color:#1e2f4b; font-family:-apple-system, BlinkMacSystemFont, 'PingFang SC','Microsoft YaHei','Helvetica Neue',Arial,sans-serif; font-size:14px; }
+  .hidden { display:none !important; }
 
-  /* 登录 */
-  .overlay {
-    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(145deg, #1e3c72, #2a5298); z-index: 100; padding: 20px;
-  }
-  .login-card {
-    background: #fff; border-radius: 24px; padding: 32px; width: 100%; max-width: 400px;
-    box-shadow: 0 30px 60px rgba(0,0,0,.35); text-align: center;
-  }
-  .login-card h2 { margin: 0 0 8px; font-size: 22px; color: #1e3c72; }
-  .login-card p.sub { margin: 0 0 22px; color: #7b8ba3; font-size: 13px; }
-  .login-card input {
-    width: 100%; padding: 14px 18px; border-radius: 40px; border: 2px solid #dbe4f0;
-    font-size: 16px; outline: none; text-align: center; margin-bottom: 16px;
-  }
-  .login-card input:focus { border-color: #2a5298; }
-  .login-err { color: #d33; font-size: 13px; min-height: 18px; margin: 10px 0 0; }
+  .overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(145deg,#1e3c72,#2a5298); z-index:100; padding:20px; }
+  .login-card { background:#fff; border-radius:24px; padding:32px; width:100%; max-width:400px; box-shadow:0 30px 60px rgba(0,0,0,.35); text-align:center; }
+  .login-card h2 { margin:0 0 8px; font-size:22px; color:#1e3c72; }
+  .login-card p.sub { margin:0 0 22px; color:#7b8ba3; font-size:13px; }
+  .login-card input { width:100%; padding:14px 18px; border-radius:40px; border:2px solid #dbe4f0; font-size:16px; outline:none; text-align:center; margin-bottom:16px; }
+  .login-card input:focus { border-color:#2a5298; }
+  .login-err { color:#d33; font-size:13px; min-height:18px; margin:10px 0 0; }
 
-  /* 主框架 */
-  .topbar {
-    background: #fff; padding: 14px 22px; display: flex; align-items: center; gap: 16px;
-    box-shadow: 0 2px 10px rgba(0,20,40,.06); position: sticky; top: 0; z-index: 20;
-  }
-  .topbar h1 { margin: 0; font-size: 18px; color: #1e3c72; flex: 1; }
-  .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .badge {
-    font-size: 12px; padding: 6px 12px; border-radius: 20px;
-    background: #e8f6ee; color: #1d7a45; font-weight: 600;
-  }
-  .badge.local { background: #fff4e5; color: #a15c00; }
+  .topbar { background:#fff; padding:14px 22px; display:flex; align-items:center; gap:16px; box-shadow:0 2px 10px rgba(0,20,40,.06); position:sticky; top:0; z-index:20; }
+  .topbar h1 { margin:0; font-size:18px; color:#1e3c72; flex:1; }
+  .topbar-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .badge { font-size:12px; padding:6px 12px; border-radius:20px; background:#e8f6ee; color:#1d7a45; font-weight:600; }
+  .badge.local { background:#fff4e5; color:#a15c00; }
 
-  .tabs { display: flex; gap: 8px; padding: 14px 22px 0; }
-  .tab {
-    border: none; background: transparent; padding: 12px 20px; border-radius: 14px 14px 0 0;
-    font-size: 14px; font-weight: 600; color: #7b8ba3; cursor: pointer;
-  }
-  .tab.active { background: #fff; color: #1e3c72; box-shadow: 0 -2px 10px rgba(0,20,40,.04); }
+  .tabs { display:flex; gap:8px; padding:14px 22px 0; }
+  .tab { border:none; background:transparent; padding:12px 20px; border-radius:14px 14px 0 0; font-size:14px; font-weight:600; color:#7b8ba3; cursor:pointer; }
+  .tab.active { background:#fff; color:#1e3c72; box-shadow:0 -2px 10px rgba(0,20,40,.04); }
 
-  .panel { padding: 18px 22px 120px; max-width: 1080px; margin: 0 auto; }
+  .panel { padding:18px 22px 120px; max-width:1080px; margin:0 auto; }
 
-  /* 卡片/折叠 */
-  .section { background: #fff; border-radius: 18px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,20,40,.05); overflow: hidden; }
-  .section-head {
-    padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
-    cursor: pointer; font-weight: 700; color: #1e3c72; font-size: 15px; user-select: none;
-  }
-  .section-head i { transition: transform .2s; color: #91a3bb; }
-  .section-head.collapsed i { transform: rotate(-90deg); }
-  .section-body { padding: 4px 20px 22px; border-top: 1px solid #f1f5fa; }
+  .section { background:#fff; border-radius:18px; margin-bottom:16px; box-shadow:0 2px 10px rgba(0,20,40,.05); overflow:hidden; }
+  .section-head { padding:16px 20px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; font-weight:700; color:#1e3c72; font-size:15px; user-select:none; }
+  .section-head i { transition:transform .2s; color:#91a3bb; }
+  .section-head.collapsed i { transform:rotate(-90deg); }
+  .section-body { padding:4px 20px 22px; border-top:1px solid #f1f5fa; }
 
-  /* 表单 */
-  .field { margin-bottom: 18px; }
-  .field > label { display: block; font-weight: 600; margin-bottom: 7px; color: #3c4f68; font-size: 13px; }
-  .field input[type=text], .field input[type=password], .field input[type=url], .field textarea, .field select {
-    width: 100%; padding: 11px 15px; border-radius: 12px; border: 1.5px solid #dbe4f0;
-    font-size: 14px; outline: none; background: #fafcff; font-family: inherit; color: #1e2f4b;
+  .field { margin-bottom:18px; }
+  .field > label { display:block; font-weight:600; margin-bottom:7px; color:#3c4f68; font-size:13px; }
+  .field input[type=text], .field input[type=password], .field textarea, .field select {
+    width:100%; padding:11px 15px; border-radius:12px; border:1.5px solid #dbe4f0;
+    font-size:14px; outline:none; background:#fafcff; font-family:inherit; color:#1e2f4b;
   }
-  .field input:focus, .field textarea:focus, .field select:focus { border-color: #2a5298; background: #fff; }
-  .field textarea { resize: vertical; min-height: 60px; line-height: 1.5; }
-  .hint { font-size: 12px; color: #8fa0b6; margin-top: 6px; line-height: 1.5; }
+  .field input:focus, .field textarea:focus, .field select:focus { border-color:#2a5298; background:#fff; }
+  .field textarea { resize:vertical; min-height:60px; line-height:1.5; }
+  .hint { font-size:12px; color:#8fa0b6; margin-top:6px; line-height:1.5; }
 
-  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .row > .grow { flex: 1; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .row > .grow { flex:1; }
 
-  /* 按钮 */
-  .btn {
-    border: none; padding: 10px 18px; border-radius: 40px; font-weight: 600; font-size: 13px;
-    cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: .15s;
-    font-family: inherit;
-  }
-  .btn-primary { background: #1e3c72; color: #fff; }
-  .btn-primary:hover { background: #2a5298; }
-  .btn-outline { background: #fff; color: #1e3c72; border: 1.5px solid #cddaea; }
-  .btn-outline:hover { background: #f0f6ff; }
-  .btn-danger { background: #fff0f0; color: #c0392b; border: 1.5px solid #f3c7c2; }
-  .btn-danger:hover { background: #ffe4e0; }
-  .btn-mini { padding: 7px 12px; font-size: 12px; border-radius: 10px; }
-  .btn[disabled] { opacity: .5; cursor: not-allowed; }
+  .btn { border:none; padding:10px 18px; border-radius:40px; font-weight:600; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:.15s; font-family:inherit; }
+  .btn-primary { background:#1e3c72; color:#fff; }
+  .btn-primary:hover { background:#2a5298; }
+  .btn-outline { background:#fff; color:#1e3c72; border:1.5px solid #cddaea; }
+  .btn-outline:hover { background:#f0f6ff; }
+  .btn-danger { background:#fff0f0; color:#c0392b; border:1.5px solid #f3c7c2; }
+  .btn-danger:hover { background:#ffe4e0; }
+  .btn-mini { padding:7px 12px; font-size:12px; border-radius:10px; }
+  .btn[disabled] { opacity:.5; cursor:not-allowed; }
 
-  /* 图片字段 */
-  .img-field { margin-bottom: 18px; }
-  .img-field > label { display: block; font-weight: 600; margin-bottom: 7px; color: #3c4f68; font-size: 13px; }
-  .img-thumb {
-    width: 100%; height: 110px; border-radius: 12px; margin-top: 10px;
-    background-size: cover; background-position: center; border: 1px solid #e2eaf4;
-  }
+  .img-field { margin-bottom:18px; }
+  .img-field > label { display:block; font-weight:600; margin-bottom:7px; color:#3c4f68; font-size:13px; }
+  .img-thumb { width:100%; height:110px; border-radius:12px; margin-top:10px; background-size:cover; background-position:center; border:1px solid #e2eaf4; }
 
-  /* 列表项 */
-  .editor-item {
-    background: #f7fafe; border: 1px solid #e1ebf6; border-radius: 14px;
-    padding: 16px; margin-bottom: 14px;
-  }
-  .editor-head {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 10px; margin-bottom: 12px; font-weight: 700; color: #1e3c72;
-  }
+  .editor-item { background:#f7fafe; border:1px solid #e1ebf6; border-radius:14px; padding:16px; margin-bottom:14px; }
+  .editor-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; font-weight:700; color:#1e3c72; }
 
-  /* 调色板（浮动版） */
-  .floating-palette {
-    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
-    z-index: 60; max-width: min(760px, calc(100vw - 120px));
-  }
-  .fp-inner {
-    display: flex; align-items: center; gap: 10px;
-    background: #fff; border-radius: 18px; padding: 10px 14px;
-    box-shadow: 0 12px 34px rgba(0,20,40,.22); border: 1px solid #e1ebf6;
-  }
-  .fp-body { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .floating-palette.collapsed .fp-body { display: none; }
-  .floating-palette.collapsed .fp-inner { padding: 8px; }
-  .fp-toggle {
-    width: 40px; height: 40px; border-radius: 50%; border: none; background: #eef4ff;
-    color: #2a5298; font-size: 16px; cursor: pointer; flex-shrink: 0;
-  }
-  .fp-toggle:hover { background: #dce9ff; }
-  .fp-body .label { font-size: 12px; color: #7b8ba3; font-weight: 600; white-space: nowrap; }
-  .swatch {
-    width: 30px; height: 30px; border-radius: 50%; border: 3px solid #fff; cursor: pointer;
-    box-shadow: 0 0 0 1px #d6e0ee; transition: .15s; flex-shrink: 0;
-  }
-  .swatch.active { box-shadow: 0 0 0 3px #2a5298; transform: scale(1.12); }
-  .swatch.eraser {
-    width: auto; border-radius: 20px; padding: 0 14px; height: 30px; background: #f1f5fa;
-    color: #566a82; font-size: 12px; font-weight: 700; border: 1px solid #d6e0ee;
-  }
-  .floating-palette input[type=color] {
-    width: 36px; height: 32px; padding: 0; border: 1px solid #d6e0ee; border-radius: 8px;
-    background: #fff; cursor: pointer;
-  }
+  .floating-palette { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); z-index:60; max-width:min(760px,calc(100vw - 120px)); }
+  .fp-inner { display:flex; align-items:center; gap:10px; background:#fff; border-radius:18px; padding:10px 14px; box-shadow:0 12px 34px rgba(0,20,40,.22); border:1px solid #e1ebf6; }
+  .fp-body { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .floating-palette.collapsed .fp-body { display:none; }
+  .floating-palette.collapsed .fp-inner { padding:8px; }
+  .fp-toggle { width:40px; height:40px; border-radius:50%; border:none; background:#eef4ff; color:#2a5298; font-size:16px; cursor:pointer; flex-shrink:0; }
+  .fp-toggle:hover { background:#dce9ff; }
+  .fp-body .label { font-size:12px; color:#7b8ba3; font-weight:600; white-space:nowrap; }
+  .swatch { width:30px; height:30px; border-radius:50%; border:3px solid #fff; cursor:pointer; box-shadow:0 0 0 1px #d6e0ee; transition:.15s; flex-shrink:0; }
+  .swatch.active { box-shadow:0 0 0 3px #2a5298; transform:scale(1.12); }
+  .swatch.eraser { width:auto; border-radius:20px; padding:0 14px; height:30px; background:#f1f5fa; color:#566a82; font-size:12px; font-weight:700; border:1px solid #d6e0ee; }
+  .floating-palette input[type=color] { width:36px; height:32px; padding:0; border:1px solid #d6e0ee; border-radius:8px; background:#fff; cursor:pointer; }
 
-  /* 字符预览 */
-  .lr-chars {
-    background: #fff; border: 1px solid #e1ebf6; border-radius: 10px; padding: 10px 12px;
-    line-height: 1.8; font-size: 20px; font-weight: 700; min-height: 46px;
-    word-break: break-word; user-select: none;
-  }
-  .lr-char {
-    display: inline-block; cursor: pointer; padding: 0 1px; border-radius: 4px;
-    transition: background .1s;
-  }
-  .lr-char:hover { background: #eaf2ff; }
-  .lr-char.space { min-width: 12px; }
+  .lr-chars { background:#fff; border:1px solid #e1ebf6; border-radius:10px; padding:10px 12px; line-height:1.8; font-size:20px; font-weight:700; min-height:46px; word-break:break-word; user-select:none; }
+  .lr-char { display:inline-block; cursor:pointer; padding:0 1px; border-radius:4px; transition:background .1s; }
+  .lr-char:hover { background:#eaf2ff; }
+  .lr-char.space { min-width:12px; }
 
-  /* 音频 */
-  .audio-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
-  .audio-row audio { height: 36px; max-width: 100%; }
+  .audio-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px; }
+  .audio-row audio { height:36px; max-width:100%; }
 
-  /* 录音卡片（分组） */
-  .student-group {
-    background: #fff; border-radius: 16px; margin-bottom: 12px;
-    box-shadow: 0 2px 10px rgba(0,20,40,.06); overflow: hidden;
-  }
-  .student-head {
-    width: 100%; border: none; background: #fff; display: flex; align-items: center;
-    gap: 12px; padding: 14px 16px; cursor: pointer; font-family: inherit; text-align: left;
-  }
-  .student-head:hover { background: #f7fafe; }
-  .avatar {
-    width: 38px; height: 38px; border-radius: 50%;
-    background: linear-gradient(135deg,#2a5298,#1e3c72); color: #fff;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 16px; flex-shrink: 0;
-  }
-  .student-name { font-weight: 700; color: #1e3c72; font-size: 15px; }
-  .student-count { background: #eef4ff; color: #2a5298; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
-  .student-latest { margin-left: auto; font-size: 12px; color: #91a3bb; }
-  .student-head i { color: #91a3bb; transition: transform .2s; }
-  .student-group.open .student-head i { transform: rotate(180deg); }
-  .student-body { padding: 0 12px 12px; border-top: 1px solid #f1f5fa; }
+  /* 录音三级分组 */
+  .campus-group { margin-bottom:14px; }
+  .campus-head { width:100%; border:none; background:linear-gradient(135deg,#1e3c72,#2a5298); color:#fff; padding:14px 18px; border-radius:14px; display:flex; align-items:center; gap:12px; cursor:pointer; font-size:15px; font-weight:700; font-family:inherit; text-align:left; }
+  .campus-head .campus-name { font-size:16px; }
+  .campus-head .count-pill { background:rgba(255,255,255,.2); color:#fff; padding:3px 10px; border-radius:20px; font-size:12px; }
+  .campus-head > i:last-child { margin-left:auto; transition:transform .2s; }
+  .campus-group.open .campus-head > i:last-child { transform:rotate(180deg); }
+  .campus-body { padding:12px 0 0 14px; border-left:3px solid #e1ebf6; margin-left:12px; }
 
-  .rec-card {
-    background: #f7fafe; border-radius: 12px; padding: 14px; margin-top: 10px;
-    display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
-  }
-  .rec-main { flex: 1; min-width: 180px; }
-  .rec-text { color: #3c4f68; margin-bottom: 4px; word-break: break-word; font-weight: 600; }
-  .rec-meta { font-size: 12px; color: #91a3bb; }
-  .rec-audio { flex: 0 0 auto; }
-  .rec-audio audio { width: 220px; max-width: 100%; height: 36px; }
+  .level-group { margin-bottom:12px; }
+  .level-head-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .level-head { flex:1; border:none; background:#eef4ff; color:#1e3c72; padding:12px 16px; border-radius:12px; display:flex; align-items:center; gap:12px; cursor:pointer; font-size:14px; font-weight:700; font-family:inherit; text-align:left; }
+  .level-head .count-pill { background:#fff; color:#2a5298; padding:3px 10px; border-radius:20px; font-size:12px; }
+  .level-head > i:last-child { margin-left:auto; transition:transform .2s; }
+  .level-group.open .level-head > i:last-child { transform:rotate(180deg); }
+  .level-body { padding-left:14px; }
 
-  .toolbar {
-    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px;
-    background: #fff; padding: 14px 16px; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,20,40,.05);
-  }
-  .toolbar input, .toolbar select {
-    padding: 9px 14px; border-radius: 10px; border: 1.5px solid #dbe4f0; font-size: 13px;
-    outline: none; background: #fafcff; font-family: inherit;
-  }
-  .toolbar input:focus, .toolbar select:focus { border-color: #2a5298; }
+  .student-group { background:#fff; border-radius:12px; margin-bottom:8px; box-shadow:0 1px 4px rgba(0,20,40,.05); overflow:hidden; border:1px solid #eef4ff; }
+  .student-head-row { display:flex; align-items:center; gap:6px; padding:6px 8px; }
+  .student-head { flex:1; border:none; background:#fff; display:flex; align-items:center; gap:10px; padding:8px 8px; cursor:pointer; font-family:inherit; text-align:left; border-radius:8px; }
+  .student-head:hover { background:#f7fafe; }
+  .avatar { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#2a5298,#1e3c72); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; }
+  .student-name { font-weight:700; color:#1e3c72; font-size:14px; }
+  .count-pill.small { background:#eef4ff; color:#2a5298; font-size:12px; font-weight:600; padding:3px 10px; border-radius:20px; }
+  .student-latest { margin-left:auto; font-size:12px; color:#91a3bb; }
+  .student-head > i { color:#91a3bb; transition:transform .2s; }
+  .student-group.open .student-head > i { transform:rotate(180deg); }
+  .student-body { padding:0 12px 12px; border-top:1px solid #f1f5fa; }
 
-  .empty { text-align: center; color: #8fa0b6; padding: 40px 20px; }
+  .rec-card { background:#f7fafe; border-radius:12px; padding:14px; margin-top:10px; display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .rec-main { flex:1; min-width:180px; }
+  .rec-text { color:#3c4f68; margin-bottom:4px; word-break:break-word; font-weight:600; }
+  .rec-meta { font-size:12px; color:#91a3bb; }
+  .rec-audio { flex:0 0 auto; }
+  .rec-audio audio { width:220px; max-width:100%; height:36px; }
 
-  /* Toast */
-  #toast {
-    position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%) translateY(20px);
-    background: #1e3c72; color: #fff; padding: 12px 24px; border-radius: 40px;
-    font-weight: 600; font-size: 14px; opacity: 0; pointer-events: none; transition: .25s;
-    z-index: 999; box-shadow: 0 10px 30px rgba(0,20,40,.3);
-  }
-  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  #toast.error { background: #b53b3b; }
+  .toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:18px; background:#fff; padding:14px 16px; border-radius:14px; box-shadow:0 2px 8px rgba(0,20,40,.05); }
+  .toolbar input, .toolbar select { padding:9px 14px; border-radius:10px; border:1.5px solid #dbe4f0; font-size:13px; outline:none; background:#fafcff; font-family:inherit; }
+  .toolbar input:focus, .toolbar select:focus { border-color:#2a5298; }
 
-  .help-box {
-    background: #fff8e8; border: 1px solid #f5e0b8; border-radius: 12px; padding: 14px 16px;
-    font-size: 12.5px; color: #7a5a1e; line-height: 1.7; margin-bottom: 16px;
-  }
-  .help-box code {
-    background: #fff; padding: 1px 6px; border-radius: 5px; font-family: monospace;
-    border: 1px solid #eed9b0;
-  }
+  .empty { text-align:center; color:#8fa0b6; padding:40px 20px; }
 
-  /* 搜索悬浮按钮 */
-  .search-fab {
-    position: fixed; right: 20px; bottom: 20px; width: 54px; height: 54px; border-radius: 50%;
-    border: none; background: #1e3c72; color: #fff; font-size: 20px; cursor: pointer;
-    box-shadow: 0 10px 26px rgba(30,60,114,.4); z-index: 70;
-    display: flex; align-items: center; justify-content: center; transition: .2s;
-  }
-  .search-fab:hover { transform: translateY(-2px) scale(1.05); background: #2a5298; }
+  #toast { position:fixed; left:50%; bottom:90px; transform:translateX(-50%) translateY(20px); background:#1e3c72; color:#fff; padding:12px 24px; border-radius:40px; font-weight:600; font-size:14px; opacity:0; pointer-events:none; transition:.25s; z-index:999; box-shadow:0 10px 30px rgba(0,20,40,.3); }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  #toast.error { background:#b53b3b; }
 
-  /* 搜索面板 */
-  .search-panel {
-    position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
-    width: min(560px, calc(100vw - 32px)); max-height: 70vh; z-index: 80;
-    background: #fff; border-radius: 18px; box-shadow: 0 24px 60px rgba(0,20,40,.28);
-    display: flex; flex-direction: column; overflow: hidden; border: 1px solid #e1ebf6;
-  }
-  .search-input-wrap { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid #f1f5fa; }
-  .search-input-wrap > i { color: #91a3bb; }
-  .search-input-wrap input {
-    flex: 1; border: none; outline: none; font-size: 16px; background: transparent;
-    font-family: inherit; color: #1e2f4b;
-  }
-  .search-input-wrap kbd {
-    font-size: 11px; background: #f1f5fa; border: 1px solid #dde6f0; border-radius: 6px;
-    padding: 2px 6px; color: #7b8ba3; font-family: inherit;
-  }
-  .search-results { overflow-y: auto; padding: 8px; }
-  .search-item {
-    display: flex; align-items: center; gap: 12px; padding: 11px 14px;
-    border-radius: 10px; cursor: pointer;
-  }
-  .search-item:hover, .search-item.active { background: #eef4ff; }
-  .search-item .si-icon {
-    width: 32px; height: 32px; border-radius: 9px; background: #eef4ff; color: #2a5298;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  }
-  .search-item .si-main { flex: 1; min-width: 0; }
-  .search-item .si-label {
-    font-weight: 600; color: #1e2f4b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .search-item .si-sub { font-size: 12px; color: #91a3bb; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .search-empty { text-align: center; color: #8fa0b6; padding: 30px 20px; font-size: 13px; }
+  .help-box { background:#fff8e8; border:1px solid #f5e0b8; border-radius:12px; padding:14px 16px; font-size:12.5px; color:#7a5a1e; line-height:1.7; margin-bottom:16px; }
+  .help-box code { background:#fff; padding:1px 6px; border-radius:5px; font-family:monospace; border:1px solid #eed9b0; word-break:break-all; }
 
-  /* 搜索定位高亮 */
+  .search-fab { position:fixed; right:20px; bottom:20px; width:54px; height:54px; border-radius:50%; border:none; background:#1e3c72; color:#fff; font-size:20px; cursor:pointer; box-shadow:0 10px 26px rgba(30,60,114,.4); z-index:70; display:flex; align-items:center; justify-content:center; transition:.2s; }
+  .search-fab:hover { transform:translateY(-2px) scale(1.05); background:#2a5298; }
+
+  .search-panel { position:fixed; top:80px; left:50%; transform:translateX(-50%); width:min(560px,calc(100vw - 32px)); max-height:70vh; z-index:80; background:#fff; border-radius:18px; box-shadow:0 24px 60px rgba(0,20,40,.28); display:flex; flex-direction:column; overflow:hidden; border:1px solid #e1ebf6; }
+  .search-input-wrap { display:flex; align-items:center; gap:10px; padding:14px 18px; border-bottom:1px solid #f1f5fa; }
+  .search-input-wrap > i { color:#91a3bb; }
+  .search-input-wrap input { flex:1; border:none; outline:none; font-size:16px; background:transparent; font-family:inherit; color:#1e2f4b; }
+  .search-input-wrap kbd { font-size:11px; background:#f1f5fa; border:1px solid #dde6f0; border-radius:6px; padding:2px 6px; color:#7b8ba3; font-family:inherit; }
+  .search-results { overflow-y:auto; padding:8px; }
+  .search-item { display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:10px; cursor:pointer; }
+  .search-item:hover, .search-item.active { background:#eef4ff; }
+  .search-item .si-icon { width:32px; height:32px; border-radius:9px; background:#eef4ff; color:#2a5298; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .search-item .si-main { flex:1; min-width:0; }
+  .search-item .si-label { font-weight:600; color:#1e2f4b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .search-item .si-sub { font-size:12px; color:#91a3bb; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .search-empty { text-align:center; color:#8fa0b6; padding:30px 20px; font-size:13px; }
+
   @keyframes hlPulse {
-    0%, 100% { box-shadow: 0 2px 10px rgba(0,20,40,.05); }
-    25%, 75% { box-shadow: 0 0 0 3px #2a5298, 0 10px 30px rgba(42,82,152,.3); }
+    0%, 100% { box-shadow:0 2px 10px rgba(0,20,40,.05); }
+    25%, 75% { box-shadow:0 0 0 3px #2a5298, 0 10px 30px rgba(42,82,152,.3); }
   }
-  .search-highlight { animation: hlPulse 1.8s ease; }
+  .search-highlight { animation:hlPulse 1.8s ease; }
 </style>
 </head>
 <body>
 
-<!-- ================= 登录 ================= -->
 <div id="loginOverlay" class="overlay">
   <div class="login-card">
     <h2>🔐 AI Time 管理后台</h2>
@@ -292,7 +176,6 @@
   </div>
 </div>
 
-<!-- ================= 主界面 ================= -->
 <div id="app" class="hidden">
   <div class="topbar">
     <h1>🛠 AI Time 管理后台</h1>
@@ -312,10 +195,8 @@
   <div id="recordingsPanel" class="panel hidden"></div>
 </div>
 
-<!-- 浮动调色板 -->
 <div id="floatingPalette" class="floating-palette hidden"></div>
 
-<!-- 搜索 -->
 <button id="searchFab" class="search-fab hidden" title="搜索 (Ctrl+K)"><i class="fas fa-search"></i></button>
 <div id="searchPanel" class="search-panel hidden">
   <div class="search-input-wrap">
@@ -331,17 +212,11 @@
 <script>
 "use strict";
 
-/* ============================================================
-   Supabase 配置 —— 必须与学生端 index.html 保持一致
-   ============================================================ */
 const SUPABASE_URL = 'https://dwagktwarlzkusawrtqq.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3YWdrdHdhcmx6a3VzYXdydHFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MzMwODQsImV4cCI6MjEwNzEwOTA4NH0.5iMbu7R3-LGHjZMFAuRH93sepxJr7bjrWexj3Invlmk';
 const BUCKET = 'site-assets';
 const LS_KEY = 'english_integrated_config';
 
-/* ============================================================
-   默认配置（与学生端一致）
-   ============================================================ */
 const DEFAULT_CONFIG = {
   settingPassword: '0303',
   aiTalkButtons: [
@@ -369,9 +244,6 @@ const DEFAULT_CONFIG = {
   ]
 };
 
-/* ============================================================
-   全局状态
-   ============================================================ */
 let config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 let configSource = 'local';
 let loggedIn = false;
@@ -379,31 +251,19 @@ let expanded = new Set(['basic']);
 let pickedColor = '#e11d48';
 let currentTab = 'settings';
 let recRows = [];
-let recFilter = { name: '', part: '' };
-let expandedStudents = new Set();
+let recFilter = { name: '', part: '', campus: '', level: '' };
+let expandedKeys = new Set();
 
-const PRESET_COLORS = [
-  '#e11d48', '#f97316', '#eab308', '#16a34a',
-  '#0ea5e9', '#6366f1', '#a855f7', '#db2777',
-  '#92400e', '#111827'
-];
+const PRESET_COLORS = ['#e11d48','#f97316','#eab308','#16a34a','#0ea5e9','#6366f1','#a855f7','#db2777','#92400e','#111827'];
 
-/* ============================================================
-   工具函数
-   ============================================================ */
 function esc(s) {
   return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 function encodePath(p) { return String(p).split('/').map(encodeURIComponent).join('/'); }
-function genId(prefix) {
-  return (prefix || 'id') + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
-}
-function cssEscape(s) {
-  if (window.CSS && CSS.escape) return CSS.escape(s);
-  return String(s).replace(/[^a-zA-Z0-9_-]/g, ch => '\\' + ch);
-}
+function genId(prefix) { return (prefix || 'id') + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,7); }
+function cssEscape(s) { if (window.CSS && CSS.escape) return CSS.escape(s); return String(s).replace(/[^a-zA-Z0-9_-]/g, ch => '\\' + ch); }
 function toast(msg, isError) {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -426,15 +286,9 @@ function formatTime(t) {
   catch (e) { return t; }
 }
 
-/* ============================================================
-   Supabase 请求封装
-   ============================================================ */
 async function sbFetch(path, options) {
   options = options || {};
-  const headers = Object.assign({
-    'apikey': SUPABASE_KEY,
-    'Authorization': 'Bearer ' + SUPABASE_KEY
-  }, options.headers || {});
+  const headers = Object.assign({ 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }, options.headers || {});
   return fetch(SUPABASE_URL + path, Object.assign({}, options, { headers }));
 }
 async function uploadFile(file, path, contentType) {
@@ -449,15 +303,9 @@ async function uploadFile(file, path, contentType) {
       },
       body: file
     });
-    if (!res.ok) {
-      console.error('upload failed', res.status, await res.text().catch(() => ''));
-      return null;
-    }
+    if (!res.ok) { console.error('upload failed', res.status, await res.text().catch(() => '')); return null; }
     return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${encodePath(path)}`;
-  } catch (e) {
-    console.error('upload error', e);
-    return null;
-  }
+  } catch (e) { console.error('upload error', e); return null; }
 }
 async function deleteStorageFile(path) {
   if (!path) return false;
@@ -469,6 +317,23 @@ async function deleteStorageFile(path) {
     return res.ok;
   } catch (e) { return false; }
 }
+async function batchDeleteStorage(paths) {
+  if (!paths || !paths.length) return;
+  for (let i = 0; i < paths.length; i += 100) {
+    const batch = paths.slice(i, i + 100);
+    try {
+      await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ prefixes: batch })
+      });
+    } catch (e) { console.warn('批量删除 storage 失败', e); }
+  }
+}
 function storagePathFromUrl(url) {
   if (!url) return null;
   const marker = `/storage/v1/object/public/${BUCKET}/`;
@@ -477,19 +342,11 @@ function storagePathFromUrl(url) {
   return decodeURIComponent(url.slice(i + marker.length).split('?')[0]);
 }
 
-/* ============================================================
-   配置：加载 / 规范化 / 发布
-   ============================================================ */
 function normalizeConfig(cfg) {
   if (!cfg || typeof cfg !== 'object') cfg = {};
   ['aiTalkButtons','discussionButtons'].forEach(k => { if (!Array.isArray(cfg[k])) cfg[k] = []; });
-  [cfg.aiTalkButtons, cfg.discussionButtons].forEach(arr => arr.forEach(b => {
-    if (typeof b.bgUrl !== 'string') b.bgUrl = '';
-  }));
-
-  if (!Array.isArray(cfg.gameParts) || !cfg.gameParts.length) {
-    cfg.gameParts = JSON.parse(JSON.stringify(DEFAULT_CONFIG.gameParts));
-  }
+  [cfg.aiTalkButtons, cfg.discussionButtons].forEach(arr => arr.forEach(b => { if (typeof b.bgUrl !== 'string') b.bgUrl = ''; }));
+  if (!Array.isArray(cfg.gameParts) || !cfg.gameParts.length) cfg.gameParts = JSON.parse(JSON.stringify(DEFAULT_CONFIG.gameParts));
   cfg.gameParts.forEach(p => {
     if (!Array.isArray(p.games)) p.games = [];
     p.games.forEach(g => {
@@ -497,7 +354,6 @@ function normalizeConfig(cfg) {
       if (typeof g.embedCode !== 'string') g.embedCode = '';
     });
   });
-
   if (!Array.isArray(cfg.listenReadParts)) cfg.listenReadParts = [];
   cfg.listenReadParts.forEach(p => {
     if (!Array.isArray(p.items)) p.items = [];
@@ -508,7 +364,6 @@ function normalizeConfig(cfg) {
       alignColors(it);
     });
   });
-
   ['homeBgUrl','gamePageBgUrl','rolePlayPageBgUrl','listenReadPageBgUrl',
    'btnGameBgUrl','btnRolePlayBgUrl','btnListenReadBgUrl','btnAITalkBgUrl'].forEach(f => {
     if (typeof cfg[f] !== 'string') cfg[f] = '';
@@ -544,11 +399,7 @@ async function loadConfigFromCloud(showToast) {
 function loadConfigFromStorage() {
   const stored = localStorage.getItem(LS_KEY);
   if (stored) {
-    try {
-      config = normalizeConfig(Object.assign({}, DEFAULT_CONFIG, JSON.parse(stored)));
-      configSource = 'local';
-      return;
-    } catch (e) {}
+    try { config = normalizeConfig(Object.assign({}, DEFAULT_CONFIG, JSON.parse(stored))); configSource = 'local'; return; } catch (e) {}
   }
   config = normalizeConfig(JSON.parse(JSON.stringify(DEFAULT_CONFIG)));
   configSource = 'default';
@@ -580,19 +431,12 @@ async function publishToCloud() {
 function updateStatusBadge() {
   const el = document.getElementById('statusBadge');
   if (!el) return;
-  const map = {
-    cloud:  { text: '☁️ 云端配置', cls: '' },
-    local:  { text: '💾 本地缓存', cls: 'local' },
-    default:{ text: '📄 默认配置', cls: 'local' }
-  };
+  const map = { cloud:{ text:'☁️ 云端配置', cls:'' }, local:{ text:'💾 本地缓存', cls:'local' }, default:{ text:'📄 默认配置', cls:'local' } };
   const m = map[configSource] || map.local;
   el.textContent = m.text;
   el.className = 'badge ' + m.cls;
 }
 
-/* ============================================================
-   登录
-   ============================================================ */
 function showLogin() {
   document.getElementById('loginOverlay').classList.remove('hidden');
   document.getElementById('app').classList.add('hidden');
@@ -617,18 +461,13 @@ document.getElementById('loginBtn').onclick = () => {
     document.getElementById('loginPwd').focus();
   }
 };
-document.getElementById('loginPwd').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('loginBtn').click();
-});
+document.getElementById('loginPwd').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginBtn').click(); });
 document.getElementById('loginSyncBtn').onclick = async () => {
   toast('⏳ 同步中…');
   const ok = await loadConfigFromCloud(false);
   toast(ok ? '✅ 已同步云端' : '⚠️ 同步失败，使用本地缓存', !ok);
 };
 
-/* ============================================================
-   Tab 切换
-   ============================================================ */
 document.querySelectorAll('.tab').forEach(tab => {
   tab.onclick = () => {
     currentTab = tab.dataset.tab;
@@ -649,27 +488,21 @@ document.getElementById('pullBtn').onclick = async () => {
 };
 document.getElementById('publishBtn').onclick = publishToCloud;
 
-/* ============================================================
-   浮动调色板
-   ============================================================ */
+/* 浮动调色板 */
 function updateFloatingPalette() {
   let el = document.getElementById('floatingPalette');
   if (!el) return;
   const show = loggedIn && currentTab === 'settings';
   el.classList.toggle('hidden', !show);
   if (!show) return;
-
   const collapsed = localStorage.getItem('fp_collapsed') === '1';
   el.classList.toggle('collapsed', collapsed);
-
   el.innerHTML = `
     <div class="fp-inner">
       <button class="fp-toggle" id="fpToggle" title="展开 / 收起调色板"><i class="fas fa-palette"></i></button>
       <div class="fp-body">
         <span class="label">🎨 选颜色 → 点字母：</span>
-        ${PRESET_COLORS.map(c =>
-          `<button class="swatch ${pickedColor === c ? 'active' : ''}" data-action="pick-color" data-color="${c}" style="background:${c}" title="${c}"></button>`
-        ).join('')}
+        ${PRESET_COLORS.map(c => `<button class="swatch ${pickedColor === c ? 'active' : ''}" data-action="pick-color" data-color="${c}" style="background:${c}" title="${c}"></button>`).join('')}
         <button class="swatch eraser ${pickedColor === '' ? 'active' : ''}" data-action="pick-color" data-color="">橡皮擦</button>
         <input type="color" id="customColor" value="${pickedColor || '#e11d48'}" title="自定义颜色">
       </div>
@@ -683,9 +516,7 @@ document.getElementById('floatingPalette').addEventListener('click', e => {
   }
 });
 
-/* ============================================================
-   渲染：设置面板
-   ============================================================ */
+/* 设置面板渲染 */
 function sectionHtml(id, title, body) {
   const open = expanded.has(id);
   return `
@@ -745,7 +576,6 @@ function renderSettings() {
     ${imgFieldHtml({ label:'AI Talk 按钮', value:config.btnAITalkBgUrl, scope:'config', key:'btnAITalkBgUrl', fixedBase:'btn_aitalk_bg' })}
   `));
 
-  /* Role Play AI */
   let aiTalkHtml = '';
   config.aiTalkButtons.forEach((b, i) => {
     aiTalkHtml += `
@@ -754,14 +584,8 @@ function renderSettings() {
           <span>🎭 Role-Play ${i + 1}</span>
           <button class="btn btn-danger btn-mini" data-action="del-aiTalk" data-id="${esc(b.id)}"><i class="fas fa-trash"></i> 删除</button>
         </div>
-        <div class="field">
-          <label>名称</label>
-          <input type="text" data-scope="aiTalk" data-id="${esc(b.id)}" data-key="name" value="${esc(b.name)}">
-        </div>
-        <div class="field">
-          <label>跳转链接</label>
-          <input type="text" data-scope="aiTalk" data-id="${esc(b.id)}" data-key="url" value="${esc(b.url)}">
-        </div>
+        <div class="field"><label>名称</label><input type="text" data-scope="aiTalk" data-id="${esc(b.id)}" data-key="name" value="${esc(b.name)}"></div>
+        <div class="field"><label>跳转链接</label><input type="text" data-scope="aiTalk" data-id="${esc(b.id)}" data-key="url" value="${esc(b.url)}"></div>
         ${imgFieldHtml({ label:'按钮背景图', value:b.bgUrl, scope:'aiTalk', id:b.id, fixedBase:'aitalk_' + b.id })}
       </div>`;
   });
@@ -770,7 +594,6 @@ function renderSettings() {
     <button class="btn btn-outline" data-action="add-aiTalk"><i class="fas fa-plus"></i> 新增 Role-Play 按钮</button>
   `));
 
-  /* AI Talk */
   let discHtml = '';
   config.discussionButtons.forEach((b, i) => {
     discHtml += `
@@ -779,14 +602,8 @@ function renderSettings() {
           <span>💬 AI Talk ${i + 1}</span>
           <button class="btn btn-danger btn-mini" data-action="del-discussion" data-id="${esc(b.id)}"><i class="fas fa-trash"></i> 删除</button>
         </div>
-        <div class="field">
-          <label>名称</label>
-          <input type="text" data-scope="discussion" data-id="${esc(b.id)}" data-key="name" value="${esc(b.name)}">
-        </div>
-        <div class="field">
-          <label>跳转链接</label>
-          <input type="text" data-scope="discussion" data-id="${esc(b.id)}" data-key="url" value="${esc(b.url)}">
-        </div>
+        <div class="field"><label>名称</label><input type="text" data-scope="discussion" data-id="${esc(b.id)}" data-key="name" value="${esc(b.name)}"></div>
+        <div class="field"><label>跳转链接</label><input type="text" data-scope="discussion" data-id="${esc(b.id)}" data-key="url" value="${esc(b.url)}"></div>
         ${imgFieldHtml({ label:'按钮背景图', value:b.bgUrl, scope:'discussion', id:b.id, fixedBase:'discussion_' + b.id })}
       </div>`;
   });
@@ -795,7 +612,6 @@ function renderSettings() {
     <button class="btn btn-outline" data-action="add-discussion"><i class="fas fa-plus"></i> 新增 AI Talk 按钮</button>
   `));
 
-  /* 游戏 */
   let gameHtml = '';
   config.gameParts.forEach(part => {
     let gamesHtml = '';
@@ -806,22 +622,15 @@ function renderSettings() {
             <span>🎮 游戏 ${gi + 1}</span>
             <button class="btn btn-danger btn-mini" data-action="del-game" data-part-id="${esc(part.id)}" data-game-id="${esc(g.id)}"><i class="fas fa-trash"></i> 删除</button>
           </div>
-          <div class="field">
-            <label>游戏名称</label>
-            <input type="text" data-scope="game" data-part-id="${esc(part.id)}" data-game-id="${esc(g.id)}" data-key="name" value="${esc(g.name)}">
-          </div>
-          <div class="field">
-            <label>嵌入代码（iframe）</label>
-            <textarea rows="3" data-scope="game" data-part-id="${esc(part.id)}" data-game-id="${esc(g.id)}" data-key="embedCode">${esc(g.embedCode)}</textarea>
-          </div>
+          <div class="field"><label>游戏名称</label><input type="text" data-scope="game" data-part-id="${esc(part.id)}" data-game-id="${esc(g.id)}" data-key="name" value="${esc(g.name)}"></div>
+          <div class="field"><label>嵌入代码（iframe）</label><textarea rows="3" data-scope="game" data-part-id="${esc(part.id)}" data-game-id="${esc(g.id)}" data-key="embedCode">${esc(g.embedCode)}</textarea></div>
           ${imgFieldHtml({ label:'游戏按钮背景图', value:g.bgUrl, scope:'game', partId:part.id, gameId:g.id, fixedBase:'game_' + g.id })}
         </div>`;
     });
     gameHtml += `
       <div class="editor-item">
         <div class="editor-head">
-          <input type="text" data-scope="gamePart" data-part-id="${esc(part.id)}" data-key="name"
-                 value="${esc(part.name)}"
+          <input type="text" data-scope="gamePart" data-part-id="${esc(part.id)}" data-key="name" value="${esc(part.name)}"
                  style="flex:1; padding:10px 14px; border-radius:10px; border:1.5px solid #dbe4f0; font-size:15px; font-weight:700; color:#1e3c72; background:#fff; outline:none;">
           <button class="btn btn-danger btn-mini" data-action="del-gamePart" data-part-id="${esc(part.id)}"><i class="fas fa-trash-alt"></i> 删除 Part</button>
         </div>
@@ -834,16 +643,13 @@ function renderSettings() {
     <button class="btn btn-primary" data-action="add-gamePart"><i class="fas fa-plus"></i> 新建 Part</button>
   `));
 
-  /* Listen & Read */
   html.push(sectionHtml('lrMgmt', '🎧 Listen &amp; Read 管理', buildListenReadHtml()));
 
-  /* 发布 */
   html.push(sectionHtml('publish', '☁️ 发布 / 备份', `
     <div class="help-box">
-      <b>数据库准备（首次使用）</b><br>
-      请在 Supabase 中创建 <code>recordings</code> 表，字段：<br>
-      <code>id bigserial primary key</code>、<code>created_at timestamptz default now()</code>、<code>part_id text</code>、<code>part_name text</code>、<code>item_id text</code>、<code>item_text text</code>、<code>student_name text</code>、<code>file_path text</code>、<code>public_url text</code><br>
-      并为该表与 Storage 桶 <code>${BUCKET}</code> 开启 anon 读写策略。
+      <b>数据库准备</b><br>
+      首次使用请执行建表 SQL。若从旧版本升级，请先执行：<br>
+      <code>ALTER TABLE public.recordings ADD COLUMN IF NOT EXISTS campus text, ADD COLUMN IF NOT EXISTS level text;</code>
     </div>
     <div class="row">
       <button class="btn btn-primary" data-action="publish"><i class="fas fa-cloud-upload-alt"></i> 一键发布到云端</button>
@@ -855,13 +661,11 @@ function renderSettings() {
 
   panel.innerHTML = html.join('');
   panel.scrollTop = scrollTop;
-
   updateFloatingPalette();
 }
 
 function buildListenReadHtml() {
   let partsHtml = '';
-
   (config.listenReadParts || []).forEach((part, pi) => {
     let itemsHtml = '';
     (part.items || []).forEach((it, ii) => {
@@ -871,54 +675,38 @@ function buildListenReadHtml() {
             <span>📝 第 ${ii + 1} 条</span>
             <button class="btn btn-danger btn-mini" data-action="del-lrItem" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}"><i class="fas fa-trash"></i> 删除</button>
           </div>
-
-          <div class="field">
-            <label>文本内容（单词 / 句子）</label>
+          <div class="field"><label>文本内容（单词 / 句子）</label>
             <textarea rows="2" data-scope="lrItem" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}" data-key="text" placeholder="例如：Hello world">${esc(it.text)}</textarea>
           </div>
-
-          <div class="field">
-            <label>逐字母上色（底部浮动调色板选颜色，再点下面字母）</label>
-            <div class="lr-chars" data-chars-for="${esc(it.id)}" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}">
-              ${renderCharsHtml(it)}
-            </div>
+          <div class="field"><label>逐字母上色（底部浮动调色板选颜色，再点下面字母）</label>
+            <div class="lr-chars" data-chars-for="${esc(it.id)}" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}">${renderCharsHtml(it)}</div>
           </div>
-
           <div class="field" style="margin-bottom:0;">
             <label>标准发音音频（学生点击「常速/龟速」时播放）</label>
             <div class="audio-row">
               <button class="btn btn-outline btn-mini" data-action="upload-lrAudio" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}"><i class="fas fa-upload"></i> 上传音频</button>
-              ${it.audioUrl ? `<audio controls src="${esc(it.audioUrl)}"></audio>
-                <button class="btn btn-danger btn-mini" data-action="clear-lrAudio" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}"><i class="fas fa-times"></i> 移除</button>` : '<span class="hint" style="margin:0;">未上传音频（学生端将使用浏览器语音合成）</span>'}
+              ${it.audioUrl ? `<audio controls src="${esc(it.audioUrl)}"></audio><button class="btn btn-danger btn-mini" data-action="clear-lrAudio" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}"><i class="fas fa-times"></i> 移除</button>` : '<span class="hint" style="margin:0;">未上传音频（学生端将使用浏览器语音合成）</span>'}
             </div>
           </div>
         </div>`;
     });
-
     partsHtml += `
       <div class="editor-item">
         <div class="editor-head">
           <span>📚 单元 ${pi + 1}</span>
           <button class="btn btn-danger btn-mini" data-action="del-lrPart" data-part-id="${esc(part.id)}"><i class="fas fa-trash-alt"></i> 删除单元</button>
         </div>
-        <div class="field">
-          <label>单元名称</label>
-          <input type="text" data-scope="lrPart" data-part-id="${esc(part.id)}" data-key="name" value="${esc(part.name)}">
-        </div>
+        <div class="field"><label>单元名称</label><input type="text" data-scope="lrPart" data-part-id="${esc(part.id)}" data-key="name" value="${esc(part.name)}"></div>
         ${itemsHtml || '<p class="empty" style="padding:16px 0;">这个单元还没有内容</p>'}
         <button class="btn btn-outline btn-mini" data-action="add-lrItem" data-part-id="${esc(part.id)}"><i class="fas fa-plus"></i> 添加单词 / 句子</button>
       </div>`;
   });
-
   return `
-    <div class="hint" style="margin-bottom:16px;">
-      学生端会自动把文本放大到适配屏幕的大小，因此可以放心输入长句子。调色板已悬浮在页面底部，随时可用。
-    </div>
+    <div class="hint" style="margin-bottom:16px;">学生端会自动把文本放大到适配屏幕的大小，可以放心输入长句子。调色板已悬浮在底部，随时可用。</div>
     ${partsHtml}
     <button class="btn btn-primary" data-action="add-lrPart"><i class="fas fa-plus"></i> 新建单元</button>
   `;
 }
-
 function renderCharsHtml(item) {
   const chars = Array.from(item.text || '');
   if (!chars.length) return '<span style="color:#b6c2d2; font-weight:400; font-size:14px;">（在上方输入文本后，这里会显示可上色的字母）</span>';
@@ -931,46 +719,30 @@ function renderCharsHtml(item) {
   }).join('');
 }
 
-/* ============================================================
-   事件委托
-   ============================================================ */
-
-/* ---------- input 输入绑定 ---------- */
+/* input 事件 */
 document.addEventListener('input', e => {
   const el = e.target;
-
-  // 自定义颜色选择器
   if (el.id === 'customColor') {
     pickedColor = el.value;
     document.querySelectorAll('.floating-palette .swatch').forEach(s => s.classList.remove('active'));
     return;
   }
-
   const scope = el.dataset.scope;
   if (!scope) return;
   const key = el.dataset.key;
   if (!key) return;
   const val = el.value;
 
-  if (scope === 'config') {
-    config[key] = val;
-  } else if (scope === 'aiTalk') {
-    const b = config.aiTalkButtons.find(x => x.id === el.dataset.id);
-    if (b) b[key] = val;
-  } else if (scope === 'discussion') {
-    const b = config.discussionButtons.find(x => x.id === el.dataset.id);
-    if (b) b[key] = val;
-  } else if (scope === 'gamePart') {
-    const p = config.gameParts.find(x => x.id === el.dataset.partId);
-    if (p) p[key] = val;
-  } else if (scope === 'game') {
+  if (scope === 'config') config[key] = val;
+  else if (scope === 'aiTalk') { const b = config.aiTalkButtons.find(x => x.id === el.dataset.id); if (b) b[key] = val; }
+  else if (scope === 'discussion') { const b = config.discussionButtons.find(x => x.id === el.dataset.id); if (b) b[key] = val; }
+  else if (scope === 'gamePart') { const p = config.gameParts.find(x => x.id === el.dataset.partId); if (p) p[key] = val; }
+  else if (scope === 'game') {
     const p = config.gameParts.find(x => x.id === el.dataset.partId);
     const g = p && p.games.find(x => x.id === el.dataset.gameId);
     if (g) g[key] = val;
-  } else if (scope === 'lrPart') {
-    const p = config.listenReadParts.find(x => x.id === el.dataset.partId);
-    if (p) p[key] = val;
-  } else if (scope === 'lrItem') {
+  } else if (scope === 'lrPart') { const p = config.listenReadParts.find(x => x.id === el.dataset.partId); if (p) p[key] = val; }
+  else if (scope === 'lrItem') {
     const p = config.listenReadParts.find(x => x.id === el.dataset.partId);
     const it = p && p.items.find(x => x.id === el.dataset.itemId);
     if (!it) return;
@@ -979,19 +751,16 @@ document.addEventListener('input', e => {
       alignColors(it);
       const box = document.querySelector(`.lr-chars[data-item-id="${cssEscape(it.id)}"]`);
       if (box) box.innerHTML = renderCharsHtml(it);
-    } else {
-      it[key] = val;
-    }
+    } else it[key] = val;
   }
 });
 
-/* ---------- click 事件 ---------- */
+/* click 事件 */
 document.addEventListener('click', async e => {
   const target = e.target.closest('[data-action]');
   if (!target) return;
   const action = target.dataset.action;
 
-  /* 折叠 section */
   if (action === 'toggle-section') {
     const id = target.dataset.sectionId;
     const body = target.parentElement.querySelector('.section-body');
@@ -999,16 +768,12 @@ document.addEventListener('click', async e => {
     else { expanded.add(id); body.classList.remove('hidden'); target.classList.remove('collapsed'); }
     return;
   }
-
-  /* 选颜色 */
   if (action === 'pick-color') {
     pickedColor = target.dataset.color || '';
     document.querySelectorAll('.floating-palette .swatch').forEach(s => s.classList.remove('active'));
     target.classList.add('active');
     return;
   }
-
-  /* 给字母上色 */
   if (action === 'paint-char') {
     const itemId = target.dataset.itemId;
     const idx = parseInt(target.dataset.idx, 10);
@@ -1022,7 +787,6 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  /* 图片上传 */
   if (action === 'img-upload') {
     const field = target.closest('.img-field');
     if (!field) return;
@@ -1037,8 +801,6 @@ document.addEventListener('click', async e => {
     toast('✅ 图片已上传');
     return;
   }
-
-  /* 图片清除 */
   if (action === 'img-clear') {
     const field = target.closest('.img-field');
     if (!field) return;
@@ -1052,7 +814,6 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  /* 音频上传 */
   if (action === 'upload-lrAudio') {
     const partId = target.dataset.partId;
     const itemId = target.dataset.itemId;
@@ -1077,8 +838,6 @@ document.addEventListener('click', async e => {
     toast('✅ 音频已上传');
     return;
   }
-
-  /* 音频清除 */
   if (action === 'clear-lrAudio') {
     const partId = target.dataset.partId;
     const itemId = target.dataset.itemId;
@@ -1092,41 +851,18 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  /* 增删结构 */
-  if (action === 'add-aiTalk') {
-    config.aiTalkButtons.push({ id: genId('aitalk'), name: 'New Role-Play', url: 'https://', bgUrl: '' });
-    renderSettings(); toast('已添加'); return;
-  }
-  if (action === 'del-aiTalk') {
-    if (!confirm('删除这个 Role-Play 按钮？')) return;
-    config.aiTalkButtons = config.aiTalkButtons.filter(b => b.id !== target.dataset.id);
-    renderSettings(); toast('已删除'); return;
-  }
-  if (action === 'add-discussion') {
-    config.discussionButtons.push({ id: genId('discussion'), name: 'New AI Talk', url: 'https://', bgUrl: '' });
-    renderSettings(); toast('已添加'); return;
-  }
-  if (action === 'del-discussion') {
-    if (!confirm('删除这个 AI Talk 按钮？')) return;
-    config.discussionButtons = config.discussionButtons.filter(b => b.id !== target.dataset.id);
-    renderSettings(); toast('已删除'); return;
-  }
-  if (action === 'add-gamePart') {
-    config.gameParts.push({ id: genId('part'), name: 'New Part', games: [] });
-    renderSettings(); toast('已添加 Part'); return;
-  }
+  if (action === 'add-aiTalk') { config.aiTalkButtons.push({ id: genId('aitalk'), name:'New Role-Play', url:'https://', bgUrl:'' }); renderSettings(); toast('已添加'); return; }
+  if (action === 'del-aiTalk') { if (!confirm('删除这个 Role-Play 按钮？')) return; config.aiTalkButtons = config.aiTalkButtons.filter(b => b.id !== target.dataset.id); renderSettings(); toast('已删除'); return; }
+  if (action === 'add-discussion') { config.discussionButtons.push({ id: genId('discussion'), name:'New AI Talk', url:'https://', bgUrl:'' }); renderSettings(); toast('已添加'); return; }
+  if (action === 'del-discussion') { if (!confirm('删除这个 AI Talk 按钮？')) return; config.discussionButtons = config.discussionButtons.filter(b => b.id !== target.dataset.id); renderSettings(); toast('已删除'); return; }
+  if (action === 'add-gamePart') { config.gameParts.push({ id: genId('part'), name:'New Part', games:[] }); renderSettings(); toast('已添加 Part'); return; }
   if (action === 'del-gamePart') {
     if (config.gameParts.length <= 1) { toast('至少保留一个 Part', true); return; }
     if (!confirm('删除这个 Part 及其所有游戏？')) return;
     config.gameParts = config.gameParts.filter(p => p.id !== target.dataset.partId);
     renderSettings(); toast('已删除'); return;
   }
-  if (action === 'add-game') {
-    const p = config.gameParts.find(x => x.id === target.dataset.partId);
-    if (!p) return;
-    p.games.push({ id: genId('game'), name: 'New Game', embedCode: '<iframe width="500" height="380" src="https://"></iframe>', bgUrl: '' });
-    renderSettings(); toast('已添加游戏'); return;
-  }
+  if (action === 'add-game') { const p = config.gameParts.find(x => x.id === target.dataset.partId); if (!p) return; p.games.push({ id: genId('game'), name:'New Game', embedCode:'<iframe width="500" height="380" src="https://"></iframe>', bgUrl:'' }); renderSettings(); toast('已添加游戏'); return; }
   if (action === 'del-game') {
     if (!confirm('删除这个游戏？')) return;
     const p = config.gameParts.find(x => x.id === target.dataset.partId);
@@ -1134,24 +870,14 @@ document.addEventListener('click', async e => {
     p.games = p.games.filter(g => g.id !== target.dataset.gameId);
     renderSettings(); toast('已删除'); return;
   }
-  if (action === 'add-lrPart') {
-    config.listenReadParts.push({ id: genId('lr'), name: 'New Unit', bgUrl: '', items: [] });
-    renderSettings(); toast('已新建单元'); return;
-  }
-  if (action === 'del-lrPart') {
-    if (!confirm('删除这个单元及其所有内容？')) return;
-    config.listenReadParts = config.listenReadParts.filter(p => p.id !== target.dataset.partId);
-    renderSettings(); toast('已删除单元'); return;
-  }
+  if (action === 'add-lrPart') { config.listenReadParts.push({ id: genId('lr'), name:'New Unit', bgUrl:'', items:[] }); renderSettings(); toast('已新建单元'); return; }
+  if (action === 'del-lrPart') { if (!confirm('删除这个单元及其所有内容？')) return; config.listenReadParts = config.listenReadParts.filter(p => p.id !== target.dataset.partId); renderSettings(); toast('已删除单元'); return; }
   if (action === 'add-lrItem') {
     const p = config.listenReadParts.find(x => x.id === target.dataset.partId);
     if (!p) return;
-    p.items.push({ id: genId('lri'), text: '', colors: [], audioUrl: '' });
+    p.items.push({ id: genId('lri'), text:'', colors:[], audioUrl:'' });
     renderSettings(); toast('已添加条目');
-    setTimeout(() => {
-      const items = document.querySelectorAll('.editor-item[data-lr-item]');
-      if (items.length) items[items.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 60);
+    setTimeout(() => { const items = document.querySelectorAll('.editor-item[data-lr-item]'); if (items.length) items[items.length - 1].scrollIntoView({ behavior:'smooth', block:'center' }); }, 60);
     return;
   }
   if (action === 'del-lrItem') {
@@ -1162,7 +888,6 @@ document.addEventListener('click', async e => {
     renderSettings(); toast('已删除'); return;
   }
 
-  /* 发布 / 备份 */
   if (action === 'publish') { publishToCloud(); return; }
   if (action === 'export-json') {
     const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
@@ -1183,9 +908,7 @@ document.addEventListener('click', async e => {
         config = normalizeConfig(Object.assign({}, DEFAULT_CONFIG, imported));
         renderSettings();
         toast('✅ 已导入（记得发布到云端）');
-      } catch (err) {
-        toast('❌ JSON 格式错误', true);
-      }
+      } catch (err) { toast('❌ JSON 格式错误', true); }
     };
     reader.readAsText(file);
     return;
@@ -1193,26 +916,51 @@ document.addEventListener('click', async e => {
   if (action === 'reset-default') {
     if (!confirm('恢复默认配置会覆盖当前所有设置，确定吗？')) return;
     config = normalizeConfig(JSON.parse(JSON.stringify(DEFAULT_CONFIG)));
-    renderSettings();
-    toast('已恢复默认配置');
+    renderSettings(); toast('已恢复默认配置'); return;
+  }
+
+  /* ====== 录音相关 ====== */
+  if (action === 'toggle-key') {
+    const key = target.dataset.key;
+    if (expandedKeys.has(key)) expandedKeys.delete(key);
+    else expandedKeys.add(key);
+    const wrapper = target.closest('.campus-group, .level-group, .student-group');
+    if (!wrapper) return;
+    wrapper.classList.toggle('open');
+    const body = wrapper.querySelector('.campus-body') || wrapper.querySelector('.level-body') || wrapper.querySelector('.student-body');
+    if (body) body.classList.toggle('hidden');
     return;
   }
 
-  /* 展开/收起学生分组 */
-  if (action === 'toggle-student') {
-    const name = target.dataset.student;
-    if (expandedStudents.has(name)) expandedStudents.delete(name);
-    else expandedStudents.add(name);
-    const group = target.closest('.student-group');
-    if (group) {
-      group.classList.toggle('open');
-      const body = group.querySelector('.student-body');
-      if (body) body.classList.toggle('hidden');
-    }
+  if (action === 'export-student') {
+    exportStudent(target.dataset.campus, target.dataset.level, target.dataset.student);
     return;
   }
 
-  /* 删除录音 */
+  if (action === 'delete-student') {
+    const campus = target.dataset.campus;
+    const level = target.dataset.level;
+    const student = target.dataset.student;
+    const rows = recRows.filter(r =>
+      (r.campus || '未分类') === campus &&
+      (r.level || '未分类') === level &&
+      (r.student_name || '未命名') === student
+    );
+    deleteRecords(rows, `${campus} / ${level} / ${student}`);
+    return;
+  }
+
+  if (action === 'delete-level') {
+    const campus = target.dataset.campus;
+    const level = target.dataset.level;
+    const rows = recRows.filter(r =>
+      (r.campus || '未分类') === campus &&
+      (r.level || '未分类') === level
+    );
+    deleteRecords(rows, `${campus} / ${level}（全部学生）`);
+    return;
+  }
+
   if (action === 'delete-recording') {
     if (!confirm('删除这条录音？')) return;
     const id = target.dataset.id;
@@ -1224,10 +972,7 @@ document.addEventListener('click', async e => {
       recRows = recRows.filter(r => String(r.id) !== String(id));
       paintRecList();
       toast('🗑 已删除');
-    } catch (e) {
-      toast('删除失败', true);
-      target.disabled = false;
-    }
+    } catch (e) { toast('删除失败', true); target.disabled = false; }
     return;
   }
 });
@@ -1235,46 +980,44 @@ document.addEventListener('click', async e => {
 function applyImgFieldValue(field, value) {
   const scope = field.dataset.imgScope;
   const urlInput = field.querySelector('.img-url');
-
-  if (scope === 'config') {
-    config[field.dataset.key] = value;
-  } else if (scope === 'aiTalk') {
-    const b = config.aiTalkButtons.find(x => x.id === field.dataset.id);
-    if (b) b.bgUrl = value;
-  } else if (scope === 'discussion') {
-    const b = config.discussionButtons.find(x => x.id === field.dataset.id);
-    if (b) b.bgUrl = value;
-  } else if (scope === 'game') {
-    const p = config.gameParts.find(x => x.id === field.dataset.partId);
-    const g = p && p.games.find(x => x.id === field.dataset.gameId);
-    if (g) g.bgUrl = value;
-  } else if (scope === 'lrPart') {
-    const p = config.listenReadParts.find(x => x.id === field.dataset.partId);
-    if (p) p.bgUrl = value;
-  }
-
+  if (scope === 'config') config[field.dataset.key] = value;
+  else if (scope === 'aiTalk') { const b = config.aiTalkButtons.find(x => x.id === field.dataset.id); if (b) b.bgUrl = value; }
+  else if (scope === 'discussion') { const b = config.discussionButtons.find(x => x.id === field.dataset.id); if (b) b.bgUrl = value; }
+  else if (scope === 'game') { const p = config.gameParts.find(x => x.id === field.dataset.partId); const g = p && p.games.find(x => x.id === field.dataset.gameId); if (g) g.bgUrl = value; }
+  else if (scope === 'lrPart') { const p = config.listenReadParts.find(x => x.id === field.dataset.partId); if (p) p.bgUrl = value; }
   if (urlInput) urlInput.value = value;
   let thumb = field.querySelector('.img-thumb');
   if (value) {
-    if (!thumb) {
-      thumb = document.createElement('div');
-      thumb.className = 'img-thumb';
-      field.appendChild(thumb);
-    }
+    if (!thumb) { thumb = document.createElement('div'); thumb.className = 'img-thumb'; field.appendChild(thumb); }
     thumb.style.backgroundImage = `url('${value}')`;
-  } else if (thumb) {
-    thumb.remove();
-  }
+  } else if (thumb) thumb.remove();
 }
 
-/* ============================================================
-   渲染：学生录音（按学生分组）
-   ============================================================ */
+/* ====== 录音渲染 ====== */
 async function renderRecordings() {
   const panel = document.getElementById('recordingsPanel');
+  if (!recRows.length) {
+    panel.innerHTML = '<p class="empty">加载中…</p>';
+    await loadRecordings(false);
+  }
+  paintRecToolbarAndList();
+}
+
+function paintRecToolbarAndList() {
+  const panel = document.getElementById('recordingsPanel');
+  const campuses = [...new Set(recRows.map(r => r.campus || '未分类'))].sort();
+  const levels = [...new Set(recRows.map(r => r.level || '未分类'))].sort();
   panel.innerHTML = `
     <div class="toolbar">
-      <input type="text" id="recNameFilter" placeholder="按学生名字筛选" value="${esc(recFilter.name)}" style="min-width:180px;">
+      <select id="recCampusFilter">
+        <option value="">全部校区</option>
+        ${campuses.map(c => `<option value="${esc(c)}" ${recFilter.campus === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}
+      </select>
+      <select id="recLevelFilter">
+        <option value="">全部 Level</option>
+        ${levels.map(l => `<option value="${esc(l)}" ${recFilter.level === l ? 'selected' : ''}>${esc(l)}</option>`).join('')}
+      </select>
+      <input type="text" id="recNameFilter" placeholder="按学生名字筛选" value="${esc(recFilter.name)}" style="min-width:160px;">
       <select id="recPartFilter">
         <option value="">全部单元</option>
         ${config.listenReadParts.map(p => `<option value="${esc(p.id)}" ${recFilter.part === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
@@ -1282,42 +1025,32 @@ async function renderRecordings() {
       <button class="btn btn-outline btn-mini" id="recRefreshBtn"><i class="fas fa-sync"></i> 刷新</button>
       <span class="hint" style="margin:0;" id="recCount"></span>
     </div>
-    <div id="recList"><p class="empty">加载中…</p></div>`;
-
-  document.getElementById('recNameFilter').oninput = e => {
-    recFilter.name = e.target.value.trim();
-    paintRecList();
-  };
-  document.getElementById('recPartFilter').onchange = e => {
-    recFilter.part = e.target.value;
-    paintRecList();
-  };
+    <div id="recList"></div>`;
+  document.getElementById('recCampusFilter').onchange = e => { recFilter.campus = e.target.value; paintRecList(); };
+  document.getElementById('recLevelFilter').onchange = e => { recFilter.level = e.target.value; paintRecList(); };
+  document.getElementById('recNameFilter').oninput = e => { recFilter.name = e.target.value.trim(); paintRecList(); };
+  document.getElementById('recPartFilter').onchange = e => { recFilter.part = e.target.value; paintRecList(); };
   document.getElementById('recRefreshBtn').onclick = () => loadRecordings(true);
-
-  await loadRecordings(false);
+  paintRecList();
 }
 
 async function loadRecordings(showToast) {
   const listEl = document.getElementById('recList');
-  if (!listEl) return;
-  listEl.innerHTML = '<p class="empty">加载中…</p>';
+  if (listEl) listEl.innerHTML = '<p class="empty">加载中…</p>';
   try {
-    const res = await sbFetch('/rest/v1/recordings?select=*&order=created_at.desc&limit=1000', {
-      headers: { 'Accept': 'application/json' }
-    });
+    const res = await sbFetch('/rest/v1/recordings?select=*&order=created_at.desc&limit=2000', { headers: { 'Accept': 'application/json' } });
     if (!res.ok) {
       const t = await res.text().catch(() => '');
       throw new Error('HTTP ' + res.status + ' ' + t.slice(0, 120));
     }
     recRows = await res.json();
-    paintRecList();
+    paintRecToolbarAndList();
     if (showToast) toast('✅ 已刷新');
   } catch (e) {
     console.error(e);
-    listEl.innerHTML = `
+    if (listEl) listEl.innerHTML = `
       <div class="help-box" style="background:#fff0f0;border-color:#f3c7c2;color:#a03528;">
-        <b>读取录音失败</b><br>
-        请确认 Supabase 中已创建 <code>recordings</code> 表并允许 anon 读取。<br>
+        <b>读取录音失败</b><br>请确认 Supabase 中已创建 <code>recordings</code> 表并允许 anon 读取。<br>
         <span style="font-size:12px;opacity:.8;">错误信息：${esc(e.message)}</span>
       </div>`;
     if (showToast) toast('读取失败', true);
@@ -1334,44 +1067,96 @@ function paintRecList() {
     const kw = recFilter.name.toLowerCase();
     rows = rows.filter(r => (r.student_name || '未命名').toLowerCase().includes(kw));
   }
-  if (recFilter.part) {
-    rows = rows.filter(r => r.part_id === recFilter.part);
-  }
+  if (recFilter.part) rows = rows.filter(r => r.part_id === recFilter.part);
+  if (recFilter.campus) rows = rows.filter(r => (r.campus || '未分类') === recFilter.campus);
+  if (recFilter.level) rows = rows.filter(r => (r.level || '未分类') === recFilter.level);
 
   const names = new Set(rows.map(r => r.student_name || '未命名'));
-  if (countEl) countEl.textContent = `共 ${rows.length} 条录音 · ${names.size} 位学生`;
+  if (countEl) countEl.textContent = `共 ${rows.length} 条 · ${names.size} 位学生`;
 
-  if (!rows.length) {
-    listEl.innerHTML = '<p class="empty">暂无录音</p>';
-    return;
-  }
+  if (!rows.length) { listEl.innerHTML = '<p class="empty">暂无录音</p>'; return; }
 
-  // 按学生分组（rows 已按时间倒序，组内保持最新在上）
-  const groups = new Map();
+  const tree = new Map();
   rows.forEach(r => {
+    const campus = r.campus || '未分类';
+    const level = r.level || '未分类';
     const name = r.student_name || '未命名';
-    if (!groups.has(name)) groups.set(name, []);
-    groups.get(name).push(r);
+    if (!tree.has(campus)) tree.set(campus, new Map());
+    const lv = tree.get(campus);
+    if (!lv.has(level)) lv.set(level, new Map());
+    const stu = lv.get(level);
+    if (!stu.has(name)) stu.set(name, []);
+    stu.get(name).push(r);
   });
 
-  listEl.innerHTML = [...groups.keys()].map(name => {
-    const list = groups.get(name);
-    const open = expandedStudents.has(name);
-    const latest = list[0];
-    return `
-      <div class="student-group ${open ? 'open' : ''}" data-student="${esc(name)}">
-        <button class="student-head" data-action="toggle-student" data-student="${esc(name)}">
-          <span class="avatar">${esc((name || '?').slice(0, 1).toUpperCase())}</span>
-          <span class="student-name">${esc(name)}</span>
-          <span class="student-count">${list.length} 条</span>
-          <span class="student-latest">${esc(formatTime(latest.created_at))}</span>
+  const html = [];
+  [...tree.keys()].sort().forEach(campus => {
+    const campusKey = 'c:' + campus;
+    const campusOpen = expandedKeys.has(campusKey);
+    const levelMap = tree.get(campus);
+    let campusTotal = 0;
+    levelMap.forEach(m => { m.forEach(arr => { campusTotal += arr.length; }); });
+
+    let levelsHtml = '';
+    [...levelMap.keys()].sort().forEach(level => {
+      const levelKey = 'l:' + campus + '::' + level;
+      const levelOpen = expandedKeys.has(levelKey);
+      const studentMap = levelMap.get(level);
+      let levelTotal = 0;
+      studentMap.forEach(arr => { levelTotal += arr.length; });
+
+      let studentsHtml = '';
+      [...studentMap.keys()].sort().forEach(name => {
+        const studentKey = 's:' + campus + '::' + level + '::' + name;
+        const studentOpen = expandedKeys.has(studentKey);
+        const list = studentMap.get(name);
+        studentsHtml += `
+          <div class="student-group ${studentOpen ? 'open' : ''}" data-student-key="${esc(studentKey)}">
+            <div class="student-head-row">
+              <button class="student-head" data-action="toggle-key" data-key="${esc(studentKey)}">
+                <span class="avatar">${esc((name || '?').slice(0,1).toUpperCase())}</span>
+                <span class="student-name">${esc(name)}</span>
+                <span class="count-pill small">${list.length} 条</span>
+                <span class="student-latest">${esc(formatTime(list[0].created_at))}</span>
+                <i class="fas fa-chevron-down"></i>
+              </button>
+              <button class="btn btn-outline btn-mini" data-action="export-student" data-campus="${esc(campus)}" data-level="${esc(level)}" data-student="${esc(name)}" title="导出该学生录音"><i class="fas fa-download"></i> 导出</button>
+              <button class="btn btn-danger btn-mini" data-action="delete-student" data-campus="${esc(campus)}" data-level="${esc(level)}" data-student="${esc(name)}" title="删除该学生全部录音"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="student-body ${studentOpen ? '' : 'hidden'}">
+              ${list.map(renderRecCard).join('')}
+            </div>
+          </div>`;
+      });
+
+      levelsHtml += `
+        <div class="level-group ${levelOpen ? 'open' : ''}">
+          <div class="level-head-row">
+            <button class="level-head" data-action="toggle-key" data-key="${esc(levelKey)}">
+              <i class="fas fa-layer-group"></i>
+              <span class="level-name">${esc(level)}</span>
+              <span class="count-pill">${studentMap.size} 位 · ${levelTotal} 条</span>
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <button class="btn btn-danger btn-mini" data-action="delete-level" data-campus="${esc(campus)}" data-level="${esc(level)}" title="删除该班级全部录音"><i class="fas fa-trash-alt"></i> 删除整组</button>
+          </div>
+          <div class="level-body ${levelOpen ? '' : 'hidden'}">${studentsHtml}</div>
+        </div>`;
+    });
+
+    html.push(`
+      <div class="campus-group ${campusOpen ? 'open' : ''}">
+        <button class="campus-head" data-action="toggle-key" data-key="${esc(campusKey)}">
+          <i class="fas fa-school"></i>
+          <span class="campus-name">${esc(campus)}</span>
+          <span class="count-pill">${campusTotal} 条</span>
           <i class="fas fa-chevron-down"></i>
         </button>
-        <div class="student-body ${open ? '' : 'hidden'}">
-          ${list.map(r => renderRecCard(r)).join('')}
-        </div>
-      </div>`;
-  }).join('');
+        <div class="campus-body ${campusOpen ? '' : 'hidden'}">${levelsHtml}</div>
+      </div>`);
+  });
+
+  listEl.innerHTML = html.join('');
 }
 
 function renderRecCard(r) {
@@ -1384,83 +1169,131 @@ function renderRecCard(r) {
       <div class="rec-audio">
         ${r.public_url ? `<audio controls preload="none" src="${esc(r.public_url)}"></audio>` : '<span class="hint" style="margin:0;">无音频文件</span>'}
       </div>
-      <button class="btn btn-danger btn-mini" data-action="delete-recording" data-id="${esc(r.id)}" data-path="${esc(r.file_path || '')}">
-        <i class="fas fa-trash"></i>
-      </button>
+      <button class="btn btn-danger btn-mini" data-action="delete-recording" data-id="${esc(r.id)}" data-path="${esc(r.file_path || '')}"><i class="fas fa-trash"></i></button>
     </div>`;
 }
 
-/* ============================================================
-   搜索
-   ============================================================ */
+/* ====== 导出 & 批量删除 ====== */
+async function ensureJSZip() {
+  if (window.JSZip) return true;
+  return new Promise(resolve => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+    s.onload = () => resolve(!!window.JSZip);
+    s.onerror = () => resolve(false);
+    document.head.appendChild(s);
+  });
+}
+
+async function exportStudent(campus, level, studentName) {
+  const rows = recRows.filter(r =>
+    (r.campus || '未分类') === campus &&
+    (r.level || '未分类') === level &&
+    (r.student_name || '未命名') === studentName
+  );
+  if (!rows.length) { toast('没有可导出的录音', true); return; }
+
+  toast('⏳ 正在准备导出…');
+  const ok = await ensureJSZip();
+  if (!ok) { toast('打包库加载失败，请重试', true); return; }
+
+  const zip = new JSZip();
+  const folderName = `${campus}-${level}-${studentName}`.replace(/[\\/:*?"<>|]/g, '_');
+  const folder = zip.folder(folderName);
+
+  let success = 0;
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r.public_url) continue;
+    try {
+      const res = await fetch(r.public_url);
+      if (!res.ok) continue;
+      const blob = await res.blob();
+      const ext = (r.file_path || '').split('.').pop() || 'webm';
+      const itemText = (r.item_text || '录音').replace(/[\\/:*?"<>|]/g, '_').slice(0, 30);
+      const idx = String(i + 1).padStart(2, '0');
+      folder.file(`${idx}_${itemText}.${ext}`, blob);
+      success++;
+    } catch (e) { console.warn('下载失败', r.public_url, e); }
+  }
+  if (!success) { toast('没有可下载的音频', true); return; }
+
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${folderName}.zip`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  toast(`✅ 已导出 ${success} 条录音`);
+}
+
+async function deleteRecords(rows, label) {
+  if (!rows.length) return;
+  if (!confirm(`确定删除 ${label} 的 ${rows.length} 条录音吗？此操作不可恢复。`)) return;
+
+  toast('⏳ 删除中…');
+  const ids = rows.map(r => String(r.id));
+  const idList = ids.map(id => encodeURIComponent(id)).join(',');
+  try {
+    await sbFetch(`/rest/v1/recordings?id=in.(${idList})`, { method: 'DELETE' });
+  } catch (e) { console.warn('批量删除数据库失败', e); }
+
+  const paths = rows.map(r => r.file_path).filter(Boolean);
+  await batchDeleteStorage(paths);
+
+  const idSet = new Set(ids);
+  recRows = recRows.filter(r => !idSet.has(String(r.id)));
+  paintRecList();
+  toast(`🗑 已删除 ${rows.length} 条`);
+}
+
+/* ====== 搜索 ====== */
 const searchState = { items: [], active: -1, results: [] };
 
 function buildSearchIndex() {
   const items = [];
   const sectionTitles = {
-    basic: '基本设置', pageBg: '页面背景', btnBg: '首页按钮背景',
-    aiTalkMgmt: 'Role-Play AI 管理', discMgmt: 'AI Talk 管理',
-    gameMgmt: '游戏管理', lrMgmt: 'Listen & Read 管理', publish: '发布 / 备份'
+    basic:'基本设置', pageBg:'页面背景', btnBg:'首页按钮背景',
+    aiTalkMgmt:'Role-Play AI 管理', discMgmt:'AI Talk 管理',
+    gameMgmt:'游戏管理', lrMgmt:'Listen & Read 管理', publish:'发布 / 备份'
   };
-  Object.keys(sectionTitles).forEach(id => {
-    items.push({ kind: 'section', label: sectionTitles[id], sub: '设置区块', sectionId: id, tab: 'settings' });
-  });
-
-  (config.aiTalkButtons || []).forEach(b => items.push({
-    kind: 'aiTalk', label: b.name || '(未命名)', sub: 'Role-Play AI',
-    sectionId: 'aiTalkMgmt', tab: 'settings',
-    anchor: { scope: 'aiTalk', id: b.id }
-  }));
-  (config.discussionButtons || []).forEach(b => items.push({
-    kind: 'discussion', label: b.name || '(未命名)', sub: 'AI Talk',
-    sectionId: 'discMgmt', tab: 'settings',
-    anchor: { scope: 'discussion', id: b.id }
-  }));
+  Object.keys(sectionTitles).forEach(id => items.push({ kind:'section', label:sectionTitles[id], sub:'设置区块', sectionId:id, tab:'settings' }));
+  (config.aiTalkButtons || []).forEach(b => items.push({ kind:'aiTalk', label:b.name || '(未命名)', sub:'Role-Play AI', sectionId:'aiTalkMgmt', tab:'settings', anchor:{ scope:'aiTalk', id:b.id } }));
+  (config.discussionButtons || []).forEach(b => items.push({ kind:'discussion', label:b.name || '(未命名)', sub:'AI Talk', sectionId:'discMgmt', tab:'settings', anchor:{ scope:'discussion', id:b.id } }));
   (config.gameParts || []).forEach(p => {
-    items.push({
-      kind: 'part', label: p.name || '(未命名 Part)', sub: '游戏 Part',
-      sectionId: 'gameMgmt', tab: 'settings',
-      anchor: { scope: 'gamePart', partId: p.id }
-    });
-    (p.games || []).forEach(g => items.push({
-      kind: 'game', label: g.name || '(未命名游戏)', sub: '游戏 · ' + (p.name || ''),
-      sectionId: 'gameMgmt', tab: 'settings',
-      anchor: { scope: 'game', partId: p.id, gameId: g.id }
-    }));
+    items.push({ kind:'part', label:p.name || '(未命名 Part)', sub:'游戏 Part', sectionId:'gameMgmt', tab:'settings', anchor:{ scope:'gamePart', partId:p.id } });
+    (p.games || []).forEach(g => items.push({ kind:'game', label:g.name || '(未命名游戏)', sub:'游戏 · ' + (p.name || ''), sectionId:'gameMgmt', tab:'settings', anchor:{ scope:'game', partId:p.id, gameId:g.id } }));
   });
   (config.listenReadParts || []).forEach(p => {
-    items.push({
-      kind: 'lrPart', label: p.name || '(未命名单元)', sub: '听读单元',
-      sectionId: 'lrMgmt', tab: 'settings',
-      anchor: { scope: 'lrPart', partId: p.id }
-    });
+    items.push({ kind:'lrPart', label:p.name || '(未命名单元)', sub:'听读单元', sectionId:'lrMgmt', tab:'settings', anchor:{ scope:'lrPart', partId:p.id } });
     (p.items || []).forEach(it => {
       const full = it.text || '';
       items.push({
-        kind: 'lrItem',
+        kind:'lrItem',
         label: full.length > 46 ? full.slice(0, 46) + '…' : (full || '(空句子)'),
         sub: '听读 · ' + (p.name || ''),
         fullText: full,
-        sectionId: 'lrMgmt', tab: 'settings',
-        anchor: { scope: 'lrItem', partId: p.id, itemId: it.id }
+        sectionId:'lrMgmt', tab:'settings',
+        anchor:{ scope:'lrItem', partId:p.id, itemId:it.id }
       });
     });
   });
-
-  const names = [...new Set(recRows.map(r => r.student_name).filter(Boolean))];
-  names.forEach(n => items.push({ kind: 'student', label: n, sub: '学生录音', tab: 'recordings' }));
-
+  const seen = new Set();
+  recRows.forEach(r => {
+    const name = r.student_name;
+    if (!name) return;
+    const campus = r.campus || '未分类';
+    const level = r.level || '未分类';
+    const key = campus + '|' + level + '|' + name;
+    if (seen.has(key)) return;
+    seen.add(key);
+    items.push({ kind:'student', label:name, sub:'学生录音 · ' + campus + ' / ' + level, tab:'recordings', campus, level });
+  });
   return items;
 }
-
 function kindIcon(kind) {
-  return {
-    section: 'fa-layer-group', aiTalk: 'fa-comment-dots', discussion: 'fa-comments',
-    part: 'fa-puzzle-piece', game: 'fa-gamepad', lrPart: 'fa-book-open',
-    lrItem: 'fa-font', student: 'fa-user-circle'
-  }[kind] || 'fa-search';
+  return { section:'fa-layer-group', aiTalk:'fa-comment-dots', discussion:'fa-comments', part:'fa-puzzle-piece', game:'fa-gamepad', lrPart:'fa-book-open', lrItem:'fa-font', student:'fa-user-circle' }[kind] || 'fa-search';
 }
-
 function openSearch() {
   const panel = document.getElementById('searchPanel');
   const input = document.getElementById('searchInput');
@@ -1469,8 +1302,6 @@ function openSearch() {
   searchState.items = buildSearchIndex();
   runSearch('');
   setTimeout(() => input.focus(), 30);
-
-  // 如果还没加载过录音，静默拉一次，方便搜学生名字
   if (!recRows.length) {
     loadRecordings(false).then(() => {
       if (!document.getElementById('searchPanel').classList.contains('hidden')) {
@@ -1480,32 +1311,17 @@ function openSearch() {
     });
   }
 }
-function closeSearch() {
-  document.getElementById('searchPanel').classList.add('hidden');
-  searchState.active = -1;
-}
+function closeSearch() { document.getElementById('searchPanel').classList.add('hidden'); searchState.active = -1; }
 function runSearch(q) {
   const kw = q.trim().toLowerCase();
   const resultsEl = document.getElementById('searchResults');
   let res = searchState.items;
-
   if (kw) {
-    res = res.filter(it =>
-      (it.label || '').toLowerCase().includes(kw) ||
-      (it.sub || '').toLowerCase().includes(kw) ||
-      (it.fullText || '').toLowerCase().includes(kw)
-    );
-  } else {
-    res = res.slice(0, 12);
-  }
+    res = res.filter(it => (it.label || '').toLowerCase().includes(kw) || (it.sub || '').toLowerCase().includes(kw) || (it.fullText || '').toLowerCase().includes(kw));
+  } else res = res.slice(0, 12);
   searchState.results = res.slice(0, 40);
   searchState.active = searchState.results.length ? 0 : -1;
-
-  if (!searchState.results.length) {
-    resultsEl.innerHTML = '<div class="search-empty">没有找到匹配项</div>';
-    return;
-  }
-
+  if (!searchState.results.length) { resultsEl.innerHTML = '<div class="search-empty">没有找到匹配项</div>'; return; }
   resultsEl.innerHTML = searchState.results.map((it, i) => `
     <div class="search-item ${i === searchState.active ? 'active' : ''}" data-idx="${i}">
       <div class="si-icon"><i class="fas ${kindIcon(it.kind)}"></i></div>
@@ -1524,11 +1340,9 @@ function setSearchActive(idx) {
   items.forEach((el, i) => el.classList.toggle('active', i === idx));
   items[idx].scrollIntoView({ block: 'nearest' });
 }
-
 function jumpToResult(item) {
   closeSearch();
 
-  /* 学生录音 */
   if (item.tab === 'recordings') {
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'recordings'));
     currentTab = 'recordings';
@@ -1538,23 +1352,25 @@ function jumpToResult(item) {
 
     recFilter.name = item.kind === 'student' ? item.label : '';
     recFilter.part = '';
-    if (item.kind === 'student') expandedStudents.add(item.label);
-
-    renderRecordings().then(() => {
-      const inp = document.getElementById('recNameFilter');
-      if (inp) inp.value = recFilter.name;
-      paintRecList();
-      const targetGroup = document.querySelector(`.student-group[data-student="${cssEscape(item.label)}"]`);
+    recFilter.campus = '';
+    recFilter.level = '';
+    if (item.kind === 'student') {
+      expandedKeys.add('c:' + item.campus);
+      expandedKeys.add('l:' + item.campus + '::' + item.level);
+      expandedKeys.add('s:' + item.campus + '::' + item.level + '::' + item.label);
+    }
+    paintRecToolbarAndList();
+    setTimeout(() => {
+      const targetGroup = document.querySelector(`.student-group[data-student-key="${cssEscape('s:' + item.campus + '::' + item.level + '::' + item.label)}"]`);
       if (targetGroup) {
         targetGroup.scrollIntoView({ behavior: 'smooth', block: 'center' });
         targetGroup.classList.add('search-highlight');
         setTimeout(() => targetGroup.classList.remove('search-highlight'), 1800);
       }
-    });
+    }, 60);
     return;
   }
 
-  /* 设置页 */
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'settings'));
   currentTab = 'settings';
   document.getElementById('settingsPanel').classList.remove('hidden');
@@ -1567,28 +1383,14 @@ function jumpToResult(item) {
     let targetEl = null;
     const a = item.anchor;
     if (a) {
-      if (a.scope === 'aiTalk') {
-        const inp = document.querySelector(`[data-scope="aiTalk"][data-id="${cssEscape(a.id)}"]`);
-        targetEl = inp && inp.closest('.editor-item');
-      } else if (a.scope === 'discussion') {
-        const inp = document.querySelector(`[data-scope="discussion"][data-id="${cssEscape(a.id)}"]`);
-        targetEl = inp && inp.closest('.editor-item');
-      } else if (a.scope === 'gamePart') {
-        const inp = document.querySelector(`[data-scope="gamePart"][data-part-id="${cssEscape(a.partId)}"]`);
-        targetEl = inp && inp.closest('.editor-item');
-      } else if (a.scope === 'game') {
-        const inp = document.querySelector(`[data-scope="game"][data-part-id="${cssEscape(a.partId)}"][data-game-id="${cssEscape(a.gameId)}"]`);
-        targetEl = inp && inp.closest('.editor-item');
-      } else if (a.scope === 'lrPart') {
-        const inp = document.querySelector(`[data-scope="lrPart"][data-part-id="${cssEscape(a.partId)}"]`);
-        targetEl = inp && inp.closest('.editor-item');
-      } else if (a.scope === 'lrItem') {
-        targetEl = document.querySelector(`.editor-item[data-lr-item="${cssEscape(a.itemId)}"]`);
-      }
+      if (a.scope === 'aiTalk') { const inp = document.querySelector(`[data-scope="aiTalk"][data-id="${cssEscape(a.id)}"]`); targetEl = inp && inp.closest('.editor-item'); }
+      else if (a.scope === 'discussion') { const inp = document.querySelector(`[data-scope="discussion"][data-id="${cssEscape(a.id)}"]`); targetEl = inp && inp.closest('.editor-item'); }
+      else if (a.scope === 'gamePart') { const inp = document.querySelector(`[data-scope="gamePart"][data-part-id="${cssEscape(a.partId)}"]`); targetEl = inp && inp.closest('.editor-item'); }
+      else if (a.scope === 'game') { const inp = document.querySelector(`[data-scope="game"][data-part-id="${cssEscape(a.partId)}"][data-game-id="${cssEscape(a.gameId)}"]`); targetEl = inp && inp.closest('.editor-item'); }
+      else if (a.scope === 'lrPart') { const inp = document.querySelector(`[data-scope="lrPart"][data-part-id="${cssEscape(a.partId)}"]`); targetEl = inp && inp.closest('.editor-item'); }
+      else if (a.scope === 'lrItem') { targetEl = document.querySelector(`.editor-item[data-lr-item="${cssEscape(a.itemId)}"]`); }
     }
-    if (!targetEl) {
-      targetEl = document.querySelector(`.section[data-section="${item.sectionId}"]`);
-    }
+    if (!targetEl) targetEl = document.querySelector(`.section[data-section="${item.sectionId}"]`);
     if (targetEl) {
       targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       targetEl.classList.add('search-highlight');
@@ -1597,25 +1399,16 @@ function jumpToResult(item) {
   }, 60);
 }
 
-/* 搜索交互绑定 */
 document.getElementById('searchFab').onclick = () => {
   const panel = document.getElementById('searchPanel');
-  if (panel.classList.contains('hidden')) openSearch();
-  else closeSearch();
+  if (panel.classList.contains('hidden')) openSearch(); else closeSearch();
 };
-document.getElementById('searchInput').addEventListener('input', e => {
-  runSearch(e.target.value);
-});
+document.getElementById('searchInput').addEventListener('input', e => runSearch(e.target.value));
 document.getElementById('searchInput').addEventListener('keydown', e => {
   if (e.key === 'ArrowDown') { e.preventDefault(); setSearchActive(searchState.active + 1); }
   else if (e.key === 'ArrowUp') { e.preventDefault(); setSearchActive(searchState.active - 1); }
-  else if (e.key === 'Enter') {
-    e.preventDefault();
-    const item = searchState.results[searchState.active];
-    if (item) jumpToResult(item);
-  } else if (e.key === 'Escape') {
-    closeSearch();
-  }
+  else if (e.key === 'Enter') { e.preventDefault(); const item = searchState.results[searchState.active]; if (item) jumpToResult(item); }
+  else if (e.key === 'Escape') closeSearch();
 });
 document.getElementById('searchResults').addEventListener('click', e => {
   const row = e.target.closest('.search-item');
@@ -1632,17 +1425,11 @@ document.addEventListener('mousedown', e => {
 });
 document.addEventListener('keydown', e => {
   const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-  if ((isMac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === 'k') {
-    e.preventDefault();
-    if (!loggedIn) return;
-    openSearch();
-  }
+  if ((isMac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); if (loggedIn) openSearch(); }
   if (e.key === 'Escape') closeSearch();
 });
 
-/* ============================================================
-   启动
-   ============================================================ */
+/* 启动 */
 (async function init() {
   loadConfigFromStorage();
   showLogin();
