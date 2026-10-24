@@ -43,7 +43,7 @@
   .iframe-container { margin-top:28px; background:#ffffffc0; border-radius:36px; padding:20px; box-shadow:inset 0 1px 4px #00000008,0 8px 18px #00000010; backdrop-filter:blur(4px); text-align:center; width:100%; }
   iframe { border-radius:24px; background:white; width:100%; max-width:500px; height:380px; border:none; }
 
-  /* ============ Listen & Read ============ */
+  /* Listen & Read */
   .lr-screen { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden; border-radius:0; }
   .lr-speed-group { position:absolute; top:14px; left:14px; display:flex; gap:10px; z-index:5; }
   .lr-speed-btn { background:#fff; border:2px solid #e2ecf9; border-radius:26px; padding:12px 20px; font-size:1.15rem; font-weight:700; color:#1e3c72; cursor:pointer; display:flex; align-items:center; gap:8px; box-shadow:0 4px 12px rgba(0,0,0,.07); transition:.15s; }
@@ -70,16 +70,25 @@
 
   /* modal */
   .modal-overlay { position:fixed; inset:0; background:rgba(10,30,50,.45); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; z-index:900; padding:20px; }
-  .modal-card { background:#fff; border-radius:36px; padding:30px; width:100%; max-width:460px; text-align:center; box-shadow:0 30px 60px rgba(0,20,40,.3); }
+  .modal-card { background:#fff; border-radius:36px; padding:30px; width:100%; max-width:540px; text-align:center; box-shadow:0 30px 60px rgba(0,20,40,.3); }
   .modal-card h2 { color:#1e3c72; font-size:1.5rem; margin-bottom:8px; }
+  .si-step { width:100%; margin-top:10px; }
+  .campus-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px; }
+  .campus-btn { padding:32px 20px; border:2px solid #dbe4f0; border-radius:24px; background:#fff; cursor:pointer; font-size:1.5rem; font-weight:700; color:#1e3c72; display:flex; flex-direction:column; align-items:center; gap:10px; transition:.15s; font-family:inherit; }
+  .campus-btn:hover { border-color:#2a5298; background:#eaf2ff; transform:translateY(-3px); }
+  .campus-btn i { font-size:2.2rem; color:#2a5298; }
+  .level-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:20px; }
+  .level-btn { padding:24px 20px; border:2px solid #dbe4f0; border-radius:20px; background:#fff; cursor:pointer; font-size:1.3rem; font-weight:700; color:#1e3c72; transition:.15s; font-family:inherit; }
+  .level-btn:hover { border-color:#2a5298; background:#eaf2ff; transform:translateY(-2px); }
+  .si-footer { display:flex; gap:12px; justify-content:center; margin-top:22px; }
   .name-input-row { display:flex; gap:10px; align-items:center; margin-top:20px; }
   .name-input-row input { flex:1; padding:16px 20px; border-radius:60px; border:2px solid #dbe4f0; font-size:1.2rem; text-align:center; outline:none; }
   .name-input-row input:focus { border-color:#2a5298; }
   .mic-btn { width:58px; height:58px; border-radius:50%; border:none; background:#eef4ff; color:#2a5298; font-size:1.3rem; cursor:pointer; flex-shrink:0; transition:.15s; }
   .mic-btn:hover { background:#dce9ff; }
   .mic-btn.listening { background:#ef4444; color:#fff; animation:pulse 1s infinite; }
-  .btn-primary { background:#1e3c72; color:#fff; border:none; padding:14px 30px; border-radius:60px; font-weight:700; cursor:pointer; font-size:1.05rem; box-shadow:0 8px 16px #1e3c7240; }
-  .btn-outline { background:transparent; border:2px solid #1e3c72; color:#1e3c72; padding:12px 28px; border-radius:60px; font-weight:700; cursor:pointer; font-size:1.05rem; }
+  .btn-primary { background:#1e3c72; color:#fff; border:none; padding:14px 30px; border-radius:60px; font-weight:700; cursor:pointer; font-size:1.05rem; box-shadow:0 8px 16px #1e3c7240; font-family:inherit; }
+  .btn-outline { background:transparent; border:2px solid #1e3c72; color:#1e3c72; padding:12px 28px; border-radius:60px; font-weight:700; cursor:pointer; font-size:1.05rem; font-family:inherit; }
 
   #snackbar { visibility:hidden; min-width:200px; background:#1e3c72; color:white; text-align:center; border-radius:40px; padding:14px 24px; position:fixed; bottom:30px; left:50%; transform:translateX(-50%); z-index:1000; box-shadow:0 10px 20px #00000020; }
   #snackbar.show { visibility:visible; animation:fadein .3s, fadeout .3s 2.5s; }
@@ -102,15 +111,11 @@
 <script>
 "use strict";
 
-/* ============================================================
-   Supabase 配置（与 monitor.html 保持一致）
-   ============================================================ */
 const SUPABASE_URL = 'https://dwagktwarlzkusawrtqq.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3YWdrdHdhcmx6a3VzYXdydHFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MzMwODQsImV4cCI6MjEwNzEwOTA4NH0.5iMbu7R3-LGHjZMFAuRH93sepxJr7bjrWexj3Invlmk';
 const LS_KEY = 'english_integrated_config';
 const BUCKET = 'site-assets';
 
-/* ================= 默认配置 ================= */
 const DEFAULT_CONFIG = {
   settingPassword: '0303',
   aiTalkButtons: [
@@ -138,13 +143,11 @@ const DEFAULT_CONFIG = {
   ]
 };
 
-/* ================= 工具函数 ================= */
 function escapeHtml(s) {
   return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
-
 async function sbFetch(path, options) {
   options = options || {};
   const headers = Object.assign({
@@ -153,7 +156,7 @@ async function sbFetch(path, options) {
   }, options.headers || {});
   return fetch(SUPABASE_URL + path, Object.assign({}, options, { headers }));
 }
-
+function encodePath(p) { return String(p).split('/').map(encodeURIComponent).join('/'); }
 async function uploadToStorage(blob, path, contentType) {
   try {
     const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodePath(path)}`, {
@@ -170,9 +173,7 @@ async function uploadToStorage(blob, path, contentType) {
     return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${encodePath(path)}`;
   } catch (e) { console.error(e); return null; }
 }
-function encodePath(p) { return String(p).split('/').map(encodeURIComponent).join('/'); }
 
-/* ================= 全局状态 ================= */
 let config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 let currentView = 'home';
 let currentPartId = null;
@@ -189,15 +190,11 @@ function showSnackbar(text, isError) {
   setTimeout(() => { snackbar.classList.remove('show'); snackbar.style.background = '#1e3c72'; }, 2800);
 }
 
-/* ================= 配置 ================= */
 function normalizeConfig(cfg) {
   if (!cfg || typeof cfg !== 'object') cfg = {};
   ['aiTalkButtons','discussionButtons'].forEach(k => { if (!Array.isArray(cfg[k])) cfg[k] = []; });
   [cfg.aiTalkButtons, cfg.discussionButtons].forEach(arr => arr.forEach(b => { if (typeof b.bgUrl !== 'string') b.bgUrl = ''; }));
-
-  if (!Array.isArray(cfg.gameParts) || !cfg.gameParts.length) {
-    cfg.gameParts = JSON.parse(JSON.stringify(DEFAULT_CONFIG.gameParts));
-  }
+  if (!Array.isArray(cfg.gameParts) || !cfg.gameParts.length) cfg.gameParts = JSON.parse(JSON.stringify(DEFAULT_CONFIG.gameParts));
   cfg.gameParts.forEach(p => {
     if (!Array.isArray(p.games)) p.games = [];
     p.games.forEach(g => {
@@ -205,7 +202,6 @@ function normalizeConfig(cfg) {
       if (typeof g.embedCode !== 'string') g.embedCode = '';
     });
   });
-
   if (!Array.isArray(cfg.listenReadParts)) cfg.listenReadParts = [];
   cfg.listenReadParts.forEach(p => {
     if (!Array.isArray(p.items)) p.items = [];
@@ -215,7 +211,6 @@ function normalizeConfig(cfg) {
       if (typeof it.audioUrl !== 'string') it.audioUrl = '';
     });
   });
-
   ['homeBgUrl','gamePageBgUrl','rolePlayPageBgUrl','listenReadPageBgUrl',
    'btnGameBgUrl','btnRolePlayBgUrl','btnListenReadBgUrl','btnAITalkBgUrl'].forEach(f => {
     if (typeof cfg[f] !== 'string') cfg[f] = '';
@@ -240,19 +235,14 @@ async function loadConfigFromCloud(showSuccess) {
     return false;
   }
 }
-
 function loadConfigFromStorage() {
   const stored = localStorage.getItem(LS_KEY);
   if (stored) {
-    try {
-      config = normalizeConfig(Object.assign({}, DEFAULT_CONFIG, JSON.parse(stored)));
-      return;
-    } catch (e) {}
+    try { config = normalizeConfig(Object.assign({}, DEFAULT_CONFIG, JSON.parse(stored))); return; } catch (e) {}
   }
   config = normalizeConfig(JSON.parse(JSON.stringify(DEFAULT_CONFIG)));
 }
 
-/* ================= 背景/按钮工具 ================= */
 function applyBackground(url, element) {
   if (url && url.trim() !== '') {
     element.style.background = `linear-gradient(145deg, rgba(246,249,252,.85), rgba(230,240,245,.85)), url("${url}") center/cover no-repeat`;
@@ -262,9 +252,8 @@ function applyBackground(url, element) {
 }
 function clearContainerBackground() { viewContainer.style.background = ''; }
 function applyContainerBackground(url) {
-  if (url && url.trim() !== '') {
-    viewContainer.style.background = `linear-gradient(rgba(255,255,255,.8), rgba(255,255,255,.8)), url("${url}") center/cover no-repeat`;
-  } else clearContainerBackground();
+  if (url && url.trim() !== '') viewContainer.style.background = `linear-gradient(rgba(255,255,255,.8), rgba(255,255,255,.8)), url("${url}") center/cover no-repeat`;
+  else clearContainerBackground();
 }
 function setBtnBackground(el, url) {
   if (url && url.trim() !== '') {
@@ -276,15 +265,11 @@ function setBtnBackground(el, url) {
   }
 }
 
-/* ================= 视图切换 ================= */
 function setView(view, partId) {
   currentView = view;
   currentPartId = partId === undefined ? currentPartId : partId;
   if (view !== 'listenReadPractice') {
-    // 如果正在录音，先停掉，避免不完整的上传
-    if (lr.recorder && lr.recorder.state === 'recording') {
-      try { lr.recorder.stop(); } catch (e) {}
-    }
+    if (lr.recorder && lr.recorder.state === 'recording') { try { lr.recorder.stop(); } catch (e) {} }
     stopMic();
     stopPlayback();
   }
@@ -306,7 +291,6 @@ function renderCurrentView() {
   else renderHomeView();
 }
 
-/* ================= 首页 ================= */
 function renderHomeView() {
   applyBackground(config.homeBgUrl, document.body);
   clearContainerBackground();
@@ -328,7 +312,6 @@ function renderHomeView() {
   });
 }
 
-/* ================= 通用链接按钮页 ================= */
 function renderGenericButtonView(title, icon, buttons, listClass, btnClass) {
   const html = (!buttons || !buttons.length)
     ? `<p class="empty-message"><i class="fas fa-info-circle"></i> 暂无内容，请在后台添加</p>`
@@ -362,7 +345,6 @@ function renderDiscussionView() {
   renderGenericButtonView('AI Talk', 'fa-comments', config.discussionButtons, 'discussion-list', 'discussion-btn');
 }
 
-/* ================= 游戏 ================= */
 function renderGameView() {
   applyContainerBackground(config.gamePageBgUrl);
   const parts = config.gameParts || [];
@@ -407,15 +389,15 @@ function renderPartDetailView() {
   });
 }
 
-/* ============================================================
-   Listen & Read
-   ============================================================ */
+/* ============ Listen & Read ============ */
 const lr = {
   partId: null,
   items: [],
   index: 0,
+  campus: '',
+  level: '',
   studentName: '',
-  done: {},          // itemId -> true
+  done: {},
   recorder: null,
   chunks: []
 };
@@ -446,11 +428,13 @@ function renderListenReadPartsView() {
       const part = parts.find(p => p.id === card.dataset.partId);
       if (!part) return;
       if (!part.items || !part.items.length) { showSnackbar('这个单元还没有内容', true); return; }
-      askStudentName(part.name, name => {
+      askStudentInfo(part.name, info => {
         lr.partId = part.id;
         lr.items = part.items;
         lr.index = 0;
-        lr.studentName = name;
+        lr.campus = info.campus;
+        lr.level = info.level;
+        lr.studentName = info.name;
         lr.done = {};
         setView('listenReadPractice');
       });
@@ -458,36 +442,114 @@ function renderListenReadPartsView() {
   });
 }
 
-/* ---------- 名字输入弹窗（支持语音） ---------- */
-function askStudentName(partName, onOk) {
+/* ---------- 三步信息弹窗：校区 → Level → 名字 ---------- */
+function askStudentInfo(partName, onOk) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
     <div class="modal-card">
-      <h2><i class="fas fa-user-circle"></i> 先告诉我你的名字</h2>
-      <p style="color:#6b7c93;">${escapeHtml(partName)}</p>
-      <div class="name-input-row">
-        <input type="text" id="studentNameInput" placeholder="输入名字 / 按🎤说出名字" autocomplete="off" maxlength="20">
-        <button class="mic-btn" id="nameMicBtn" title="语音输入"><i class="fas fa-microphone"></i></button>
+      <h2 id="siTitle"><i class="fas fa-school"></i> 你在哪个校区？</h2>
+      <p style="color:#6b7c93;" id="siSub">${escapeHtml(partName)}</p>
+
+      <div id="siStep1" class="si-step">
+        <div class="campus-grid">
+          <button class="campus-btn" data-campus="West"><i class="fas fa-map-marker-alt"></i>West</button>
+          <button class="campus-btn" data-campus="East"><i class="fas fa-map-marker-alt"></i>East</button>
+        </div>
       </div>
-      <div style="display:flex;gap:12px;margin-top:24px;justify-content:center;">
-        <button class="btn-primary" id="nameOkBtn">开始</button>
-        <button class="btn-outline" id="nameCancelBtn">取消</button>
+
+      <div id="siStep2" class="si-step hidden">
+        <div class="level-grid">
+          <button class="level-btn" data-level="Level 1">Level 1</button>
+          <button class="level-btn" data-level="Level 2">Level 2</button>
+          <button class="level-btn" data-level="Level 3">Level 3</button>
+          <button class="level-btn" data-level="Level 4">Level 4</button>
+        </div>
+      </div>
+
+      <div id="siStep3" class="si-step hidden">
+        <div class="name-input-row">
+          <input type="text" id="studentNameInput" placeholder="输入名字 / 按🎤说出名字" autocomplete="off" maxlength="20">
+          <button class="mic-btn" id="nameMicBtn" title="语音输入"><i class="fas fa-microphone"></i></button>
+        </div>
+      </div>
+
+      <div class="si-footer">
+        <button class="btn-outline" id="siBackBtn" style="display:none;">上一步</button>
+        <button class="btn-primary" id="siNextBtn">下一步</button>
+        <button class="btn-outline" id="siCancelBtn">取消</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
 
-  const input = overlay.querySelector('#studentNameInput');
-  const micBtn = overlay.querySelector('#nameMicBtn');
-  const okBtn = overlay.querySelector('#nameOkBtn');
-  const cancelBtn = overlay.querySelector('#nameCancelBtn');
-
-  input.focus();
-
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let step = 1;
+  let campus = '';
+  let level = '';
   let recognition = null;
   let listening = false;
 
+  const titleEl = overlay.querySelector('#siTitle');
+  const step1 = overlay.querySelector('#siStep1');
+  const step2 = overlay.querySelector('#siStep2');
+  const step3 = overlay.querySelector('#siStep3');
+  const backBtn = overlay.querySelector('#siBackBtn');
+  const nextBtn = overlay.querySelector('#siNextBtn');
+  const cancelBtn = overlay.querySelector('#siCancelBtn');
+  const nameInput = overlay.querySelector('#studentNameInput');
+  const micBtn = overlay.querySelector('#nameMicBtn');
+
+  function showStep(n) {
+    step = n;
+    step1.classList.toggle('hidden', n !== 1);
+    step2.classList.toggle('hidden', n !== 2);
+    step3.classList.toggle('hidden', n !== 3);
+    backBtn.style.display = n === 1 ? 'none' : 'inline-block';
+    nextBtn.textContent = n === 3 ? '开始' : '下一步';
+    if (n === 1) titleEl.innerHTML = '<i class="fas fa-school"></i> 你在哪个校区？';
+    else if (n === 2) titleEl.innerHTML = '<i class="fas fa-layer-group"></i> 选择你的 Level';
+    else {
+      titleEl.innerHTML = '<i class="fas fa-user-circle"></i> 告诉我你的名字';
+      setTimeout(() => nameInput.focus(), 60);
+    }
+  }
+
+  overlay.querySelectorAll('.campus-btn').forEach(btn => {
+    btn.onclick = () => {
+      overlay.querySelectorAll('.campus-btn').forEach(b => { b.style.borderColor = ''; b.style.background = ''; });
+      btn.style.borderColor = '#2a5298';
+      btn.style.background = '#eaf2ff';
+      campus = btn.dataset.campus;
+      setTimeout(() => showStep(2), 120);
+    };
+  });
+  overlay.querySelectorAll('.level-btn').forEach(btn => {
+    btn.onclick = () => {
+      overlay.querySelectorAll('.level-btn').forEach(b => { b.style.borderColor = ''; b.style.background = ''; });
+      btn.style.borderColor = '#2a5298';
+      btn.style.background = '#eaf2ff';
+      level = btn.dataset.level;
+      setTimeout(() => showStep(3), 120);
+    };
+  });
+
+  backBtn.onclick = () => { if (step === 2) showStep(1); else if (step === 3) showStep(2); };
+  cancelBtn.onclick = close;
+  nextBtn.onclick = () => {
+    if (step === 1) {
+      if (!campus) { showSnackbar('请先选择校区', true); return; }
+      showStep(2);
+    } else if (step === 2) {
+      if (!level) { showSnackbar('请先选择 Level', true); return; }
+      showStep(3);
+    } else {
+      const name = nameInput.value.trim();
+      if (!name) { showSnackbar('请输入你的名字', true); nameInput.focus(); return; }
+      close();
+      onOk({ campus, level, name });
+    }
+  };
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (SR) {
     recognition = new SR();
     recognition.lang = (navigator.language || 'zh-CN').toLowerCase().indexOf('zh') === 0 ? 'zh-CN' : 'en-US';
@@ -495,9 +557,9 @@ function askStudentName(partName, onOk) {
     recognition.maxAlternatives = 1;
     recognition.onresult = e => {
       const t = e.results[0][0].transcript.trim();
-      if (t) input.value = t;
+      if (t) nameInput.value = t;
     };
-    recognition.onerror = () => { showSnackbar('语音识别失败，请直接打字', true); };
+    recognition.onerror = () => showSnackbar('语音识别失败，请直接打字', true);
     recognition.onend = () => { listening = false; micBtn.classList.remove('listening'); };
     micBtn.onclick = () => {
       if (listening) { recognition.stop(); return; }
@@ -507,23 +569,15 @@ function askStudentName(partName, onOk) {
   } else {
     micBtn.onclick = () => showSnackbar('当前浏览器不支持语音输入，请打字', true);
   }
+  nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') nextBtn.click(); });
 
   function close() {
     if (recognition && listening) { try { recognition.stop(); } catch (e) {} }
     overlay.remove();
   }
-
-  okBtn.onclick = () => {
-    const name = input.value.trim();
-    if (!name) { showSnackbar('请输入你的名字', true); input.focus(); return; }
-    close();
-    onOk(name);
-  };
-  cancelBtn.onclick = close;
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') okBtn.click(); });
 }
 
-/* ---------- 听读练习主界面 ---------- */
+/* ---------- 听读练习 ---------- */
 function renderListenReadPractice() {
   const part = (config.listenReadParts || []).find(p => p.id === lr.partId);
   if (!part || !part.items || !part.items.length) { setView('listenReadParts'); return; }
@@ -539,9 +593,7 @@ function renderListenReadPractice() {
       </div>
       <div class="lr-progress" id="lrProgress">1 / 1</div>
       <div class="lr-check" id="lrCheck"><i class="fas fa-check"></i></div>
-      <div class="lr-text-wrap" id="lrTextWrap">
-        <div class="lr-text" id="lrText"></div>
-      </div>
+      <div class="lr-text-wrap" id="lrTextWrap"><div class="lr-text" id="lrText"></div></div>
       <div class="lr-bottom">
         <button class="lr-nav" id="lrPrev"><i class="fas fa-arrow-left"></i></button>
         <button class="lr-rec" id="lrRec"><i class="fas fa-microphone"></i></button>
@@ -575,7 +627,6 @@ function renderListenReadPractice() {
     showSnackbar('🎉 完成啦！');
     setView('listenReadParts');
   };
-
   updateLrItem();
 }
 
@@ -598,29 +649,23 @@ function updateLrItem() {
   const els = lrEls;
   els.text.innerHTML = renderItemHtml(item);
   els.progress.textContent = (lr.index + 1) + ' / ' + lr.items.length;
-
   const isLast = lr.index === lr.items.length - 1;
   els.next.style.display = isLast ? 'none' : 'flex';
   els.finish.style.display = isLast ? 'flex' : 'none';
   els.prev.disabled = (lr.index === 0);
-
   els.check.classList.toggle('show', !!lr.done[item.id]);
-
   const allDone = lr.items.every(it => lr.done[it.id]);
   els.finish.disabled = !allDone;
   els.finish.classList.toggle('ready', allDone);
-
   requestAnimationFrame(() => fitText(els.text, els.wrap));
 }
 
-/* 自动排版：二分查找最大可用字号 */
 function fitText(textEl, wrapEl) {
   if (!textEl || !wrapEl) return;
   const cs = getComputedStyle(wrapEl);
   const availW = wrapEl.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
   const availH = wrapEl.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
   if (availW <= 20 || availH <= 20) return;
-
   textEl.style.width = availW + 'px';
   let lo = 18, hi = 420;
   textEl.style.fontSize = hi + 'px';
@@ -632,7 +677,6 @@ function fitText(textEl, wrapEl) {
   textEl.style.fontSize = Math.max(18, Math.floor(lo)) + 'px';
 }
 
-/* ---------- 播放 ---------- */
 function stopPlayback() {
   if (lrAudio) { try { lrAudio.pause(); } catch (e) {} lrAudio = null; }
   if ('speechSynthesis' in window) speechSynthesis.cancel();
@@ -643,7 +687,6 @@ function playCurrent(slow) {
   if (!item) return;
   stopPlayback();
   const rate = slow ? 0.6 : 1.0;
-
   if (item.audioUrl) {
     lrAudio = new Audio(item.audioUrl);
     lrAudio.playbackRate = rate;
@@ -658,7 +701,6 @@ function playCurrent(slow) {
   speechSynthesis.speak(u);
 }
 
-/* ---------- 录音 ---------- */
 async function ensureMic() {
   if (lrStream && lrStream.active) return lrStream;
   lrStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -676,15 +718,11 @@ function setRecordingUI(on) {
 }
 
 async function toggleRecording() {
-  if (lr.recorder && lr.recorder.state === 'recording') {
-    lr.recorder.stop();
-    return;
-  }
+  if (lr.recorder && lr.recorder.state === 'recording') { lr.recorder.stop(); return; }
   try {
     const stream = await ensureMic();
     const candidates = ['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus'];
     const mime = (window.MediaRecorder && candidates.find(t => MediaRecorder.isTypeSupported(t))) || '';
-
     lr.chunks = [];
     let rec;
     try {
@@ -692,10 +730,8 @@ async function toggleRecording() {
       if (mime) opts.mimeType = mime;
       rec = new MediaRecorder(stream, opts);
     } catch (e) {
-      // 最终兜底：让浏览器自己选格式
       rec = new MediaRecorder(stream);
     }
-
     lr.recorder = rec;
     rec.ondataavailable = e => { if (e.data && e.data.size) lr.chunks.push(e.data); };
     rec.onstop = async () => {
@@ -703,17 +739,6 @@ async function toggleRecording() {
       lr.chunks = [];
       setRecordingUI(false);
       await handleRecordingDone(blob);
-    };
-    const MAX_REC_MS = 20000;
-    const autoStop = setTimeout(() => {
-      if (lr.recorder && lr.recorder.state === 'recording') {
-        lr.recorder.stop();
-        showSnackbar('录音时间到，已自动停止');
-      }
-    }, MAX_REC_MS);
-    rec.onstop = async () => {
-      clearTimeout(autoStop);
-      // ...原有的 onstop 逻辑
     };
     rec.start();
     setRecordingUI(true);
@@ -727,14 +752,13 @@ async function handleRecordingDone(blob) {
   const item = lr.items[lr.index];
   if (!item) return;
   if (!blob || blob.size < 800) { showSnackbar('录音太短啦，再试一次', true); return; }
-
   showSnackbar('⏳ 正在上传录音…');
   const part = (config.listenReadParts || []).find(p => p.id === lr.partId);
-  const ext = blob.type.indexOf('mp4') >= 0 ? 'mp4'
-            : blob.type.indexOf('ogg') >= 0 ? 'ogg'
-            : 'webm';
+  const ext = blob.type.indexOf('mp4') >= 0 ? 'mp4' : blob.type.indexOf('ogg') >= 0 ? 'ogg' : 'webm';
+  const safeCampus = (lr.campus || 'Unknown').replace(/[^\w-]/g, '_');
+  const safeLevel = (lr.level || 'Unknown').replace(/[^\w-]/g, '_');
   const safeName = (lr.studentName || 'student').replace(/[^\w\u4e00-\u9fa5-]/g, '_').slice(0, 40);
-  const path = `listenread/${lr.partId}/${item.id}/${safeName}_${Date.now()}.${ext}`;
+  const path = `listenread/${safeCampus}/${safeLevel}/${lr.partId}/${item.id}/${safeName}_${Date.now()}.${ext}`;
 
   const url = await uploadToStorage(blob, path, blob.type);
   if (!url) { showSnackbar('❌ 上传失败，请重试', true); return; }
@@ -744,6 +768,8 @@ async function handleRecordingDone(blob) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
       body: JSON.stringify({
+        campus: lr.campus || '',
+        level: lr.level || '',
         part_id: lr.partId,
         part_name: part ? part.name : '',
         item_id: item.id,
@@ -758,7 +784,7 @@ async function handleRecordingDone(blob) {
       throw new Error('HTTP ' + res.status + ' ' + errText.slice(0, 120));
     }
   } catch (e) {
-    console.warn('记录写入失败（不影响完成状态）', e);
+    console.warn('记录写入失败', e);
     showSnackbar('⚠️ 录音已上传，但记录保存失败，请告诉老师', true);
   }
 
@@ -767,23 +793,15 @@ async function handleRecordingDone(blob) {
   updateLrItem();
 }
 
-/* ---------- 窗口尺寸变化重新排版 ---------- */
 window.addEventListener('resize', () => {
-  if (currentView === 'listenReadPractice' && lrEls.text && lrEls.wrap) {
-    fitText(lrEls.text, lrEls.wrap);
-  }
+  if (currentView === 'listenReadPractice' && lrEls.text && lrEls.wrap) fitText(lrEls.text, lrEls.wrap);
 });
 
-/* ================= 启动 ================= */
 backButton.onclick = goBack;
 cloudRefreshBtn.onclick = () => loadConfigFromCloud(true);
-
 loadConfigFromStorage();
 renderCurrentView();
-
-loadConfigFromCloud(false).then(ok => {
-  if (ok) renderCurrentView();
-});
+loadConfigFromCloud(false).then(ok => { if (ok) renderCurrentView(); });
 </script>
 </body>
 </html>
