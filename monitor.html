@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Time · 管理后台</title>
+<title>AI Time · Admin</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <style>
@@ -165,12 +165,12 @@
 
 <div id="loginOverlay" class="overlay">
   <div class="login-card">
-    <h2>🔐 AI Time 管理后台</h2>
-    <p class="sub">请输入管理密码</p>
-    <input type="password" id="loginPwd" placeholder="管理密码" autocomplete="current-password">
+    <h2>🔐 AI Time Admin</h2>
+    <p class="sub">Please enter admin password</p>
+    <input type="password" id="loginPwd" placeholder="Admin Password" autocomplete="current-password">
     <div class="row" style="justify-content:center; gap:10px;">
-      <button class="btn btn-primary" id="loginBtn" style="padding:12px 30px;">登录</button>
-      <button class="btn btn-outline" id="loginSyncBtn" style="padding:12px 20px;">重新同步</button>
+      <button class="btn btn-primary" id="loginBtn" style="padding:12px 30px;">Enter</button>
+      <button class="btn btn-outline" id="loginSyncBtn" style="padding:12px 20px;">RE-CL</button>
     </div>
     <p class="login-err" id="loginErr"></p>
   </div>
@@ -178,17 +178,17 @@
 
 <div id="app" class="hidden">
   <div class="topbar">
-    <h1>🛠 AI Time 管理后台</h1>
+    <h1>🛠 AI Time Admin</h1>
     <div class="topbar-right">
-      <span class="badge" id="statusBadge">☁️ 云端</span>
-      <button class="btn btn-outline" id="pullBtn"><i class="fas fa-cloud-download-alt"></i> 拉取云端</button>
-      <button class="btn btn-primary" id="publishBtn"><i class="fas fa-cloud-upload-alt"></i> 发布到云端</button>
+      <span class="badge" id="statusBadge">☁️ Cloud</span>
+      <button class="btn btn-outline" id="pullBtn"><i class="fas fa-cloud-download-alt"></i> Grab Cloud Config</button>
+      <button class="btn btn-primary" id="publishBtn"><i class="fas fa-cloud-upload-alt"></i> Publish On Cloud</button>
     </div>
   </div>
 
   <div class="tabs">
-    <button class="tab active" data-tab="settings">⚙️ 站点设置</button>
-    <button class="tab" data-tab="recordings">🎙 学生录音</button>
+    <button class="tab active" data-tab="settings">⚙️ Site Setting</button>
+    <button class="tab" data-tab="recordings">🎙 Student Recording</button>
   </div>
 
   <div id="settingsPanel" class="panel"></div>
@@ -197,11 +197,11 @@
 
 <div id="floatingPalette" class="floating-palette hidden"></div>
 
-<button id="searchFab" class="search-fab hidden" title="搜索 (Ctrl+K)"><i class="fas fa-search"></i></button>
+<button id="searchFab" class="search-fab hidden" title="Search (Ctrl+K)"><i class="fas fa-search"></i></button>
 <div id="searchPanel" class="search-panel hidden">
   <div class="search-input-wrap">
     <i class="fas fa-search"></i>
-    <input id="searchInput" placeholder="搜索设置、按钮、句子、学生名字…" autocomplete="off">
+    <input id="searchInput" placeholder="Search settings, buttons, sentences, student names..." autocomplete="off">
     <kbd>Ctrl K</kbd>
   </div>
   <div class="search-results" id="searchResults"></div>
@@ -282,7 +282,7 @@ function pickFile(accept) {
 }
 function formatTime(t) {
   if (!t) return '';
-  try { return new Date(t).toLocaleString('zh-CN', { hour12: false }); }
+  try { return new Date(t).toLocaleString('en-US', { hour12: false }); }
   catch (e) { return t; }
 }
 
@@ -331,7 +331,7 @@ async function batchDeleteStorage(paths) {
         },
         body: JSON.stringify({ prefixes: batch })
       });
-    } catch (e) { console.warn('批量删除 storage 失败', e); }
+    } catch (e) { console.warn('batch delete storage failed', e); }
   }
 }
 function storagePathFromUrl(url) {
@@ -388,11 +388,11 @@ async function loadConfigFromCloud(showToast) {
     config = normalizeConfig(Object.assign({}, DEFAULT_CONFIG, rows[0].data));
     configSource = 'cloud';
     localStorage.setItem(LS_KEY, JSON.stringify(config));
-    if (showToast) toast('✅ 已拉取云端配置');
+    if (showToast) toast('✅ Cloud config loaded');
     return true;
   } catch (e) {
-    console.warn('云端加载失败', e);
-    if (showToast) toast('⚠️ 云端加载失败', true);
+    console.warn('cloud loading failed', e);
+    if (showToast) toast('⚠️ Cloud loading failed', true);
     return false;
   }
 }
@@ -405,11 +405,11 @@ function loadConfigFromStorage() {
   configSource = 'default';
 }
 async function publishToCloud() {
-  if (!confirm('确定要把当前配置发布到云端吗？所有学生端会立即使用新配置。')) return;
+  if (!confirm('Publish the current configuration to the cloud? The student client will update immediately.')) return;
   config.listenReadParts.forEach(p => p.items.forEach(alignColors));
   const btn = document.getElementById('publishBtn');
   btn.disabled = true;
-  toast('⏳ 正在发布…');
+  toast('⏳ Publishing…');
   try {
     const res = await sbFetch('/rest/v1/config?id=eq.1', {
       method: 'PATCH',
@@ -420,10 +420,10 @@ async function publishToCloud() {
     configSource = 'cloud';
     localStorage.setItem(LS_KEY, JSON.stringify(config));
     updateStatusBadge();
-    toast('🎉 发布成功');
+    toast('🎉 Published successfully');
   } catch (e) {
     console.error(e);
-    toast('❌ 发布失败：' + (e.message || '未知错误'), true);
+    toast('❌ Publish failed: ' + (e.message || 'Unknown error'), true);
   } finally {
     btn.disabled = false;
   }
@@ -431,7 +431,7 @@ async function publishToCloud() {
 function updateStatusBadge() {
   const el = document.getElementById('statusBadge');
   if (!el) return;
-  const map = { cloud:{ text:'☁️ 云端配置', cls:'' }, local:{ text:'💾 本地缓存', cls:'local' }, default:{ text:'📄 默认配置', cls:'local' } };
+  const map = { cloud:{ text:'☁️ Cloud Config', cls:'' }, local:{ text:'💾 Local Cache', cls:'local' }, default:{ text:'📄 Default Config', cls:'local' } };
   const m = map[configSource] || map.local;
   el.textContent = m.text;
   el.className = 'badge ' + m.cls;
@@ -456,16 +456,16 @@ document.getElementById('loginBtn').onclick = () => {
     document.getElementById('loginErr').textContent = '';
     enterApp();
   } else {
-    document.getElementById('loginErr').textContent = '密码不正确';
+    document.getElementById('loginErr').textContent = 'Incorrect password';
     document.getElementById('loginPwd').value = '';
     document.getElementById('loginPwd').focus();
   }
 };
 document.getElementById('loginPwd').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginBtn').click(); });
 document.getElementById('loginSyncBtn').onclick = async () => {
-  toast('⏳ 同步中…');
+  toast('⏳ Syncing…');
   const ok = await loadConfigFromCloud(false);
-  toast(ok ? '✅ 已同步云端' : '⚠️ 同步失败，使用本地缓存', !ok);
+  toast(ok ? '✅ Configuration synced from cloud' : '⚠️ Sync failed, using local cache', !ok);
 };
 
 document.querySelectorAll('.tab').forEach(tab => {
@@ -480,15 +480,15 @@ document.querySelectorAll('.tab').forEach(tab => {
 });
 
 document.getElementById('pullBtn').onclick = async () => {
-  if (!confirm('从云端拉取最新配置将覆盖当前编辑内容，是否继续？')) return;
-  toast('⏳ 拉取中…');
+  if (!confirm('Fetching the latest cloud config will overwrite your current edits. Continue?')) return;
+  toast('⏳ Pulling…');
   const ok = await loadConfigFromCloud(false);
-  if (ok) { renderSettings(); updateStatusBadge(); toast('✅ 已拉取云端配置'); }
-  else toast('❌ 拉取失败', true);
+  if (ok) { renderSettings(); updateStatusBadge(); toast('✅ Cloud config retrieved'); }
+  else toast('❌ Pull failed', true);
 };
 document.getElementById('publishBtn').onclick = publishToCloud;
 
-/* 浮动调色板 */
+/* floating palette */
 function updateFloatingPalette() {
   let el = document.getElementById('floatingPalette');
   if (!el) return;
@@ -499,12 +499,12 @@ function updateFloatingPalette() {
   el.classList.toggle('collapsed', collapsed);
   el.innerHTML = `
     <div class="fp-inner">
-      <button class="fp-toggle" id="fpToggle" title="展开 / 收起调色板"><i class="fas fa-palette"></i></button>
+      <button class="fp-toggle" id="fpToggle" title="Toggle palette"><i class="fas fa-palette"></i></button>
       <div class="fp-body">
-        <span class="label">🎨 选颜色 → 点字母：</span>
+        <span class="label">🎨 Pick a color → click a letter:</span>
         ${PRESET_COLORS.map(c => `<button class="swatch ${pickedColor === c ? 'active' : ''}" data-action="pick-color" data-color="${c}" style="background:${c}" title="${c}"></button>`).join('')}
-        <button class="swatch eraser ${pickedColor === '' ? 'active' : ''}" data-action="pick-color" data-color="">橡皮擦</button>
-        <input type="color" id="customColor" value="${pickedColor || '#e11d48'}" title="自定义颜色">
+        <button class="swatch eraser ${pickedColor === '' ? 'active' : ''}" data-action="pick-color" data-color="">Eraser</button>
+        <input type="color" id="customColor" value="${pickedColor || '#e11d48'}" title="Custom color">
       </div>
     </div>`;
 }
@@ -516,7 +516,7 @@ document.getElementById('floatingPalette').addEventListener('click', e => {
   }
 });
 
-/* 设置面板渲染 */
+/* settings rendering */
 function sectionHtml(id, title, body) {
   const open = expanded.has(id);
   return `
@@ -541,8 +541,8 @@ function imgFieldHtml(opts) {
     <div class="img-field" ${attrs.join(' ')}>
       <label>${esc(label)}</label>
       <div class="row">
-        <input type="text" class="grow img-url" readonly value="${esc(value || '')}" placeholder="未设置">
-        <button class="btn btn-outline btn-mini" data-action="img-upload"><i class="fas fa-upload"></i> 上传</button>
+        <input type="text" class="grow img-url" readonly value="${esc(value || '')}" placeholder="Not set">
+        <button class="btn btn-outline btn-mini" data-action="img-upload"><i class="fas fa-upload"></i> Upload</button>
         <button class="btn btn-danger btn-mini" data-action="img-clear"><i class="fas fa-times"></i></button>
       </div>
       ${value ? `<div class="img-thumb" style="background-image:url('${esc(value)}')"></div>` : ''}
@@ -554,26 +554,26 @@ function renderSettings() {
   const scrollTop = panel.scrollTop;
   const html = [];
 
-  html.push(sectionHtml('basic', '🔑 基本设置', `
+  html.push(sectionHtml('basic', '🔑 Basic Setting', `
     <div class="field">
-      <label>管理后台密码</label>
+      <label>Admin Password</label>
       <input type="text" data-scope="config" data-key="settingPassword" value="${esc(config.settingPassword)}">
-      <div class="hint">修改后请点击「发布到云端」才会生效</div>
+      <div class="hint">Click "Publish to Cloud" after editing for changes to take effect.</div>
     </div>
   `));
 
-  html.push(sectionHtml('pageBg', '🖼 页面背景', `
-    ${imgFieldHtml({ label:'首页背景', value:config.homeBgUrl, scope:'config', key:'homeBgUrl', fixedBase:'home_bg' })}
-    ${imgFieldHtml({ label:'游戏页背景', value:config.gamePageBgUrl, scope:'config', key:'gamePageBgUrl', fixedBase:'game_page_bg' })}
-    ${imgFieldHtml({ label:'Role-Play 页背景', value:config.rolePlayPageBgUrl, scope:'config', key:'rolePlayPageBgUrl', fixedBase:'roleplay_page_bg' })}
-    ${imgFieldHtml({ label:'Listen & Read 页背景', value:config.listenReadPageBgUrl, scope:'config', key:'listenReadPageBgUrl', fixedBase:'listenread_page_bg' })}
+  html.push(sectionHtml('pageBg', '🖼 Page Backgrounds', `
+    ${imgFieldHtml({ label:'Home Page Background', value:config.homeBgUrl, scope:'config', key:'homeBgUrl', fixedBase:'home_bg' })}
+    ${imgFieldHtml({ label:'Game Page Background', value:config.gamePageBgUrl, scope:'config', key:'gamePageBgUrl', fixedBase:'game_page_bg' })}
+    ${imgFieldHtml({ label:'Role-Play Page Background', value:config.rolePlayPageBgUrl, scope:'config', key:'rolePlayPageBgUrl', fixedBase:'roleplay_page_bg' })}
+    ${imgFieldHtml({ label:'Listen & Read Page Background', value:config.listenReadPageBgUrl, scope:'config', key:'listenReadPageBgUrl', fixedBase:'listenread_page_bg' })}
   `));
 
-  html.push(sectionHtml('btnBg', '🎛 首页按钮背景', `
-    ${imgFieldHtml({ label:'Game 按钮', value:config.btnGameBgUrl, scope:'config', key:'btnGameBgUrl', fixedBase:'btn_game_bg' })}
-    ${imgFieldHtml({ label:'Role-Play 按钮', value:config.btnRolePlayBgUrl, scope:'config', key:'btnRolePlayBgUrl', fixedBase:'btn_roleplay_bg' })}
-    ${imgFieldHtml({ label:'Listen & Read 按钮', value:config.btnListenReadBgUrl, scope:'config', key:'btnListenReadBgUrl', fixedBase:'btn_listenread_bg' })}
-    ${imgFieldHtml({ label:'AI Talk 按钮', value:config.btnAITalkBgUrl, scope:'config', key:'btnAITalkBgUrl', fixedBase:'btn_aitalk_bg' })}
+  html.push(sectionHtml('btnBg', '🎛 Home Button Backgrounds', `
+    ${imgFieldHtml({ label:'Game Button', value:config.btnGameBgUrl, scope:'config', key:'btnGameBgUrl', fixedBase:'btn_game_bg' })}
+    ${imgFieldHtml({ label:'Role-Play Button', value:config.btnRolePlayBgUrl, scope:'config', key:'btnRolePlayBgUrl', fixedBase:'btn_roleplay_bg' })}
+    ${imgFieldHtml({ label:'Listen & Read Button', value:config.btnListenReadBgUrl, scope:'config', key:'btnListenReadBgUrl', fixedBase:'btn_listenread_bg' })}
+    ${imgFieldHtml({ label:'AI Talk Button', value:config.btnAITalkBgUrl, scope:'config', key:'btnAITalkBgUrl', fixedBase:'btn_aitalk_bg' })}
   `));
 
   let aiTalkHtml = '';
@@ -582,16 +582,16 @@ function renderSettings() {
       <div class="editor-item">
         <div class="editor-head">
           <span>🎭 Role-Play ${i + 1}</span>
-          <button class="btn btn-danger btn-mini" data-action="del-aiTalk" data-id="${esc(b.id)}"><i class="fas fa-trash"></i> 删除</button>
+          <button class="btn btn-danger btn-mini" data-action="del-aiTalk" data-id="${esc(b.id)}"><i class="fas fa-trash"></i> Delete</button>
         </div>
-        <div class="field"><label>名称</label><input type="text" data-scope="aiTalk" data-id="${esc(b.id)}" data-key="name" value="${esc(b.name)}"></div>
-        <div class="field"><label>跳转链接</label><input type="text" data-scope="aiTalk" data-id="${esc(b.id)}" data-key="url" value="${esc(b.url)}"></div>
-        ${imgFieldHtml({ label:'按钮背景图', value:b.bgUrl, scope:'aiTalk', id:b.id, fixedBase:'aitalk_' + b.id })}
+        <div class="field"><label>Name</label><input type="text" data-scope="aiTalk" data-id="${esc(b.id)}" data-key="name" value="${esc(b.name)}"></div>
+        <div class="field"><label>Link URL</label><input type="text" data-scope="aiTalk" data-id="${esc(b.id)}" data-key="url" value="${esc(b.url)}"></div>
+        ${imgFieldHtml({ label:'Button Background Image', value:b.bgUrl, scope:'aiTalk', id:b.id, fixedBase:'aitalk_' + b.id })}
       </div>`;
   });
-  html.push(sectionHtml('aiTalkMgmt', '🎭 Role-Play AI 管理', `
-    ${aiTalkHtml || '<p class="empty">暂无按钮</p>'}
-    <button class="btn btn-outline" data-action="add-aiTalk"><i class="fas fa-plus"></i> 新增 Role-Play 按钮</button>
+  html.push(sectionHtml('aiTalkMgmt', '🎭 Role-Play AI Management', `
+    ${aiTalkHtml || '<p class="empty">No buttons yet</p>'}
+    <button class="btn btn-outline" data-action="add-aiTalk"><i class="fas fa-plus"></i> Add Role-Play Button</button>
   `));
 
   let discHtml = '';
@@ -600,16 +600,16 @@ function renderSettings() {
       <div class="editor-item">
         <div class="editor-head">
           <span>💬 AI Talk ${i + 1}</span>
-          <button class="btn btn-danger btn-mini" data-action="del-discussion" data-id="${esc(b.id)}"><i class="fas fa-trash"></i> 删除</button>
+          <button class="btn btn-danger btn-mini" data-action="del-discussion" data-id="${esc(b.id)}"><i class="fas fa-trash"></i> Delete</button>
         </div>
-        <div class="field"><label>名称</label><input type="text" data-scope="discussion" data-id="${esc(b.id)}" data-key="name" value="${esc(b.name)}"></div>
-        <div class="field"><label>跳转链接</label><input type="text" data-scope="discussion" data-id="${esc(b.id)}" data-key="url" value="${esc(b.url)}"></div>
-        ${imgFieldHtml({ label:'按钮背景图', value:b.bgUrl, scope:'discussion', id:b.id, fixedBase:'discussion_' + b.id })}
+        <div class="field"><label>Name</label><input type="text" data-scope="discussion" data-id="${esc(b.id)}" data-key="name" value="${esc(b.name)}"></div>
+        <div class="field"><label>Link URL</label><input type="text" data-scope="discussion" data-id="${esc(b.id)}" data-key="url" value="${esc(b.url)}"></div>
+        ${imgFieldHtml({ label:'Button Background Image', value:b.bgUrl, scope:'discussion', id:b.id, fixedBase:'discussion_' + b.id })}
       </div>`;
   });
-  html.push(sectionHtml('discMgmt', '💬 AI Talk 管理', `
-    ${discHtml || '<p class="empty">暂无按钮</p>'}
-    <button class="btn btn-outline" data-action="add-discussion"><i class="fas fa-plus"></i> 新增 AI Talk 按钮</button>
+  html.push(sectionHtml('discMgmt', '💬 AI Talk Management', `
+    ${discHtml || '<p class="empty">No buttons yet</p>'}
+    <button class="btn btn-outline" data-action="add-discussion"><i class="fas fa-plus"></i> Add AI Talk Button</button>
   `));
 
   let gameHtml = '';
@@ -619,12 +619,12 @@ function renderSettings() {
       gamesHtml += `
         <div class="editor-item" style="background:#fff;">
           <div class="editor-head">
-            <span>🎮 游戏 ${gi + 1}</span>
-            <button class="btn btn-danger btn-mini" data-action="del-game" data-part-id="${esc(part.id)}" data-game-id="${esc(g.id)}"><i class="fas fa-trash"></i> 删除</button>
+            <span>🎮 Game ${gi + 1}</span>
+            <button class="btn btn-danger btn-mini" data-action="del-game" data-part-id="${esc(part.id)}" data-game-id="${esc(g.id)}"><i class="fas fa-trash"></i> Delete</button>
           </div>
-          <div class="field"><label>游戏名称</label><input type="text" data-scope="game" data-part-id="${esc(part.id)}" data-game-id="${esc(g.id)}" data-key="name" value="${esc(g.name)}"></div>
-          <div class="field"><label>嵌入代码（iframe）</label><textarea rows="3" data-scope="game" data-part-id="${esc(part.id)}" data-game-id="${esc(g.id)}" data-key="embedCode">${esc(g.embedCode)}</textarea></div>
-          ${imgFieldHtml({ label:'游戏按钮背景图', value:g.bgUrl, scope:'game', partId:part.id, gameId:g.id, fixedBase:'game_' + g.id })}
+          <div class="field"><label>Game Name</label><input type="text" data-scope="game" data-part-id="${esc(part.id)}" data-game-id="${esc(g.id)}" data-key="name" value="${esc(g.name)}"></div>
+          <div class="field"><label>Embed Code (iframe)</label><textarea rows="3" data-scope="game" data-part-id="${esc(part.id)}" data-game-id="${esc(g.id)}" data-key="embedCode">${esc(g.embedCode)}</textarea></div>
+          ${imgFieldHtml({ label:'Game Button Background Image', value:g.bgUrl, scope:'game', partId:part.id, gameId:g.id, fixedBase:'game_' + g.id })}
         </div>`;
     });
     gameHtml += `
@@ -632,30 +632,30 @@ function renderSettings() {
         <div class="editor-head">
           <input type="text" data-scope="gamePart" data-part-id="${esc(part.id)}" data-key="name" value="${esc(part.name)}"
                  style="flex:1; padding:10px 14px; border-radius:10px; border:1.5px solid #dbe4f0; font-size:15px; font-weight:700; color:#1e3c72; background:#fff; outline:none;">
-          <button class="btn btn-danger btn-mini" data-action="del-gamePart" data-part-id="${esc(part.id)}"><i class="fas fa-trash-alt"></i> 删除 Part</button>
+          <button class="btn btn-danger btn-mini" data-action="del-gamePart" data-part-id="${esc(part.id)}"><i class="fas fa-trash-alt"></i> Delete Part</button>
         </div>
-        ${gamesHtml || '<p class="empty" style="padding:16px 0;">这个 Part 还没有游戏</p>'}
-        <button class="btn btn-outline btn-mini" data-action="add-game" data-part-id="${esc(part.id)}"><i class="fas fa-plus"></i> 添加游戏</button>
+        ${gamesHtml || '<p class="empty" style="padding:16px 0;">No games in this part yet</p>'}
+        <button class="btn btn-outline btn-mini" data-action="add-game" data-part-id="${esc(part.id)}"><i class="fas fa-plus"></i> Add Game</button>
       </div>`;
   });
-  html.push(sectionHtml('gameMgmt', '🎮 游戏管理', `
+  html.push(sectionHtml('gameMgmt', '🎮 Game Management', `
     ${gameHtml}
-    <button class="btn btn-primary" data-action="add-gamePart"><i class="fas fa-plus"></i> 新建 Part</button>
+    <button class="btn btn-primary" data-action="add-gamePart"><i class="fas fa-plus"></i> New Part</button>
   `));
 
-  html.push(sectionHtml('lrMgmt', '🎧 Listen &amp; Read 管理', buildListenReadHtml()));
+  html.push(sectionHtml('lrMgmt', '🎧 Listen &amp; Read Management', buildListenReadHtml()));
 
-  html.push(sectionHtml('publish', '☁️ 发布 / 备份', `
+  html.push(sectionHtml('publish', '☁️ Publish / Backup', `
     <div class="help-box">
-      <b>数据库准备</b><br>
-      首次使用请执行建表 SQL。若从旧版本升级，请先执行：<br>
+      <b>Database setup</b><br>
+      Run the table SQL first. If upgrading from an older version, run:<br>
       <code>ALTER TABLE public.recordings ADD COLUMN IF NOT EXISTS campus text, ADD COLUMN IF NOT EXISTS level text;</code>
     </div>
     <div class="row">
-      <button class="btn btn-primary" data-action="publish"><i class="fas fa-cloud-upload-alt"></i> 一键发布到云端</button>
-      <button class="btn btn-outline" data-action="export-json"><i class="fas fa-download"></i> 导出 JSON</button>
-      <button class="btn btn-outline" data-action="import-json"><i class="fas fa-upload"></i> 导入 JSON</button>
-      <button class="btn btn-danger" data-action="reset-default"><i class="fas fa-undo"></i> 恢复默认</button>
+      <button class="btn btn-primary" data-action="publish"><i class="fas fa-cloud-upload-alt"></i> One-Click Publish</button>
+      <button class="btn btn-outline" data-action="export-json"><i class="fas fa-download"></i> Export JSON</button>
+      <button class="btn btn-outline" data-action="import-json"><i class="fas fa-upload"></i> Import JSON</button>
+      <button class="btn btn-danger" data-action="reset-default"><i class="fas fa-undo"></i> Reset Default</button>
     </div>
   `));
 
@@ -672,20 +672,20 @@ function buildListenReadHtml() {
       itemsHtml += `
         <div class="editor-item" style="background:#fff;" data-lr-item="${esc(it.id)}">
           <div class="editor-head">
-            <span>📝 第 ${ii + 1} 条</span>
-            <button class="btn btn-danger btn-mini" data-action="del-lrItem" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}"><i class="fas fa-trash"></i> 删除</button>
+            <span>📝 Item ${ii + 1}</span>
+            <button class="btn btn-danger btn-mini" data-action="del-lrItem" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}"><i class="fas fa-trash"></i> Delete</button>
           </div>
-          <div class="field"><label>文本内容（单词 / 句子）</label>
-            <textarea rows="2" data-scope="lrItem" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}" data-key="text" placeholder="例如：Hello world">${esc(it.text)}</textarea>
+          <div class="field"><label>Text (word / sentence)</label>
+            <textarea rows="2" data-scope="lrItem" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}" data-key="text" placeholder="e.g. Hello world">${esc(it.text)}</textarea>
           </div>
-          <div class="field"><label>逐字母上色（底部浮动调色板选颜色，再点下面字母）</label>
+          <div class="field"><label>Per-letter colors (pick a color at the bottom, then click a letter)</label>
             <div class="lr-chars" data-chars-for="${esc(it.id)}" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}">${renderCharsHtml(it)}</div>
           </div>
           <div class="field" style="margin-bottom:0;">
-            <label>标准发音音频（学生点击「常速/龟速」时播放）</label>
+            <label>Reference audio (played when students click Slow / Normal)</label>
             <div class="audio-row">
-              <button class="btn btn-outline btn-mini" data-action="upload-lrAudio" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}"><i class="fas fa-upload"></i> 上传音频</button>
-              ${it.audioUrl ? `<audio controls src="${esc(it.audioUrl)}"></audio><button class="btn btn-danger btn-mini" data-action="clear-lrAudio" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}"><i class="fas fa-times"></i> 移除</button>` : '<span class="hint" style="margin:0;">未上传音频（学生端将使用浏览器语音合成）</span>'}
+              <button class="btn btn-outline btn-mini" data-action="upload-lrAudio" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}"><i class="fas fa-upload"></i> Upload Audio</button>
+              ${it.audioUrl ? `<audio controls src="${esc(it.audioUrl)}"></audio><button class="btn btn-danger btn-mini" data-action="clear-lrAudio" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}"><i class="fas fa-times"></i> Remove</button>` : '<span class="hint" style="margin:0;">No audio uploaded (browser speech synthesis will be used)</span>'}
             </div>
           </div>
         </div>`;
@@ -693,23 +693,23 @@ function buildListenReadHtml() {
     partsHtml += `
       <div class="editor-item">
         <div class="editor-head">
-          <span>📚 单元 ${pi + 1}</span>
-          <button class="btn btn-danger btn-mini" data-action="del-lrPart" data-part-id="${esc(part.id)}"><i class="fas fa-trash-alt"></i> 删除单元</button>
+          <span>📚 Unit ${pi + 1}</span>
+          <button class="btn btn-danger btn-mini" data-action="del-lrPart" data-part-id="${esc(part.id)}"><i class="fas fa-trash-alt"></i> Delete Unit</button>
         </div>
-        <div class="field"><label>单元名称</label><input type="text" data-scope="lrPart" data-part-id="${esc(part.id)}" data-key="name" value="${esc(part.name)}"></div>
-        ${itemsHtml || '<p class="empty" style="padding:16px 0;">这个单元还没有内容</p>'}
-        <button class="btn btn-outline btn-mini" data-action="add-lrItem" data-part-id="${esc(part.id)}"><i class="fas fa-plus"></i> 添加单词 / 句子</button>
+        <div class="field"><label>Unit Name</label><input type="text" data-scope="lrPart" data-part-id="${esc(part.id)}" data-key="name" value="${esc(part.name)}"></div>
+        ${itemsHtml || '<p class="empty" style="padding:16px 0;">No items in this unit yet</p>'}
+        <button class="btn btn-outline btn-mini" data-action="add-lrItem" data-part-id="${esc(part.id)}"><i class="fas fa-plus"></i> Add Word / Sentence</button>
       </div>`;
   });
   return `
-    <div class="hint" style="margin-bottom:16px;">学生端会自动把文本放大到适配屏幕的大小，可以放心输入长句子。调色板已悬浮在底部，随时可用。</div>
+    <div class="hint" style="margin-bottom:16px;">The student side auto-scales text to fit the screen, so long sentences are fine. The palette floats at the bottom for quick access.</div>
     ${partsHtml}
-    <button class="btn btn-primary" data-action="add-lrPart"><i class="fas fa-plus"></i> 新建单元</button>
+    <button class="btn btn-primary" data-action="add-lrPart"><i class="fas fa-plus"></i> New Unit</button>
   `;
 }
 function renderCharsHtml(item) {
   const chars = Array.from(item.text || '');
-  if (!chars.length) return '<span style="color:#b6c2d2; font-weight:400; font-size:14px;">（在上方输入文本后，这里会显示可上色的字母）</span>';
+  if (!chars.length) return '<span style="color:#b6c2d2; font-weight:400; font-size:14px;">(Enter text above to show colorable letters)</span>';
   const colors = item.colors || [];
   return chars.map((ch, i) => {
     const c = colors[i] || '';
@@ -719,7 +719,7 @@ function renderCharsHtml(item) {
   }).join('');
 }
 
-/* input 事件 */
+/* input events */
 document.addEventListener('input', e => {
   const el = e.target;
   if (el.id === 'customColor') {
@@ -755,7 +755,7 @@ document.addEventListener('input', e => {
   }
 });
 
-/* click 事件 */
+/* click events */
 document.addEventListener('click', async e => {
   const target = e.target.closest('[data-action]');
   if (!target) return;
@@ -794,11 +794,11 @@ document.addEventListener('click', async e => {
     if (!file) return;
     const base = field.dataset.fixed;
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-    toast('⏳ 上传中…');
+    toast('⏳ Uploading…');
     const url = await uploadFile(file, `${base}.${ext}`, file.type);
-    if (!url) { toast('❌ 上传失败', true); return; }
+    if (!url) { toast('❌ Upload failed', true); return; }
     applyImgFieldValue(field, url + '?t=' + Date.now());
-    toast('✅ 图片已上传');
+    toast('✅ Image uploaded');
     return;
   }
   if (action === 'img-clear') {
@@ -806,11 +806,11 @@ document.addEventListener('click', async e => {
     if (!field) return;
     const oldVal = field.querySelector('.img-url').value;
     if (!oldVal) return;
-    if (!confirm('确定清除这张图片吗？')) return;
+    if (!confirm('Clear this image?')) return;
     const path = storagePathFromUrl(oldVal);
     applyImgFieldValue(field, '');
     if (path) await deleteStorageFile(path);
-    toast('🗑 已清除');
+    toast('🗑 Removed');
     return;
   }
 
@@ -823,19 +823,19 @@ document.addEventListener('click', async e => {
     const file = await pickFile('audio/*');
     if (!file) return;
     const ext = (file.name.split('.').pop() || 'mp3').toLowerCase();
-    toast('⏳ 上传音频中…');
+    toast('⏳ Uploading audio…');
     const url = await uploadFile(file, `lr_audio/${itemId}.${ext}`, file.type);
-    if (!url) { toast('❌ 上传失败', true); return; }
+    if (!url) { toast('❌ Upload failed', true); return; }
     it.audioUrl = url + '?t=' + Date.now();
     const itemEl = document.querySelector(`.editor-item[data-lr-item="${cssEscape(itemId)}"]`);
     if (itemEl) {
       const audioRow = itemEl.querySelector('.audio-row');
       audioRow.innerHTML = `
-        <button class="btn btn-outline btn-mini" data-action="upload-lrAudio" data-part-id="${esc(partId)}" data-item-id="${esc(itemId)}"><i class="fas fa-upload"></i> 重新上传</button>
+        <button class="btn btn-outline btn-mini" data-action="upload-lrAudio" data-part-id="${esc(partId)}" data-item-id="${esc(itemId)}"><i class="fas fa-upload"></i> Re-upload</button>
         <audio controls src="${esc(it.audioUrl)}"></audio>
-        <button class="btn btn-danger btn-mini" data-action="clear-lrAudio" data-part-id="${esc(partId)}" data-item-id="${esc(itemId)}"><i class="fas fa-times"></i> 移除</button>`;
+        <button class="btn btn-danger btn-mini" data-action="clear-lrAudio" data-part-id="${esc(partId)}" data-item-id="${esc(itemId)}"><i class="fas fa-times"></i> Remove</button>`;
     }
-    toast('✅ 音频已上传');
+    toast('✅ Audio uploaded');
     return;
   }
   if (action === 'clear-lrAudio') {
@@ -844,48 +844,48 @@ document.addEventListener('click', async e => {
     const part = config.listenReadParts.find(p => p.id === partId);
     const it = part && part.items.find(x => x.id === itemId);
     if (!it) return;
-    if (!confirm('确定移除这条音频吗？')) return;
+    if (!confirm('Remove this audio?')) return;
     it.audioUrl = '';
     renderSettings();
-    toast('🗑 已移除音频');
+    toast('🗑 Audio removed');
     return;
   }
 
-  if (action === 'add-aiTalk') { config.aiTalkButtons.push({ id: genId('aitalk'), name:'New Role-Play', url:'https://', bgUrl:'' }); renderSettings(); toast('已添加'); return; }
-  if (action === 'del-aiTalk') { if (!confirm('删除这个 Role-Play 按钮？')) return; config.aiTalkButtons = config.aiTalkButtons.filter(b => b.id !== target.dataset.id); renderSettings(); toast('已删除'); return; }
-  if (action === 'add-discussion') { config.discussionButtons.push({ id: genId('discussion'), name:'New AI Talk', url:'https://', bgUrl:'' }); renderSettings(); toast('已添加'); return; }
-  if (action === 'del-discussion') { if (!confirm('删除这个 AI Talk 按钮？')) return; config.discussionButtons = config.discussionButtons.filter(b => b.id !== target.dataset.id); renderSettings(); toast('已删除'); return; }
-  if (action === 'add-gamePart') { config.gameParts.push({ id: genId('part'), name:'New Part', games:[] }); renderSettings(); toast('已添加 Part'); return; }
+  if (action === 'add-aiTalk') { config.aiTalkButtons.push({ id: genId('aitalk'), name:'New Role-Play', url:'https://', bgUrl:'' }); renderSettings(); toast('Added'); return; }
+  if (action === 'del-aiTalk') { if (!confirm('Delete this Role-Play button?')) return; config.aiTalkButtons = config.aiTalkButtons.filter(b => b.id !== target.dataset.id); renderSettings(); toast('Deleted'); return; }
+  if (action === 'add-discussion') { config.discussionButtons.push({ id: genId('discussion'), name:'New AI Talk', url:'https://', bgUrl:'' }); renderSettings(); toast('Added'); return; }
+  if (action === 'del-discussion') { if (!confirm('Delete this AI Talk button?')) return; config.discussionButtons = config.discussionButtons.filter(b => b.id !== target.dataset.id); renderSettings(); toast('Deleted'); return; }
+  if (action === 'add-gamePart') { config.gameParts.push({ id: genId('part'), name:'New Part', games:[] }); renderSettings(); toast('Part added'); return; }
   if (action === 'del-gamePart') {
-    if (config.gameParts.length <= 1) { toast('至少保留一个 Part', true); return; }
-    if (!confirm('删除这个 Part 及其所有游戏？')) return;
+    if (config.gameParts.length <= 1) { toast('At least one Part is required', true); return; }
+    if (!confirm('Delete this Part and all its games?')) return;
     config.gameParts = config.gameParts.filter(p => p.id !== target.dataset.partId);
-    renderSettings(); toast('已删除'); return;
+    renderSettings(); toast('Deleted'); return;
   }
-  if (action === 'add-game') { const p = config.gameParts.find(x => x.id === target.dataset.partId); if (!p) return; p.games.push({ id: genId('game'), name:'New Game', embedCode:'<iframe width="500" height="380" src="https://"></iframe>', bgUrl:'' }); renderSettings(); toast('已添加游戏'); return; }
+  if (action === 'add-game') { const p = config.gameParts.find(x => x.id === target.dataset.partId); if (!p) return; p.games.push({ id: genId('game'), name:'New Game', embedCode:'<iframe width="500" height="380" src="https://"></iframe>', bgUrl:'' }); renderSettings(); toast('Game added'); return; }
   if (action === 'del-game') {
-    if (!confirm('删除这个游戏？')) return;
+    if (!confirm('Delete this game?')) return;
     const p = config.gameParts.find(x => x.id === target.dataset.partId);
     if (!p) return;
     p.games = p.games.filter(g => g.id !== target.dataset.gameId);
-    renderSettings(); toast('已删除'); return;
+    renderSettings(); toast('Deleted'); return;
   }
-  if (action === 'add-lrPart') { config.listenReadParts.push({ id: genId('lr'), name:'New Unit', bgUrl:'', items:[] }); renderSettings(); toast('已新建单元'); return; }
-  if (action === 'del-lrPart') { if (!confirm('删除这个单元及其所有内容？')) return; config.listenReadParts = config.listenReadParts.filter(p => p.id !== target.dataset.partId); renderSettings(); toast('已删除单元'); return; }
+  if (action === 'add-lrPart') { config.listenReadParts.push({ id: genId('lr'), name:'New Unit', bgUrl:'', items:[] }); renderSettings(); toast('Unit created'); return; }
+  if (action === 'del-lrPart') { if (!confirm('Delete this unit and all its content?')) return; config.listenReadParts = config.listenReadParts.filter(p => p.id !== target.dataset.partId); renderSettings(); toast('Unit deleted'); return; }
   if (action === 'add-lrItem') {
     const p = config.listenReadParts.find(x => x.id === target.dataset.partId);
     if (!p) return;
     p.items.push({ id: genId('lri'), text:'', colors:[], audioUrl:'' });
-    renderSettings(); toast('已添加条目');
+    renderSettings(); toast('Item added');
     setTimeout(() => { const items = document.querySelectorAll('.editor-item[data-lr-item]'); if (items.length) items[items.length - 1].scrollIntoView({ behavior:'smooth', block:'center' }); }, 60);
     return;
   }
   if (action === 'del-lrItem') {
-    if (!confirm('删除这条内容？')) return;
+    if (!confirm('Delete this item?')) return;
     const p = config.listenReadParts.find(x => x.id === target.dataset.partId);
     if (!p) return;
     p.items = p.items.filter(it => it.id !== target.dataset.itemId);
-    renderSettings(); toast('已删除'); return;
+    renderSettings(); toast('Deleted'); return;
   }
 
   if (action === 'publish') { publishToCloud(); return; }
@@ -907,19 +907,19 @@ document.addEventListener('click', async e => {
         const imported = JSON.parse(ev.target.result);
         config = normalizeConfig(Object.assign({}, DEFAULT_CONFIG, imported));
         renderSettings();
-        toast('✅ 已导入（记得发布到云端）');
-      } catch (err) { toast('❌ JSON 格式错误', true); }
+        toast('✅ Import complete. Remember to publish to cloud.');
+      } catch (err) { toast('❌ Invalid JSON', true); }
     };
     reader.readAsText(file);
     return;
   }
   if (action === 'reset-default') {
-    if (!confirm('恢复默认配置会覆盖当前所有设置，确定吗？')) return;
+    if (!confirm('Reset to default configuration? This will overwrite all current settings.')) return;
     config = normalizeConfig(JSON.parse(JSON.stringify(DEFAULT_CONFIG)));
-    renderSettings(); toast('已恢复默认配置'); return;
+    renderSettings(); toast('Reset to defaults'); return;
   }
 
-  /* ====== 录音相关 ====== */
+  /* recordings */
   if (action === 'toggle-key') {
     const key = target.dataset.key;
     if (expandedKeys.has(key)) expandedKeys.delete(key);
@@ -957,12 +957,12 @@ document.addEventListener('click', async e => {
       (r.campus || '未分类') === campus &&
       (r.level || '未分类') === level
     );
-    deleteRecords(rows, `${campus} / ${level}（全部学生）`);
+    deleteRecords(rows, `${campus} / ${level} (all students)`);
     return;
   }
 
   if (action === 'delete-recording') {
-    if (!confirm('删除这条录音？')) return;
+    if (!confirm('Delete this recording?')) return;
     const id = target.dataset.id;
     const path = target.dataset.path;
     target.disabled = true;
@@ -971,8 +971,8 @@ document.addEventListener('click', async e => {
       if (path) await deleteStorageFile(path);
       recRows = recRows.filter(r => String(r.id) !== String(id));
       paintRecList();
-      toast('🗑 已删除');
-    } catch (e) { toast('删除失败', true); target.disabled = false; }
+      toast('🗑 Deleted');
+    } catch (e) { toast('Delete failed', true); target.disabled = false; }
     return;
   }
 });
@@ -993,11 +993,11 @@ function applyImgFieldValue(field, value) {
   } else if (thumb) thumb.remove();
 }
 
-/* ====== 录音渲染 ====== */
+/* recordings rendering */
 async function renderRecordings() {
   const panel = document.getElementById('recordingsPanel');
   if (!recRows.length) {
-    panel.innerHTML = '<p class="empty">加载中…</p>';
+    panel.innerHTML = '<p class="empty">Loading…</p>';
     await loadRecordings(false);
   }
   paintRecToolbarAndList();
@@ -1010,19 +1010,19 @@ function paintRecToolbarAndList() {
   panel.innerHTML = `
     <div class="toolbar">
       <select id="recCampusFilter">
-        <option value="">全部校区</option>
+        <option value="">All Campuses</option>
         ${campuses.map(c => `<option value="${esc(c)}" ${recFilter.campus === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}
       </select>
       <select id="recLevelFilter">
-        <option value="">全部 Level</option>
+        <option value="">All Levels</option>
         ${levels.map(l => `<option value="${esc(l)}" ${recFilter.level === l ? 'selected' : ''}>${esc(l)}</option>`).join('')}
       </select>
-      <input type="text" id="recNameFilter" placeholder="按学生名字筛选" value="${esc(recFilter.name)}" style="min-width:160px;">
+      <input type="text" id="recNameFilter" placeholder="Filter by student name" value="${esc(recFilter.name)}" style="min-width:160px;">
       <select id="recPartFilter">
-        <option value="">全部单元</option>
+        <option value="">All Units</option>
         ${config.listenReadParts.map(p => `<option value="${esc(p.id)}" ${recFilter.part === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
       </select>
-      <button class="btn btn-outline btn-mini" id="recRefreshBtn"><i class="fas fa-sync"></i> 刷新</button>
+      <button class="btn btn-outline btn-mini" id="recRefreshBtn"><i class="fas fa-sync"></i> Refresh</button>
       <span class="hint" style="margin:0;" id="recCount"></span>
     </div>
     <div id="recList"></div>`;
@@ -1036,7 +1036,7 @@ function paintRecToolbarAndList() {
 
 async function loadRecordings(showToast) {
   const listEl = document.getElementById('recList');
-  if (listEl) listEl.innerHTML = '<p class="empty">加载中…</p>';
+  if (listEl) listEl.innerHTML = '<p class="empty">Loading…</p>';
   try {
     const res = await sbFetch('/rest/v1/recordings?select=*&order=created_at.desc&limit=2000', { headers: { 'Accept': 'application/json' } });
     if (!res.ok) {
@@ -1045,15 +1045,15 @@ async function loadRecordings(showToast) {
     }
     recRows = await res.json();
     paintRecToolbarAndList();
-    if (showToast) toast('✅ 已刷新');
+    if (showToast) toast('✅ Refreshed');
   } catch (e) {
     console.error(e);
     if (listEl) listEl.innerHTML = `
       <div class="help-box" style="background:#fff0f0;border-color:#f3c7c2;color:#a03528;">
-        <b>读取录音失败</b><br>请确认 Supabase 中已创建 <code>recordings</code> 表并允许 anon 读取。<br>
-        <span style="font-size:12px;opacity:.8;">错误信息：${esc(e.message)}</span>
+        <b>Failed to load recordings</b><br>Make sure the <code>recordings</code> table exists in Supabase and allows anon reads.<br>
+        <span style="font-size:12px;opacity:.8;">Error: ${esc(e.message)}</span>
       </div>`;
-    if (showToast) toast('读取失败', true);
+    if (showToast) toast('Load failed', true);
   }
 }
 
@@ -1072,9 +1072,9 @@ function paintRecList() {
   if (recFilter.level) rows = rows.filter(r => (r.level || '未分类') === recFilter.level);
 
   const names = new Set(rows.map(r => r.student_name || '未命名'));
-  if (countEl) countEl.textContent = `共 ${rows.length} 条 · ${names.size} 位学生`;
+  if (countEl) countEl.textContent = `${rows.length} recordings · ${names.size} students`;
 
-  if (!rows.length) { listEl.innerHTML = '<p class="empty">暂无录音</p>'; return; }
+  if (!rows.length) { listEl.innerHTML = '<p class="empty">No recordings yet</p>'; return; }
 
   const tree = new Map();
   rows.forEach(r => {
@@ -1116,12 +1116,12 @@ function paintRecList() {
               <button class="student-head" data-action="toggle-key" data-key="${esc(studentKey)}">
                 <span class="avatar">${esc((name || '?').slice(0,1).toUpperCase())}</span>
                 <span class="student-name">${esc(name)}</span>
-                <span class="count-pill small">${list.length} 条</span>
+                <span class="count-pill small">${list.length} recordings</span>
                 <span class="student-latest">${esc(formatTime(list[0].created_at))}</span>
                 <i class="fas fa-chevron-down"></i>
               </button>
-              <button class="btn btn-outline btn-mini" data-action="export-student" data-campus="${esc(campus)}" data-level="${esc(level)}" data-student="${esc(name)}" title="导出该学生录音"><i class="fas fa-download"></i> 导出</button>
-              <button class="btn btn-danger btn-mini" data-action="delete-student" data-campus="${esc(campus)}" data-level="${esc(level)}" data-student="${esc(name)}" title="删除该学生全部录音"><i class="fas fa-trash"></i></button>
+              <button class="btn btn-outline btn-mini" data-action="export-student" data-campus="${esc(campus)}" data-level="${esc(level)}" data-student="${esc(name)}" title="Export this student's recordings"><i class="fas fa-download"></i> Export</button>
+              <button class="btn btn-danger btn-mini" data-action="delete-student" data-campus="${esc(campus)}" data-level="${esc(level)}" data-student="${esc(name)}" title="Delete all recordings for this student"><i class="fas fa-trash"></i></button>
             </div>
             <div class="student-body ${studentOpen ? '' : 'hidden'}">
               ${list.map(renderRecCard).join('')}
@@ -1135,10 +1135,10 @@ function paintRecList() {
             <button class="level-head" data-action="toggle-key" data-key="${esc(levelKey)}">
               <i class="fas fa-layer-group"></i>
               <span class="level-name">${esc(level)}</span>
-              <span class="count-pill">${studentMap.size} 位 · ${levelTotal} 条</span>
+              <span class="count-pill">${studentMap.size} students · ${levelTotal} recordings</span>
               <i class="fas fa-chevron-down"></i>
             </button>
-            <button class="btn btn-danger btn-mini" data-action="delete-level" data-campus="${esc(campus)}" data-level="${esc(level)}" title="删除该班级全部录音"><i class="fas fa-trash-alt"></i> 删除整组</button>
+            <button class="btn btn-danger btn-mini" data-action="delete-level" data-campus="${esc(campus)}" data-level="${esc(level)}" title="Delete all recordings for this class"><i class="fas fa-trash-alt"></i> Delete Group</button>
           </div>
           <div class="level-body ${levelOpen ? '' : 'hidden'}">${studentsHtml}</div>
         </div>`;
@@ -1149,7 +1149,7 @@ function paintRecList() {
         <button class="campus-head" data-action="toggle-key" data-key="${esc(campusKey)}">
           <i class="fas fa-school"></i>
           <span class="campus-name">${esc(campus)}</span>
-          <span class="count-pill">${campusTotal} 条</span>
+          <span class="count-pill">${campusTotal} recordings</span>
           <i class="fas fa-chevron-down"></i>
         </button>
         <div class="campus-body ${campusOpen ? '' : 'hidden'}">${levelsHtml}</div>
@@ -1167,13 +1167,13 @@ function renderRecCard(r) {
         <div class="rec-meta">${esc(r.part_name || r.part_id || '')} · ${esc(formatTime(r.created_at))}</div>
       </div>
       <div class="rec-audio">
-        ${r.public_url ? `<audio controls preload="none" src="${esc(r.public_url)}"></audio>` : '<span class="hint" style="margin:0;">无音频文件</span>'}
+        ${r.public_url ? `<audio controls preload="none" src="${esc(r.public_url)}"></audio>` : '<span class="hint" style="margin:0;">No audio file</span>'}
       </div>
       <button class="btn btn-danger btn-mini" data-action="delete-recording" data-id="${esc(r.id)}" data-path="${esc(r.file_path || '')}"><i class="fas fa-trash"></i></button>
     </div>`;
 }
 
-/* ====== 导出 & 批量删除 ====== */
+/* export & batch delete */
 async function ensureJSZip() {
   if (window.JSZip) return true;
   return new Promise(resolve => {
@@ -1191,11 +1191,11 @@ async function exportStudent(campus, level, studentName) {
     (r.level || '未分类') === level &&
     (r.student_name || '未命名') === studentName
   );
-  if (!rows.length) { toast('没有可导出的录音', true); return; }
+  if (!rows.length) { toast('No recordings to export', true); return; }
 
-  toast('⏳ 正在准备导出…');
+  toast('⏳ Preparing export…');
   const ok = await ensureJSZip();
-  if (!ok) { toast('打包库加载失败，请重试', true); return; }
+  if (!ok) { toast('Failed to load zip library', true); return; }
 
   const zip = new JSZip();
   const folderName = `${campus}-${level}-${studentName}`.replace(/[\\/:*?"<>|]/g, '_');
@@ -1210,13 +1210,13 @@ async function exportStudent(campus, level, studentName) {
       if (!res.ok) continue;
       const blob = await res.blob();
       const ext = (r.file_path || '').split('.').pop() || 'webm';
-      const itemText = (r.item_text || '录音').replace(/[\\/:*?"<>|]/g, '_').slice(0, 30);
+      const itemText = (r.item_text || 'recording').replace(/[\\/:*?"<>|]/g, '_').slice(0, 30);
       const idx = String(i + 1).padStart(2, '0');
       folder.file(`${idx}_${itemText}.${ext}`, blob);
       success++;
-    } catch (e) { console.warn('下载失败', r.public_url, e); }
+    } catch (e) { console.warn('download failed', r.public_url, e); }
   }
-  if (!success) { toast('没有可下载的音频', true); return; }
+  if (!success) { toast('No downloadable audio', true); return; }
 
   const blob = await zip.generateAsync({ type: 'blob' });
   const a = document.createElement('a');
@@ -1224,19 +1224,19 @@ async function exportStudent(campus, level, studentName) {
   a.download = `${folderName}.zip`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 3000);
-  toast(`✅ 已导出 ${success} 条录音`);
+  toast(`✅ Exported ${success} recordings`);
 }
 
 async function deleteRecords(rows, label) {
   if (!rows.length) return;
-  if (!confirm(`确定删除 ${label} 的 ${rows.length} 条录音吗？此操作不可恢复。`)) return;
+  if (!confirm(`Delete ${rows.length} recordings for ${label}? This cannot be undone.`)) return;
 
-  toast('⏳ 删除中…');
+  toast('⏳ Deleting…');
   const ids = rows.map(r => String(r.id));
   const idList = ids.map(id => encodeURIComponent(id)).join(',');
   try {
     await sbFetch(`/rest/v1/recordings?id=in.(${idList})`, { method: 'DELETE' });
-  } catch (e) { console.warn('批量删除数据库失败', e); }
+  } catch (e) { console.warn('batch db delete failed', e); }
 
   const paths = rows.map(r => r.file_path).filter(Boolean);
   await batchDeleteStorage(paths);
@@ -1244,34 +1244,34 @@ async function deleteRecords(rows, label) {
   const idSet = new Set(ids);
   recRows = recRows.filter(r => !idSet.has(String(r.id)));
   paintRecList();
-  toast(`🗑 已删除 ${rows.length} 条`);
+  toast(`🗑 Deleted ${rows.length} recordings`);
 }
 
-/* ====== 搜索 ====== */
+/* search */
 const searchState = { items: [], active: -1, results: [] };
 
 function buildSearchIndex() {
   const items = [];
   const sectionTitles = {
-    basic:'基本设置', pageBg:'页面背景', btnBg:'首页按钮背景',
-    aiTalkMgmt:'Role-Play AI 管理', discMgmt:'AI Talk 管理',
-    gameMgmt:'游戏管理', lrMgmt:'Listen & Read 管理', publish:'发布 / 备份'
+    basic:'Basic Setting', pageBg:'Page Backgrounds', btnBg:'Home Button Backgrounds',
+    aiTalkMgmt:'Role-Play AI Management', discMgmt:'AI Talk Management',
+    gameMgmt:'Game Management', lrMgmt:'Listen & Read Management', publish:'Publish / Backup'
   };
-  Object.keys(sectionTitles).forEach(id => items.push({ kind:'section', label:sectionTitles[id], sub:'设置区块', sectionId:id, tab:'settings' }));
-  (config.aiTalkButtons || []).forEach(b => items.push({ kind:'aiTalk', label:b.name || '(未命名)', sub:'Role-Play AI', sectionId:'aiTalkMgmt', tab:'settings', anchor:{ scope:'aiTalk', id:b.id } }));
-  (config.discussionButtons || []).forEach(b => items.push({ kind:'discussion', label:b.name || '(未命名)', sub:'AI Talk', sectionId:'discMgmt', tab:'settings', anchor:{ scope:'discussion', id:b.id } }));
+  Object.keys(sectionTitles).forEach(id => items.push({ kind:'section', label:sectionTitles[id], sub:'Settings section', sectionId:id, tab:'settings' }));
+  (config.aiTalkButtons || []).forEach(b => items.push({ kind:'aiTalk', label:b.name || '(Untitled)', sub:'Role-Play AI', sectionId:'aiTalkMgmt', tab:'settings', anchor:{ scope:'aiTalk', id:b.id } }));
+  (config.discussionButtons || []).forEach(b => items.push({ kind:'discussion', label:b.name || '(Untitled)', sub:'AI Talk', sectionId:'discMgmt', tab:'settings', anchor:{ scope:'discussion', id:b.id } }));
   (config.gameParts || []).forEach(p => {
-    items.push({ kind:'part', label:p.name || '(未命名 Part)', sub:'游戏 Part', sectionId:'gameMgmt', tab:'settings', anchor:{ scope:'gamePart', partId:p.id } });
-    (p.games || []).forEach(g => items.push({ kind:'game', label:g.name || '(未命名游戏)', sub:'游戏 · ' + (p.name || ''), sectionId:'gameMgmt', tab:'settings', anchor:{ scope:'game', partId:p.id, gameId:g.id } }));
+    items.push({ kind:'part', label:p.name || '(Untitled Part)', sub:'Game Part', sectionId:'gameMgmt', tab:'settings', anchor:{ scope:'gamePart', partId:p.id } });
+    (p.games || []).forEach(g => items.push({ kind:'game', label:g.name || '(Untitled Game)', sub:'Game · ' + (p.name || ''), sectionId:'gameMgmt', tab:'settings', anchor:{ scope:'game', partId:p.id, gameId:g.id } }));
   });
   (config.listenReadParts || []).forEach(p => {
-    items.push({ kind:'lrPart', label:p.name || '(未命名单元)', sub:'听读单元', sectionId:'lrMgmt', tab:'settings', anchor:{ scope:'lrPart', partId:p.id } });
+    items.push({ kind:'lrPart', label:p.name || '(Untitled Unit)', sub:'Listen & Read Unit', sectionId:'lrMgmt', tab:'settings', anchor:{ scope:'lrPart', partId:p.id } });
     (p.items || []).forEach(it => {
       const full = it.text || '';
       items.push({
         kind:'lrItem',
-        label: full.length > 46 ? full.slice(0, 46) + '…' : (full || '(空句子)'),
-        sub: '听读 · ' + (p.name || ''),
+        label: full.length > 46 ? full.slice(0, 46) + '…' : (full || '(Empty sentence)'),
+        sub: 'Listen & Read · ' + (p.name || ''),
         fullText: full,
         sectionId:'lrMgmt', tab:'settings',
         anchor:{ scope:'lrItem', partId:p.id, itemId:it.id }
@@ -1287,7 +1287,7 @@ function buildSearchIndex() {
     const key = campus + '|' + level + '|' + name;
     if (seen.has(key)) return;
     seen.add(key);
-    items.push({ kind:'student', label:name, sub:'学生录音 · ' + campus + ' / ' + level, tab:'recordings', campus, level });
+    items.push({ kind:'student', label:name, sub:'Student Recording · ' + campus + ' / ' + level, tab:'recordings', campus, level });
   });
   return items;
 }
@@ -1321,7 +1321,7 @@ function runSearch(q) {
   } else res = res.slice(0, 12);
   searchState.results = res.slice(0, 40);
   searchState.active = searchState.results.length ? 0 : -1;
-  if (!searchState.results.length) { resultsEl.innerHTML = '<div class="search-empty">没有找到匹配项</div>'; return; }
+  if (!searchState.results.length) { resultsEl.innerHTML = '<div class="search-empty">No matches found</div>'; return; }
   resultsEl.innerHTML = searchState.results.map((it, i) => `
     <div class="search-item ${i === searchState.active ? 'active' : ''}" data-idx="${i}">
       <div class="si-icon"><i class="fas ${kindIcon(it.kind)}"></i></div>
@@ -1429,7 +1429,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeSearch();
 });
 
-/* 启动 */
+/* init */
 (async function init() {
   loadConfigFromStorage();
   showLogin();
