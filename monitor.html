@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Time · 管理后台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #eef3f9; color: #1e2f4b;
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px;
+  }
+  .hidden { display: none !important; }
+
+  /* 登录 */
+  .overlay {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(145deg, #1e3c72, #2a5298); z-index: 100; padding: 20px;
+  }
+  .login-card {
+    background: #fff; border-radius: 24px; padding: 32px; width: 100%; max-width: 400px;
+    box-shadow: 0 30px 60px rgba(0,0,0,.35); text-align: center;
+  }
+  .login-card h2 { margin: 0 0 8px; font-size: 22px; color: #1e3c72; }
+  .login-card p.sub { margin: 0 0 22px; color: #7b8ba3; font-size: 13px; }
+  .login-card input {
+    width: 100%; padding: 14px 18px; border-radius: 40px; border: 2px solid #dbe4f0;
+    font-size: 16px; outline: none; text-align: center; margin-bottom: 16px;
+  }
+  .login-card input:focus { border-color: #2a5298; }
+  .login-err { color: #d33; font-size: 13px; min-height: 18px; margin: 10px 0 0; }
+
+  /* 主框架 */
+  .topbar {
+    background: #fff; padding: 14px 22px; display: flex; align-items: center; gap: 16px;
+    box-shadow: 0 2px 10px rgba(0,20,40,.06); position: sticky; top: 0; z-index: 20;
+  }
+  .topbar h1 { margin: 0; font-size: 18px; color: #1e3c72; flex: 1; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .badge {
+    font-size: 12px; padding: 6px 12px; border-radius: 20px;
+    background: #e8f6ee; color: #1d7a45; font-weight: 600;
+  }
+  .badge.local { background: #fff4e5; color: #a15c00; }
+
+  .tabs { display: flex; gap: 8px; padding: 14px 22px 0; }
+  .tab {
+    border: none; background: transparent; padding: 12px 20px; border-radius: 14px 14px 0 0;
+    font-size: 14px; font-weight: 600; color: #7b8ba3; cursor: pointer;
+  }
+  .tab.active { background: #fff; color: #1e3c72; box-shadow: 0 -2px 10px rgba(0,20,40,.04); }
+
+  .panel { padding: 18px 22px 60px; max-width: 1080px; margin: 0 auto; }
+
+  /* 卡片/折叠 */
+  .section { background: #fff; border-radius: 18px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,20,40,.05); overflow: hidden; }
+  .section-head {
+    padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; font-weight: 700; color: #1e3c72; font-size: 15px; user-select: none;
+  }
+  .section-head i { transition: transform .2s; color: #91a3bb; }
+  .section-head.collapsed i { transform: rotate(-90deg); }
+  .section-body { padding: 4px 20px 22px; border-top: 1px solid #f1f5fa; }
+
+  /* 表单 */
+  .field { margin-bottom: 18px; }
+  .field > label { display: block; font-weight: 600; margin-bottom: 7px; color: #3c4f68; font-size: 13px; }
+  .field input[type=text], .field input[type=password], .field input[type=url], .field textarea, .field select {
+    width: 100%; padding: 11px 15px; border-radius: 12px; border: 1.5px solid #dbe4f0;
+    font-size: 14px; outline: none; background: #fafcff; font-family: inherit; color: #1e2f4b;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus { border-color: #2a5298; background: #fff; }
+  .field textarea { resize: vertical; min-height: 60px; line-height: 1.5; }
+  .hint { font-size: 12px; color: #8fa0b6; margin-top: 6px; line-height: 1.5; }
+
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .row > .grow { flex: 1; }
+
+  /* 按钮 */
+  .btn {
+    border: none; padding: 10px 18px; border-radius: 40px; font-weight: 600; font-size: 13px;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: .15s;
+    font-family: inherit;
+  }
+  .btn-primary { background: #1e3c72; color: #fff; }
+  .btn-primary:hover { background: #2a5298; }
+  .btn-outline { background: #fff; color: #1e3c72; border: 1.5px solid #cddaea; }
+  .btn-outline:hover { background: #f0f6ff; }
+  .btn-danger { background: #fff0f0; color: #c0392b; border: 1.5px solid #f3c7c2; }
+  .btn-danger:hover { background: #ffe4e0; }
+  .btn-mini { padding: 7px 12px; font-size: 12px; border-radius: 10px; }
+  .btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+  /* 图片字段 */
+  .img-field { margin-bottom: 18px; }
+  .img-field > label { display: block; font-weight: 600; margin-bottom: 7px; color: #3c4f68; font-size: 13px; }
+  .img-thumb {
+    width: 100%; height: 110px; border-radius: 12px; margin-top: 10px;
+    background-size: cover; background-position: center; border: 1px solid #e2eaf4;
+  }
+
+  /* 列表项 */
+  .editor-item {
+    background: #f7fafe; border: 1px solid #e1ebf6; border-radius: 14px;
+    padding: 16px; margin-bottom: 14px;
+  }
+  .editor-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; margin-bottom: 12px; font-weight: 700; color: #1e3c72;
+  }
+
+  /* 调色板 */
+  .palette {
+    position: sticky; top: 66px; z-index: 10; background: #fff; border-radius: 14px;
+    padding: 12px 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 16px; border: 1px solid #e1ebf6; box-shadow: 0 4px 14px rgba(0,20,40,.06);
+  }
+  .palette .label { font-size: 12px; color: #7b8ba3; font-weight: 600; }
+  .swatch {
+    width: 30px; height: 30px; border-radius: 50%; border: 3px solid #fff; cursor: pointer;
+    box-shadow: 0 0 0 1px #d6e0ee; transition: .15s;
+  }
+  .swatch.active { box-shadow: 0 0 0 3px #2a5298; transform: scale(1.12); }
+  .swatch.eraser {
+    width: auto; border-radius: 20px; padding: 0 14px; height: 30px; background: #f1f5fa;
+    color: #566a82; font-size: 12px; font-weight: 700; border: 1px solid #d6e0ee;
+  }
+  .palette input[type=color] {
+    width: 36px; height: 32px; padding: 0; border: 1px solid #d6e0ee; border-radius: 8px;
+    background: #fff; cursor: pointer;
+  }
+
+  /* 字符预览 */
+  .lr-chars {
+    background: #fff; border: 1px solid #e1ebf6; border-radius: 10px; padding: 10px 12px;
+    line-height: 1.8; font-size: 20px; font-weight: 700; min-height: 46px;
+    word-break: break-word; user-select: none;
+  }
+  .lr-char {
+    display: inline-block; cursor: pointer; padding: 0 1px; border-radius: 4px;
+    transition: background .1s;
+  }
+  .lr-char:hover { background: #eaf2ff; }
+  .lr-char.space { min-width: 12px; }
+
+  /* 音频 */
+  .audio-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .audio-row audio { height: 36px; max-width: 100%; }
+
+  /* 录音卡片 */
+  .rec-card {
+    background: #fff; border-radius: 14px; padding: 16px; margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0,20,40,.05); display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+  }
+  .rec-main { flex: 1; min-width: 200px; }
+  .rec-name { font-weight: 700; color: #1e3c72; margin-bottom: 4px; font-size: 15px; }
+  .rec-text { color: #3c4f68; margin-bottom: 4px; word-break: break-word; }
+  .rec-meta { font-size: 12px; color: #91a3bb; }
+  .rec-audio { flex: 0 0 auto; }
+  .rec-audio audio { width: 220px; max-width: 100%; height: 36px; }
+
+  .toolbar {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px;
+    background: #fff; padding: 14px 16px; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,20,40,.05);
+  }
+  .toolbar input, .toolbar select {
+    padding: 9px 14px; border-radius: 10px; border: 1.5px solid #dbe4f0; font-size: 13px;
+    outline: none; background: #fafcff; font-family: inherit;
+  }
+  .toolbar input:focus, .toolbar select:focus { border-color: #2a5298; }
+
+  .empty { text-align: center; color: #8fa0b6; padding: 40px 20px; }
+
+  /* Toast */
+  #toast {
+    position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%) translateY(20px);
+    background: #1e3c72; color: #fff; padding: 12px 24px; border-radius: 40px;
+    font-weight: 600; font-size: 14px; opacity: 0; pointer-events: none; transition: .25s;
+    z-index: 999; box-shadow: 0 10px 30px rgba(0,20,40,.3);
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.error { background: #b53b3b; }
+
+  .help-box {
+    background: #fff8e8; border: 1px solid #f5e0b8; border-radius: 12px; padding: 14px 16px;
+    font-size: 12.5px; color: #7a5a1e; line-height: 1.7; margin-bottom: 16px;
+  }
+  .help-box code {
+    background: #fff; padding: 1px 6px; border-radius: 5px; font-family: monospace;
+    border: 1px solid #eed9b0;
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= 登录 ================= -->
+<div id="loginOverlay" class="overlay">
+  <div class="login-card">
+    <h2>🔐 AI Time 管理后台</h2>
+    <p class="sub">请输入管理密码</p>
+    <input type="password" id="loginPwd" placeholder="管理密码" autocomplete="current-password">
+    <div class="row" style="justify-content:center; gap:10px;">
+      <button class="btn btn-primary" id="loginBtn" style="padding:12px 30px;">登录</button>
+      <button class="btn btn-outline" id="loginSyncBtn" style="padding:12px 20px;">重新同步</button>
+    </div>
+    <p class="login-err" id="loginErr"></p>
+  </div>
+</div>
+
+<!-- ================= 主界面 ================= -->
+<div id="app" class="hidden">
+  <div class="topbar">
+    <h1>🛠 AI Time 管理后台</h1>
+    <div class="topbar-right">
+      <span class="badge" id="statusBadge">☁️ 云端</span>
+      <button class="btn btn-outline" id="pullBtn"><i class="fas fa-cloud-download-alt"></i> 拉取云端</button>
+      <button class="btn btn-primary" id="publishBtn"><i class="fas fa-cloud-upload-alt"></i> 发布到云端</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="settings">⚙️ 站点设置</button>
+    <button class="tab" data-tab="recordings">🎙 学生录音</button>
+  </div>
+
+  <div id="settingsPanel" class="panel"></div>
+  <div id="recordingsPanel" class="panel hidden"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   Supabase 配置 —— 必须与学生端 index.html 保持一致
+   ============================================================ */
+const SUPABASE_URL = 'https://dwagktwarlzkusawrtqq.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3YWdrdHdhcmx6a3VzYXdydHFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MzMwODQsImV4cCI6MjEwNzEwOTA4NH0.5iMbu7R3-LGHjZMFAuRH93sepxJr7bjrWexj3Invlmk';
+const BUCKET = 'site-assets';
+const LS_KEY = 'english_integrated_config';
+
+/* ============================================================
+   默认配置（与学生端一致）
+   ============================================================ */
+const DEFAULT_CONFIG = {
+  settingPassword: '0303',
+  aiTalkButtons: [
+    { id:'aitalk-1', name:'Topic 06 - 1', url:'https://doubao.com/bot/Ew35NrPV', bgUrl:'' },
+    { id:'aitalk-2', name:'Topic 06 - 2', url:'https://doubao.com/bot/3Ts8VUxv', bgUrl:'' },
+    { id:'aitalk-3', name:'Topic 06 - 3', url:'https://doubao.com/bot/dtyTUTvW', bgUrl:'' },
+    { id:'aitalk-4', name:'Topic 06 - 4', url:'https://doubao.com/bot/bqqTQuWx', bgUrl:'' }
+  ],
+  discussionButtons: [
+    { id:'discussion-1', name:'Debate apple', url:'https://doubao.com/bot/ovuVreEm', bgUrl:'' },
+    { id:'discussion-2', name:'Debate Banana', url:'https://doubao.com/bot/VnCWIcTq', bgUrl:'' }
+  ],
+  homeBgUrl:'', gamePageBgUrl:'', rolePlayPageBgUrl:'', listenReadPageBgUrl:'',
+  btnGameBgUrl:'', btnRolePlayBgUrl:'', btnListenReadBgUrl:'', btnAITalkBgUrl:'',
+  gameParts: [
+    { id:'part1', name:'Part 1', games:[
+      { id:'game1', name:'Wordwall Game', embedCode:'<iframe style="max-width:100%" src="https://wordwall.net/embed/fc41e69b25a747f0a439d228a56fcf59?themeId=1&templateId=3&fontStackId=0" width="500" height="380" frameborder="0" allowfullscreen></iframe>', bgUrl:'' }
+    ]},
+    { id:'part2', name:'Part 2', games:[] },
+    { id:'part3', name:'Part 3', games:[] }
+  ],
+  listenReadParts: [
+    { id:'lr-1', name:'Unit 1', bgUrl:'', items:[] },
+    { id:'lr-2', name:'Unit 2', bgUrl:'', items:[] }
+  ]
+};
+
+/* ============================================================
+   全局状态
+   ============================================================ */
+let config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+let configSource = 'local';          // 'cloud' | 'local' | 'default'
+let loggedIn = false;
+let expanded = new Set(['basic']);
+let pickedColor = '#e11d48';
+let currentTab = 'settings';
+let recRows = [];
+let recFilter = { name: '', part: '' };
+
+const PRESET_COLORS = [
+  '#e11d48', '#f97316', '#eab308', '#16a34a',
+  '#0ea5e9', '#6366f1', '#a855f7', '#db2777',
+  '#92400e', '#111827'
+];
+
+/* ============================================================
+   工具函数
+   ============================================================ */
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function encodePath(p) {
+  return String(p).split('/').map(encodeURIComponent).join('/');
+}
+function genId(prefix) {
+  return (prefix || 'id') + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+}
+function toast(msg, isError) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show' + (isError ? ' error' : '');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.className = ''; }, 2600);
+}
+function pickFile(accept) {
+  return new Promise(resolve => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = accept || '*/*';
+    input.onchange = () => resolve(input.files && input.files[0] ? input.files[0] : null);
+    input.click();
+  });
+}
+
+/* ============================================================
+   Supabase 请求封装
+   ============================================================ */
+async function sbFetch(path, options) {
+  options = options || {};
+  const headers = Object.assign({
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_KEY
+  }, options.headers || {});
+  return fetch(SUPABASE_URL + path, Object.assign({}, options, { headers }));
+}
+
+async function uploadFile(file, path, contentType) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodePath(path)}`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'x-upsert': 'true',
+        'Content-Type': contentType || file.type || 'application/octet-stream'
+      },
+      body: file
+    });
+    if (!res.ok) {
+      console.error('upload failed', res.status, await res.text().catch(() => ''));
+      return null;
+    }
+    return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${encodePath(path)}`;
+  } catch (e) {
+    console.error('upload error', e);
+    return null;
+  }
+}
+
+async function deleteStorageFile(path) {
+  if (!path) return false;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodePath(path)}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    return res.ok;
+  } catch (e) { return false; }
+}
+
+function storagePathFromUrl(url) {
+  if (!url) return null;
+  const marker = `/storage/v1/object/public/${BUCKET}/`;
+  const i = url.indexOf(marker);
+  if (i < 0) return null;
+  return decodeURIComponent(url.slice(i + marker.length).split('?')[0]);
+}
+
+/* ============================================================
+   配置：加载 / 规范化 / 发布
+   ============================================================ */
+function normalizeConfig(cfg) {
+  if (!cfg || typeof cfg !== 'object') cfg = {};
+  ['aiTalkButtons','discussionButtons'].forEach(k => { if (!Array.isArray(cfg[k])) cfg[k] = []; });
+  [cfg.aiTalkButtons, cfg.discussionButtons].forEach(arr => arr.forEach(b => {
+    if (typeof b.bgUrl !== 'string') b.bgUrl = '';
+  }));
+
+  if (!Array.isArray(cfg.gameParts) || !cfg.gameParts.length) {
+    cfg.gameParts = JSON.parse(JSON.stringify(DEFAULT_CONFIG.gameParts));
+  }
+  cfg.gameParts.forEach(p => {
+    if (!Array.isArray(p.games)) p.games = [];
+    p.games.forEach(g => {
+      if (typeof g.bgUrl !== 'string') g.bgUrl = '';
+      if (typeof g.embedCode !== 'string') g.embedCode = '';
+    });
+  });
+
+  if (!Array.isArray(cfg.listenReadParts)) cfg.listenReadParts = [];
+  cfg.listenReadParts.forEach(p => {
+    if (!Array.isArray(p.items)) p.items = [];
+    p.items.forEach(it => {
+      if (typeof it.text !== 'string') it.text = '';
+      if (!Array.isArray(it.colors)) it.colors = [];
+      if (typeof it.audioUrl !== 'string') it.audioUrl = '';
+      alignColors(it);
+    });
+  });
+
+  ['homeBgUrl','gamePageBgUrl','rolePlayPageBgUrl','listenReadPageBgUrl',
+   'btnGameBgUrl','btnRolePlayBgUrl','btnListenReadBgUrl','btnAITalkBgUrl'].forEach(f => {
+    if (typeof cfg[f] !== 'string') cfg[f] = '';
+  });
+  if (!cfg.settingPassword) cfg.settingPassword = '0303';
+  return cfg;
+}
+
+function alignColors(item) {
+  const len = Array.from(item.text || '').length;
+  const old = Array.isArray(item.colors) ? item.colors : [];
+  const next = [];
+  for (let i = 0; i < len; i++) next.push(old[i] || '');
+  item.colors = next;
+}
+
+async function loadConfigFromCloud(showToast) {
+  try {
+    const res = await sbFetch('/rest/v1/config?id=eq.1&select=data', { headers: { 'Accept': 'application/json' } });
+    if (!res.ok) throw new Error('http ' + res.status);
+    const rows = await res.json();
+    if (!rows.length || !rows[0].data) throw new Error('empty');
+    config = normalizeConfig(Object.assign({}, DEFAULT_CONFIG, rows[0].data));
+    configSource = 'cloud';
+    localStorage.setItem(LS_KEY, JSON.stringify(config));
+    if (showToast) toast('✅ 已拉取云端配置');
+    return true;
+  } catch (e) {
+    console.warn('云端加载失败', e);
+    if (showToast) toast('⚠️ 云端加载失败', true);
+    return false;
+  }
+}
+
+function loadConfigFromStorage() {
+  const stored = localStorage.getItem(LS_KEY);
+  if (stored) {
+    try {
+      config = normalizeConfig(Object.assign({}, DEFAULT_CONFIG, JSON.parse(stored)));
+      configSource = 'local';
+      return;
+    } catch (e) {}
+  }
+  config = normalizeConfig(JSON.parse(JSON.stringify(DEFAULT_CONFIG)));
+  configSource = 'default';
+}
+
+async function publishToCloud() {
+  if (!confirm('确定要把当前配置发布到云端吗？所有学生端会立即使用新配置。')) return;
+  config.listenReadParts.forEach(p => p.items.forEach(alignColors));
+  const btn = document.getElementById('publishBtn');
+  btn.disabled = true;
+  toast('⏳ 正在发布…');
+  try {
+    const res = await sbFetch('/rest/v1/config?id=eq.1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+      body: JSON.stringify({ data: config })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    configSource = 'cloud';
+    localStorage.setItem(LS_KEY, JSON.stringify(config));
+    updateStatusBadge();
+    toast('🎉 发布成功');
+  } catch (e) {
+    console.error(e);
+    toast('❌ 发布失败：' + (e.message || '未知错误'), true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function updateStatusBadge() {
+  const el = document.getElementById('statusBadge');
+  if (!el) return;
+  const map = {
+    cloud:  { text: '☁️ 云端配置', cls: '' },
+    local:  { text: '💾 本地缓存', cls: 'local' },
+    default:{ text: '📄 默认配置', cls: 'local' }
+  };
+  const m = map[configSource] || map.local;
+  el.textContent = m.text;
+  el.className = 'badge ' + m.cls;
+}
+
+/* ============================================================
+   登录
+   ============================================================ */
+function showLogin() {
+  document.getElementById('loginOverlay').classList.remove('hidden');
+  document.getElementById('app').classList.add('hidden');
+}
+function enterApp() {
+  loggedIn = true;
+  document.getElementById('loginOverlay').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  updateStatusBadge();
+  renderSettings();
+  renderRecordings();
+}
+
+document.getElementById('loginBtn').onclick = () => {
+  const pwd = document.getElementById('loginPwd').value;
+  if (pwd === (config.settingPassword || '0303')) {
+    document.getElementById('loginErr').textContent = '';
+    enterApp();
+  } else {
+    document.getElementById('loginErr').textContent = '密码不正确';
+    document.getElementById('loginPwd').value = '';
+    document.getElementById('loginPwd').focus();
+  }
+};
+document.getElementById('loginPwd').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('loginBtn').click();
+});
+document.getElementById('loginSyncBtn').onclick = async () => {
+  toast('⏳ 同步中…');
+  const ok = await loadConfigFromCloud(false);
+  toast(ok ? '✅ 已同步云端' : '⚠️ 同步失败，使用本地缓存', !ok);
+};
+
+/* ============================================================
+   Tab 切换
+   ============================================================ */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    currentTab = tab.dataset.tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
+    document.getElementById('settingsPanel').classList.toggle('hidden', currentTab !== 'settings');
+    document.getElementById('recordingsPanel').classList.toggle('hidden', currentTab !== 'recordings');
+    if (currentTab === 'recordings') renderRecordings();
+  };
+});
+
+document.getElementById('pullBtn').onclick = async () => {
+  if (!confirm('从云端拉取最新配置将覆盖当前编辑内容，是否继续？')) return;
+  toast('⏳ 拉取中…');
+  const ok = await loadConfigFromCloud(false);
+  if (ok) { renderSettings(); updateStatusBadge(); toast('✅ 已拉取云端配置'); }
+  else toast('❌ 拉取失败', true);
+};
+document.getElementById('publishBtn').onclick = publishToCloud;
+
+/* ============================================================
+   渲染：设置面板
+   ============================================================ */
+function sectionHtml(id, title, body) {
+  const open = expanded.has(id);
+  return `
+    <div class="section" data-section="${id}">
+      <div class="section-head ${open ? '' : 'collapsed'}" data-action="toggle-section" data-section-id="${id}">
+        <span>${title}</span>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="section-body ${open ? '' : 'hidden'}">${body}</div>
+    </div>`;
+}
+
+function imgFieldHtml(opts) {
+  const { label, value, scope, fixedBase, key, id, partId, gameId } = opts;
+  const attrs = [];
+  attrs.push(`data-img-scope="${esc(scope)}"`);
+  attrs.push(`data-fixed="${esc(fixedBase)}"`);
+  if (key) attrs.push(`data-key="${esc(key)}"`);
+  if (id) attrs.push(`data-id="${esc(id)}"`);
+  if (partId) attrs.push(`data-part-id="${esc(partId)}"`);
+  if (gameId) attrs.push(`data-game-id="${esc(gameId)}"`);
+  return `
+    <div class="img-field" ${attrs.join(' ')}>
+      <label>${esc(label)}</label>
+      <div class="row">
+        <input type="text" class="grow img-url" readonly value="${esc(value || '')}" placeholder="未设置">
+        <button class="btn btn-outline btn-mini" data-action="img-upload"><i class="fas fa-upload"></i> 上传</button>
+        <button class="btn btn-danger btn-mini" data-action="img-clear"><i class="fas fa-times"></i></button>
+      </div>
+      ${value ? `<div class="img-thumb" style="background-image:url('${esc(value)}')"></div>` : ''}
+    </div>`;
+}
+
+function paletteHtml() {
+  const swatches = PRESET_COLORS.map(c =>
+    `<button class="swatch ${pickedColor === c ? 'active' : ''}" data-action="pick-color" data-color="${c}" style="background:${c}" title="${c}"></button>`
+  ).join('');
+  return `
+    <div class="palette">
+      <span class="label">🎨 当前颜色：</span>
+      ${swatches}
+      <button class="swatch eraser ${pickedColor === '' ? 'active' : ''}" data-action="pick-color" data-color="">橡皮擦</button>
+      <input type="color" id="customColor" value="${pickedColor || '#e11d48'}" title="自定义颜色">
+    </div>`;
+}
+
+function renderSettings() {
+  const panel = document.getElementById('settingsPanel');
+  const scrollTop = panel.scrollTop;
+  const html = [];
+
+  /* ---- 1. 基本设置 ---- */
+  html.push(sectionHtml('basic', '🔑 基本设置', `
+    <div class="field">
+      <label>管理后台密码</label>
+      <input type="text" data-scope="config" data-key="settingPassword" value="${esc(config.settingPassword)}">
+      <div class="hint">修改后请点击「发布到云端」才会生效</div>
+    </div>
+  `));
+
+  /* ---- 2. 页面背景 ---- */
+  html.push(sectionHtml('pageBg', '🖼 页面背景', `
+    ${imgFieldHtml({ label:'首页背景',     value:config.homeBgUrl,          scope:'config', key:'homeBgUrl',          fixedBase:'home_bg' })}
+    ${imgFieldHtml({ label:'游戏页背景',   value:config.gamePageBgUrl,      scope:'config', key:'gamePageBgUrl',      fixedBase:'game_page_bg' })}
+    ${imgFieldHtml({ label:'Role-Play 页背景', value:config.rolePlayPageBgUrl, scope:'config', key:'rolePlayPageBgUrl', fixedBase:'roleplay_page_bg' })}
+    ${imgFieldHtml({ label:'Listen & Read 页背景', value:config.listenReadPageBgUrl, scope:'config', key:'listenReadPageBgUrl', fixedBase:'listenread_page_bg' })}
+  `));
+
+  /* ---- 3. 主按钮背景 ---- */
+  html.push(sectionHtml('btnBg', '🎛 首页按钮背景', `
+    ${imgFieldHtml({ label:'Game 按钮',       value:config.btnGameBgUrl,      scope:'config', key:'btnGameBgUrl',      fixedBase:'btn_game_bg' })}
+    ${imgFieldHtml({ label:'Role-Play 按钮',  value:config.btnRolePlayBgUrl,  scope:'config', key:'btnRolePlayBgUrl',  fixedBase:'btn_roleplay_bg' })}
+    ${imgFieldHtml({ label:'Listen & Read 按钮', value:config.btnListenReadBgUrl, scope:'config', key:'btnListenReadBgUrl', fixedBase:'btn_listenread_bg' })}
+    ${imgFieldHtml({ label:'AI Talk 按钮',    value:config.btnAITalkBgUrl,    scope:'config', key:'btnAITalkBgUrl',    fixedBase:'btn_aitalk_bg' })}
+  `));
+
+  /* ---- 4. Role Play AI ---- */
+  let aiTalkHtml = '';
+  config.aiTalkButtons.forEach((b, i) => {
+    aiTalkHtml += `
+      <div class="editor-item">
+        <div class="editor-head">
+          <span>🎭 Role-Play ${i + 1}</span>
+          <button class="btn btn-danger btn-mini" data-action="del-aiTalk" data-id="${esc(b.id)}"><i class="fas fa-trash"></i> 删除</button>
+        </div>
+        <div class="field">
+          <label>名称</label>
+          <input type="text" data-scope="aiTalk" data-id="${esc(b.id)}" data-key="name" value="${esc(b.name)}">
+        </div>
+        <div class="field">
+          <label>跳转链接</label>
+          <input type="text" data-scope="aiTalk" data-id="${esc(b.id)}" data-key="url" value="${esc(b.url)}">
+        </div>
+        ${imgFieldHtml({ label:'按钮背景图', value:b.bgUrl, scope:'aiTalk', id:b.id, fixedBase:'aitalk_' + b.id })}
+      </div>`;
+  });
+  html.push(sectionHtml('aiTalkMgmt', '🎭 Role-Play AI 管理', `
+    ${aiTalkHtml || '<p class="empty">暂无按钮</p>'}
+    <button class="btn btn-outline" data-action="add-aiTalk"><i class="fas fa-plus"></i> 新增 Role-Play 按钮</button>
+  `));
+
+  /* ---- 5. AI Talk ---- */
+  let discHtml = '';
+  config.discussionButtons.forEach((b, i) => {
+    discHtml += `
+      <div class="editor-item">
+        <div class="editor-head">
+          <span>💬 AI Talk ${i + 1}</span>
+          <button class="btn btn-danger btn-mini" data-action="del-discussion" data-id="${esc(b.id)}"><i class="fas fa-trash"></i> 删除</button>
+        </div>
+        <div class="field">
+          <label>名称</label>
+          <input type="text" data-scope="discussion" data-id="${esc(b.id)}" data-key="name" value="${esc(b.name)}">
+        </div>
+        <div class="field">
+          <label>跳转链接</label>
+          <input type="text" data-scope="discussion" data-id="${esc(b.id)}" data-key="url" value="${esc(b.url)}">
+        </div>
+        ${imgFieldHtml({ label:'按钮背景图', value:b.bgUrl, scope:'discussion', id:b.id, fixedBase:'discussion_' + b.id })}
+      </div>`;
+  });
+  html.push(sectionHtml('discMgmt', '💬 AI Talk 管理', `
+    ${discHtml || '<p class="empty">暂无按钮</p>'}
+    <button class="btn btn-outline" data-action="add-discussion"><i class="fas fa-plus"></i> 新增 AI Talk 按钮</button>
+  `));
+
+  /* ---- 6. 游戏管理 ---- */
+  let gameHtml = '';
+  config.gameParts.forEach(part => {
+    let gamesHtml = '';
+    (part.games || []).forEach((g, gi) => {
+      gamesHtml += `
+        <div class="editor-item" style="background:#fff;">
+          <div class="editor-head">
+            <span>🎮 游戏 ${gi + 1}</span>
+            <button class="btn btn-danger btn-mini" data-action="del-game" data-part-id="${esc(part.id)}" data-game-id="${esc(g.id)}"><i class="fas fa-trash"></i> 删除</button>
+          </div>
+          <div class="field">
+            <label>游戏名称</label>
+            <input type="text" data-scope="game" data-part-id="${esc(part.id)}" data-game-id="${esc(g.id)}" data-key="name" value="${esc(g.name)}">
+          </div>
+          <div class="field">
+            <label>嵌入代码（iframe）</label>
+            <textarea rows="3" data-scope="game" data-part-id="${esc(part.id)}" data-game-id="${esc(g.id)}" data-key="embedCode">${esc(g.embedCode)}</textarea>
+          </div>
+          ${imgFieldHtml({ label:'游戏按钮背景图', value:g.bgUrl, scope:'game', partId:part.id, gameId:g.id, fixedBase:'game_' + g.id })}
+        </div>`;
+    });
+    gameHtml += `
+      <div class="editor-item">
+        <div class="editor-head">
+          <input type="text" data-scope="gamePart" data-part-id="${esc(part.id)}" data-key="name"
+                 value="${esc(part.name)}"
+                 style="flex:1; padding:10px 14px; border-radius:10px; border:1.5px solid #dbe4f0; font-size:15px; font-weight:700; color:#1e3c72; background:#fff; outline:none;">
+          <button class="btn btn-danger btn-mini" data-action="del-gamePart" data-part-id="${esc(part.id)}"><i class="fas fa-trash-alt"></i> 删除 Part</button>
+        </div>
+        ${gamesHtml || '<p class="empty" style="padding:16px 0;">这个 Part 还没有游戏</p>'}
+        <button class="btn btn-outline btn-mini" data-action="add-game" data-part-id="${esc(part.id)}"><i class="fas fa-plus"></i> 添加游戏</button>
+      </div>`;
+  });
+  html.push(sectionHtml('gameMgmt', '🎮 游戏管理', `
+    ${gameHtml}
+    <button class="btn btn-primary" data-action="add-gamePart"><i class="fas fa-plus"></i> 新建 Part</button>
+  `));
+
+  /* ---- 7. Listen & Read（核心） ---- */
+  html.push(sectionHtml('lrMgmt', '🎧 Listen &amp; Read 管理', buildListenReadHtml()));
+
+  /* ---- 8. 发布 / 导入导出 ---- */
+  html.push(sectionHtml('publish', '☁️ 发布 / 备份', `
+    <div class="help-box">
+      <b>数据库准备（首次使用）</b><br>
+      请在 Supabase 中创建 <code>recordings</code> 表，字段：<br>
+      <code>id bigserial primary key</code>、<code>created_at timestamptz default now()</code>、<code>part_id text</code>、<code>part_name text</code>、<code>item_id text</code>、<code>item_text text</code>、<code>student_name text</code>、<code>file_path text</code>、<code>public_url text</code><br>
+      并为该表与 Storage 桶 <code>${BUCKET}</code> 开启 anon 读写策略。
+    </div>
+    <div class="row">
+      <button class="btn btn-primary" data-action="publish"><i class="fas fa-cloud-upload-alt"></i> 一键发布到云端</button>
+      <button class="btn btn-outline" data-action="export-json"><i class="fas fa-download"></i> 导出 JSON</button>
+      <button class="btn btn-outline" data-action="import-json"><i class="fas fa-upload"></i> 导入 JSON</button>
+      <button class="btn btn-danger" data-action="reset-default"><i class="fas fa-undo"></i> 恢复默认</button>
+    </div>
+  `));
+
+  panel.innerHTML = html.join('');
+
+  // 绑定自定义颜色选择器
+  const cp = document.getElementById('customColor');
+  if (cp) {
+    cp.addEventListener('input', e => {
+      pickedColor = e.target.value;
+      document.querySelectorAll('.palette .swatch').forEach(s => s.classList.remove('active'));
+    });
+  }
+
+  panel.scrollTop = scrollTop;
+}
+
+/* ---- Listen & Read 区块 HTML ---- */
+function buildListenReadHtml() {
+  let partsHtml = '';
+
+  (config.listenReadParts || []).forEach((part, pi) => {
+    let itemsHtml = '';
+    (part.items || []).forEach((it, ii) => {
+      itemsHtml += `
+        <div class="editor-item" style="background:#fff;" data-lr-item="${esc(it.id)}">
+          <div class="editor-head">
+            <span>📝 第 ${ii + 1} 条</span>
+            <button class="btn btn-danger btn-mini" data-action="del-lrItem" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}"><i class="fas fa-trash"></i> 删除</button>
+          </div>
+
+          <div class="field">
+            <label>文本内容（单词 / 句子）</label>
+            <textarea rows="2" data-scope="lrItem" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}" data-key="text" placeholder="例如：Hello world">${esc(it.text)}</textarea>
+          </div>
+
+          <div class="field">
+            <label>逐字母上色（先在顶部选颜色，再点下面字母）</label>
+            <div class="lr-chars" data-chars-for="${esc(it.id)}" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}">
+              ${renderCharsHtml(it)}
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom:0;">
+            <label>标准发音音频（学生点击「常速/龟速」时播放）</label>
+            <div class="audio-row">
+              <button class="btn btn-outline btn-mini" data-action="upload-lrAudio" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}"><i class="fas fa-upload"></i> 上传音频</button>
+              ${it.audioUrl ? `<audio controls src="${esc(it.audioUrl)}"></audio>
+                <button class="btn btn-danger btn-mini" data-action="clear-lrAudio" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}"><i class="fas fa-times"></i> 移除</button>` : '<span class="hint" style="margin:0;">未上传音频（学生端将使用浏览器语音合成）</span>'}
+            </div>
+          </div>
+        </div>`;
+    });
+
+    partsHtml += `
+      <div class="editor-item">
+        <div class="editor-head">
+          <span>📚 单元 ${pi + 1}</span>
+          <button class="btn btn-danger btn-mini" data-action="del-lrPart" data-part-id="${esc(part.id)}"><i class="fas fa-trash-alt"></i> 删除单元</button>
+        </div>
+        <div class="field">
+          <label>单元名称</label>
+          <input type="text" data-scope="lrPart" data-part-id="${esc(part.id)}" data-key="name" value="${esc(part.name)}">
+        </div>
+        ${itemsHtml || '<p class="empty" style="padding:16px 0;">这个单元还没有内容</p>'}
+        <button class="btn btn-outline btn-mini" data-action="add-lrItem" data-part-id="${esc(part.id)}"><i class="fas fa-plus"></i> 添加单词 / 句子</button>
+      </div>`;
+  });
+
+  return `
+    ${paletteHtml()}
+    <div class="hint" style="margin-bottom:16px;">
+      学生端会自动把文本放大到适配屏幕的大小，因此可以放心输入长句子。
+    </div>
+    ${partsHtml}
+    <button class="btn btn-primary" data-action="add-lrPart"><i class="fas fa-plus"></i> 新建单元</button>
+  `;
+}
+
+function renderCharsHtml(item) {
+  const chars = Array.from(item.text || '');
+  if (!chars.length) return '<span style="color:#b6c2d2; font-weight:400; font-size:14px;">（在上方输入文本后，这里会显示可上色的字母）</span>';
+  const colors = item.colors || [];
+  return chars.map((ch, i) => {
+    const c = colors[i] || '';
+    if (ch === '\n') return '<br>';
+    if (ch === ' ') return `<span class="lr-char space" data-action="paint-char" data-item-id="${esc(item.id)}" data-idx="${i}" style="color:${c || '#1e2f4b'}"> </span>`;
+    return `<span class="lr-char" data-action="paint-char" data-item-id="${esc(item.id)}" data-idx="${i}" style="color:${c || '#1e2f4b'}">${esc(ch)}</span>`;
+  }).join('');
+}
+
+/* ============================================================
+   事件委托
+   ============================================================ */
+
+/* ---------- input 输入绑定 ---------- */
+document.addEventListener('input', e => {
+  const el = e.target;
+  const scope = el.dataset.scope;
+  if (!scope) return;
+  const key = el.dataset.key;
+  if (!key) return;
+  const val = el.value;
+
+  if (scope === 'config') {
+    config[key] = val;
+  } else if (scope === 'aiTalk') {
+    const b = config.aiTalkButtons.find(x => x.id === el.dataset.id);
+    if (b) b[key] = val;
+  } else if (scope === 'discussion') {
+    const b = config.discussionButtons.find(x => x.id === el.dataset.id);
+    if (b) b[key] = val;
+  } else if (scope === 'gamePart') {
+    const p = config.gameParts.find(x => x.id === el.dataset.partId);
+    if (p) p[key] = val;
+  } else if (scope === 'game') {
+    const p = config.gameParts.find(x => x.id === el.dataset.partId);
+    const g = p && p.games.find(x => x.id === el.dataset.gameId);
+    if (g) g[key] = val;
+  } else if (scope === 'lrPart') {
+    const p = config.listenReadParts.find(x => x.id === el.dataset.partId);
+    if (p) p[key] = val;
+  } else if (scope === 'lrItem') {
+    const p = config.listenReadParts.find(x => x.id === el.dataset.partId);
+    const it = p && p.items.find(x => x.id === el.dataset.itemId);
+    if (!it) return;
+    if (key === 'text') {
+      it.text = val;
+      alignColors(it);
+      // 只局部刷新字符预览，避免输入框失去焦点
+      const box = document.querySelector(`.lr-chars[data-item-id="${cssEscape(it.id)}"]`);
+      if (box) box.innerHTML = renderCharsHtml(it);
+    } else {
+      it[key] = val;
+    }
+  }
+});
+
+function cssEscape(s) {
+  if (window.CSS && CSS.escape) return CSS.escape(s);
+  return String(s).replace(/[^a-zA-Z0-9_-]/g, ch => '\\' + ch);
+}
+
+/* ---------- click 事件 ---------- */
+document.addEventListener('click', async e => {
+  const target = e.target.closest('[data-action]');
+  if (!target) return;
+  const action = target.dataset.action;
+
+  /* --- 折叠 --- */
+  if (action === 'toggle-section') {
+    const id = target.dataset.sectionId;
+    const body = target.parentElement.querySelector('.section-body');
+    if (expanded.has(id)) { expanded.delete(id); body.classList.add('hidden'); target.classList.add('collapsed'); }
+    else { expanded.add(id); body.classList.remove('hidden'); target.classList.remove('collapsed'); }
+    return;
+  }
+
+  /* --- 选颜色 --- */
+  if (action === 'pick-color') {
+    pickedColor = target.dataset.color || '';
+    document.querySelectorAll('.palette .swatch').forEach(s => s.classList.remove('active'));
+    target.classList.add('active');
+    return;
+  }
+
+  /* --- 给字符上色 --- */
+  if (action === 'paint-char') {
+    const itemId = target.dataset.itemId;
+    const idx = parseInt(target.dataset.idx, 10);
+    const partId = target.closest('.lr-chars').dataset.partId;
+    const part = config.listenReadParts.find(p => p.id === partId);
+    const it = part && part.items.find(x => x.id === itemId);
+    if (!it) return;
+    alignColors(it);
+    it.colors[idx] = pickedColor;
+    target.style.color = pickedColor || '#1e2f4b';
+    return;
+  }
+
+  /* --- 图片上传 --- */
+  if (action === 'img-upload') {
+    const field = target.closest('.img-field');
+    if (!field) return;
+    const file = await pickFile('image/*');
+    if (!file) return;
+    const base = field.dataset.fixed;
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    toast('⏳ 上传中…');
+    const url = await uploadFile(file, `${base}.${ext}`, file.type);
+    if (!url) { toast('❌ 上传失败', true); return; }
+    applyImgFieldValue(field, url + '?t=' + Date.now());
+    toast('✅ 图片已上传');
+    return;
+  }
+
+  /* --- 图片清除 --- */
+  if (action === 'img-clear') {
+    const field = target.closest('.img-field');
+    if (!field) return;
+    const oldVal = field.querySelector('.img-url').value;
+    if (!oldVal) return;
+    if (!confirm('确定清除这张图片吗？')) return;
+    const path = storagePathFromUrl(oldVal);
+    applyImgFieldValue(field, '');
+    if (path) await deleteStorageFile(path);
+    toast('🗑 已清除');
+    return;
+  }
+
+  /* --- 音频上传 --- */
+  if (action === 'upload-lrAudio') {
+    const partId = target.dataset.partId;
+    const itemId = target.dataset.itemId;
+    const part = config.listenReadParts.find(p => p.id === partId);
+    const it = part && part.items.find(x => x.id === itemId);
+    if (!it) return;
+    const file = await pickFile('audio/*');
+    if (!file) return;
+    const ext = (file.name.split('.').pop() || 'mp3').toLowerCase();
+    toast('⏳ 上传音频中…');
+    const url = await uploadFile(file, `lr_audio/${itemId}.${ext}`, file.type);
+    if (!url) { toast('❌ 上传失败', true); return; }
+    it.audioUrl = url + '?t=' + Date.now();
+    // 局部刷新这个 item 的音频行
+    const itemEl = document.querySelector(`.editor-item[data-lr-item="${cssEscape(itemId)}"]`);
+    if (itemEl) {
+      const audioRow = itemEl.querySelector('.audio-row');
+      audioRow.innerHTML = `
+        <button class="btn btn-outline btn-mini" data-action="upload-lrAudio" data-part-id="${esc(partId)}" data-item-id="${esc(itemId)}"><i class="fas fa-upload"></i> 重新上传</button>
+        <audio controls src="${esc(it.audioUrl)}"></audio>
+        <button class="btn btn-danger btn-mini" data-action="clear-lrAudio" data-part-id="${esc(partId)}" data-item-id="${esc(itemId)}"><i class="fas fa-times"></i> 移除</button>`;
+    }
+    toast('✅ 音频已上传');
+    return;
+  }
+
+  /* --- 音频清除 --- */
+  if (action === 'clear-lrAudio') {
+    const partId = target.dataset.partId;
+    const itemId = target.dataset.itemId;
+    const part = config.listenReadParts.find(p => p.id === partId);
+    const it = part && part.items.find(x => x.id === itemId);
+    if (!it) return;
+    if (!confirm('确定移除这条音频吗？')) return;
+    it.audioUrl = '';
+    renderSettings();
+    toast('🗑 已移除音频');
+    return;
+  }
+
+  /* --- 增删改结构 --- */
+  if (action === 'add-aiTalk') {
+    config.aiTalkButtons.push({ id: genId('aitalk'), name: 'New Role-Play', url: 'https://', bgUrl: '' });
+    renderSettings(); toast('已添加');
+    return;
+  }
+  if (action === 'del-aiTalk') {
+    if (!confirm('删除这个 Role-Play 按钮？')) return;
+    config.aiTalkButtons = config.aiTalkButtons.filter(b => b.id !== target.dataset.id);
+    renderSettings(); toast('已删除');
+    return;
+  }
+  if (action === 'add-discussion') {
+    config.discussionButtons.push({ id: genId('discussion'), name: 'New AI Talk', url: 'https://', bgUrl: '' });
+    renderSettings(); toast('已添加');
+    return;
+  }
+  if (action === 'del-discussion') {
+    if (!confirm('删除这个 AI Talk 按钮？')) return;
+    config.discussionButtons = config.discussionButtons.filter(b => b.id !== target.dataset.id);
+    renderSettings(); toast('已删除');
+    return;
+  }
+  if (action === 'add-gamePart') {
+    config.gameParts.push({ id: genId('part'), name: 'New Part', games: [] });
+    renderSettings(); toast('已添加 Part');
+    return;
+  }
+  if (action === 'del-gamePart') {
+    if (config.gameParts.length <= 1) { toast('至少保留一个 Part', true); return; }
+    if (!confirm('删除这个 Part 及其所有游戏？')) return;
+    config.gameParts = config.gameParts.filter(p => p.id !== target.dataset.partId);
+    renderSettings(); toast('已删除');
+    return;
+  }
+  if (action === 'add-game') {
+    const p = config.gameParts.find(x => x.id === target.dataset.partId);
+    if (!p) return;
+    p.games.push({ id: genId('game'), name: 'New Game', embedCode: '<iframe width="500" height="380" src="https://"></iframe>', bgUrl: '' });
+    renderSettings(); toast('已添加游戏');
+    return;
+  }
+  if (action === 'del-game') {
+    if (!confirm('删除这个游戏？')) return;
+    const p = config.gameParts.find(x => x.id === target.dataset.partId);
+    if (!p) return;
+    p.games = p.games.filter(g => g.id !== target.dataset.gameId);
+    renderSettings(); toast('已删除');
+    return;
+  }
+  if (action === 'add-lrPart') {
+    config.listenReadParts.push({ id: genId('lr'), name: 'New Unit', bgUrl: '', items: [] });
+    renderSettings(); toast('已新建单元');
+    return;
+  }
+  if (action === 'del-lrPart') {
+    if (!confirm('删除这个单元及其所有内容？')) return;
+    config.listenReadParts = config.listenReadParts.filter(p => p.id !== target.dataset.partId);
+    renderSettings(); toast('已删除单元');
+    return;
+  }
+  if (action === 'add-lrItem') {
+    const p = config.listenReadParts.find(x => x.id === target.dataset.partId);
+    if (!p) return;
+    p.items.push({ id: genId('lri'), text: '', colors: [], audioUrl: '' });
+    renderSettings(); toast('已添加条目');
+    // 滚动到新条目附近
+    setTimeout(() => {
+      const items = document.querySelectorAll('.editor-item[data-lr-item]');
+      if (items.length) items[items.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 60);
+    return;
+  }
+  if (action === 'del-lrItem') {
+    if (!confirm('删除这条内容？')) return;
+    const p = config.listenReadParts.find(x => x.id === target.dataset.partId);
+    if (!p) return;
+    p.items = p.items.filter(it => it.id !== target.dataset.itemId);
+    renderSettings(); toast('已删除');
+    return;
+  }
+
+  /* --- 发布 / 导入导出 --- */
+  if (action === 'publish') { publishToCloud(); return; }
+  if (action === 'export-json') {
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'english_config.json';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    return;
+  }
+  if (action === 'import-json') {
+    const file = await pickFile('.json,application/json');
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const imported = JSON.parse(ev.target.result);
+        config = normalizeConfig(Object.assign({}, DEFAULT_CONFIG, imported));
+        renderSettings();
+        toast('✅ 已导入（记得发布到云端）');
+      } catch (err) {
+        toast('❌ JSON 格式错误', true);
+      }
+    };
+    reader.readAsText(file);
+    return;
+  }
+  if (action === 'reset-default') {
+    if (!confirm('恢复默认配置会覆盖当前所有设置，确定吗？')) return;
+    config = normalizeConfig(JSON.parse(JSON.stringify(DEFAULT_CONFIG)));
+    renderSettings();
+    toast('已恢复默认配置');
+    return;
+  }
+
+  /* --- 录音删除 --- */
+  if (action === 'delete-recording') {
+    if (!confirm('删除这条录音？')) return;
+    const id = target.dataset.id;
+    const path = target.dataset.path;
+    target.disabled = true;
+    try {
+      await sbFetch(`/rest/v1/recordings?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (path) await deleteStorageFile(path);
+      recRows = recRows.filter(r => String(r.id) !== String(id));
+      renderRecordings();
+      toast('🗑 已删除');
+    } catch (e) {
+      toast('删除失败', true);
+      target.disabled = false;
+    }
+    return;
+  }
+});
+
+/* 给某个图片字段写入值并局部刷新 UI */
+function applyImgFieldValue(field, value) {
+  const scope = field.dataset.imgScope;
+  const urlInput = field.querySelector('.img-url');
+  let target = null;
+
+  if (scope === 'config') {
+    config[field.dataset.key] = value;
+  } else if (scope === 'aiTalk') {
+    const b = config.aiTalkButtons.find(x => x.id === field.dataset.id);
+    if (b) b.bgUrl = value;
+  } else if (scope === 'discussion') {
+    const b = config.discussionButtons.find(x => x.id === field.dataset.id);
+    if (b) b.bgUrl = value;
+  } else if (scope === 'game') {
+    const p = config.gameParts.find(x => x.id === field.dataset.partId);
+    const g = p && p.games.find(x => x.id === field.dataset.gameId);
+    if (g) g.bgUrl = value;
+  } else if (scope === 'lrPart') {
+    const p = config.listenReadParts.find(x => x.id === field.dataset.partId);
+    if (p) p.bgUrl = value;
+  }
+
+  if (urlInput) urlInput.value = value;
+  let thumb = field.querySelector('.img-thumb');
+  if (value) {
+    if (!thumb) {
+      thumb = document.createElement('div');
+      thumb.className = 'img-thumb';
+      field.appendChild(thumb);
+    }
+    thumb.style.backgroundImage = `url('${value}')`;
+  } else if (thumb) {
+    thumb.remove();
+  }
+}
+
+/* ============================================================
+   渲染：学生录音
+   ============================================================ */
+async function renderRecordings() {
+  const panel = document.getElementById('recordingsPanel');
+  panel.innerHTML = `
+    <div class="toolbar">
+      <input type="text" id="recNameFilter" placeholder="按学生名字筛选" value="${esc(recFilter.name)}" style="min-width:180px;">
+      <select id="recPartFilter">
+        <option value="">全部单元</option>
+        ${config.listenReadParts.map(p => `<option value="${esc(p.id)}" ${recFilter.part === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
+      </select>
+      <button class="btn btn-outline btn-mini" id="recRefreshBtn"><i class="fas fa-sync"></i> 刷新</button>
+      <span class="hint" style="margin:0;" id="recCount"></span>
+    </div>
+    <div id="recList"><p class="empty">加载中…</p></div>`;
+
+  document.getElementById('recNameFilter').oninput = e => {
+    recFilter.name = e.target.value.trim();
+    paintRecList();
+  };
+  document.getElementById('recPartFilter').onchange = e => {
+    recFilter.part = e.target.value;
+    paintRecList();
+  };
+  document.getElementById('recRefreshBtn').onclick = () => loadRecordings(true);
+
+  await loadRecordings(false);
+}
+
+async function loadRecordings(showToast) {
+  const listEl = document.getElementById('recList');
+  if (!listEl) return;
+  listEl.innerHTML = '<p class="empty">加载中…</p>';
+  try {
+    const res = await sbFetch('/rest/v1/recordings?select=*&order=created_at.desc&limit=1000', {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => '');
+      throw new Error('HTTP ' + res.status + ' ' + t.slice(0, 120));
+    }
+    recRows = await res.json();
+    paintRecList();
+    if (showToast) toast('✅ 已刷新');
+  } catch (e) {
+    console.error(e);
+    listEl.innerHTML = `
+      <div class="help-box" style="background:#fff0f0;border-color:#f3c7c2;color:#a03528;">
+        <b>读取录音失败</b><br>
+        请确认 Supabase 中已创建 <code>recordings</code> 表并允许 anon 读取。<br>
+        <span style="font-size:12px;opacity:.8;">错误信息：${esc(e.message)}</span>
+      </div>`;
+    if (showToast) toast('读取失败', true);
+  }
+}
+
+function paintRecList() {
+  const listEl = document.getElementById('recList');
+  const countEl = document.getElementById('recCount');
+  if (!listEl) return;
+
+  let rows = recRows.slice();
+  if (recFilter.name) {
+    const kw = recFilter.name.toLowerCase();
+    rows = rows.filter(r => (r.student_name || '').toLowerCase().includes(kw));
+  }
+  if (recFilter.part) {
+    rows = rows.filter(r => r.part_id === recFilter.part);
+  }
+
+  if (countEl) countEl.textContent = `共 ${rows.length} 条录音`;
+
+  if (!rows.length) {
+    listEl.innerHTML = '<p class="empty">暂无录音</p>';
+    return;
+  }
+
+  listEl.innerHTML = rows.map(r => `
+    <div class="rec-card">
+      <div class="rec-main">
+        <div class="rec-name">
+          <i class="fas fa-user-circle"></i> ${esc(r.student_name || '未命名')}
+          <span style="font-weight:400;color:#91a3bb;font-size:13px;margin-left:6px;">· ${esc(r.part_name || r.part_id || '')}</span>
+        </div>
+        <div class="rec-text">${esc(r.item_text || '')}</div>
+        <div class="rec-meta">${esc(formatTime(r.created_at))}</div>
+      </div>
+      <div class="rec-audio">
+        ${r.public_url ? `<audio controls preload="none" src="${esc(r.public_url)}"></audio>` : '<span class="hint" style="margin:0;">无音频文件</span>'}
+      </div>
+      <button class="btn btn-danger btn-mini" data-action="delete-recording" data-id="${esc(r.id)}" data-path="${esc(r.file_path || '')}">
+        <i class="fas fa-trash"></i>
+      </button>
+    </div>`).join('');
+}
+
+function formatTime(t) {
+  if (!t) return '';
+  try {
+    return new Date(t).toLocaleString('zh-CN', { hour12: false });
+  } catch (e) { return t; }
+}
+
+/* ============================================================
+   启动
+   ============================================================ */
+(async function init() {
+  loadConfigFromStorage();
+  showLogin();
+  // 尝试拉取云端；无论成功与否都停留在登录页
+  const ok = await loadConfigFromCloud(false);
+  if (ok) updateStatusBadge();
+  // 若已登录（刷新后重新进入），需要重新校验密码
+  document.getElementById('loginPwd').focus();
+})();
+</script>
+</body>
+</html>
