@@ -52,7 +52,7 @@
   }
   .tab.active { background: #fff; color: #1e3c72; box-shadow: 0 -2px 10px rgba(0,20,40,.04); }
 
-  .panel { padding: 18px 22px 60px; max-width: 1080px; margin: 0 auto; }
+  .panel { padding: 18px 22px 120px; max-width: 1080px; margin: 0 auto; }
 
   /* 卡片/折叠 */
   .section { background: #fff; border-radius: 18px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,20,40,.05); overflow: hidden; }
@@ -111,23 +111,35 @@
     gap: 10px; margin-bottom: 12px; font-weight: 700; color: #1e3c72;
   }
 
-  /* 调色板 */
-  .palette {
-    position: sticky; top: 66px; z-index: 10; background: #fff; border-radius: 14px;
-    padding: 12px 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    margin-bottom: 16px; border: 1px solid #e1ebf6; box-shadow: 0 4px 14px rgba(0,20,40,.06);
+  /* 调色板（浮动版） */
+  .floating-palette {
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+    z-index: 60; max-width: min(760px, calc(100vw - 120px));
   }
-  .palette .label { font-size: 12px; color: #7b8ba3; font-weight: 600; }
+  .fp-inner {
+    display: flex; align-items: center; gap: 10px;
+    background: #fff; border-radius: 18px; padding: 10px 14px;
+    box-shadow: 0 12px 34px rgba(0,20,40,.22); border: 1px solid #e1ebf6;
+  }
+  .fp-body { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .floating-palette.collapsed .fp-body { display: none; }
+  .floating-palette.collapsed .fp-inner { padding: 8px; }
+  .fp-toggle {
+    width: 40px; height: 40px; border-radius: 50%; border: none; background: #eef4ff;
+    color: #2a5298; font-size: 16px; cursor: pointer; flex-shrink: 0;
+  }
+  .fp-toggle:hover { background: #dce9ff; }
+  .fp-body .label { font-size: 12px; color: #7b8ba3; font-weight: 600; white-space: nowrap; }
   .swatch {
     width: 30px; height: 30px; border-radius: 50%; border: 3px solid #fff; cursor: pointer;
-    box-shadow: 0 0 0 1px #d6e0ee; transition: .15s;
+    box-shadow: 0 0 0 1px #d6e0ee; transition: .15s; flex-shrink: 0;
   }
   .swatch.active { box-shadow: 0 0 0 3px #2a5298; transform: scale(1.12); }
   .swatch.eraser {
     width: auto; border-radius: 20px; padding: 0 14px; height: 30px; background: #f1f5fa;
     color: #566a82; font-size: 12px; font-weight: 700; border: 1px solid #d6e0ee;
   }
-  .palette input[type=color] {
+  .floating-palette input[type=color] {
     width: 36px; height: 32px; padding: 0; border: 1px solid #d6e0ee; border-radius: 8px;
     background: #fff; cursor: pointer;
   }
@@ -149,14 +161,35 @@
   .audio-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
   .audio-row audio { height: 36px; max-width: 100%; }
 
-  /* 录音卡片 */
-  .rec-card {
-    background: #fff; border-radius: 14px; padding: 16px; margin-bottom: 12px;
-    box-shadow: 0 2px 8px rgba(0,20,40,.05); display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+  /* 录音卡片（分组） */
+  .student-group {
+    background: #fff; border-radius: 16px; margin-bottom: 12px;
+    box-shadow: 0 2px 10px rgba(0,20,40,.06); overflow: hidden;
   }
-  .rec-main { flex: 1; min-width: 200px; }
-  .rec-name { font-weight: 700; color: #1e3c72; margin-bottom: 4px; font-size: 15px; }
-  .rec-text { color: #3c4f68; margin-bottom: 4px; word-break: break-word; }
+  .student-head {
+    width: 100%; border: none; background: #fff; display: flex; align-items: center;
+    gap: 12px; padding: 14px 16px; cursor: pointer; font-family: inherit; text-align: left;
+  }
+  .student-head:hover { background: #f7fafe; }
+  .avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg,#2a5298,#1e3c72); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 16px; flex-shrink: 0;
+  }
+  .student-name { font-weight: 700; color: #1e3c72; font-size: 15px; }
+  .student-count { background: #eef4ff; color: #2a5298; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+  .student-latest { margin-left: auto; font-size: 12px; color: #91a3bb; }
+  .student-head i { color: #91a3bb; transition: transform .2s; }
+  .student-group.open .student-head i { transform: rotate(180deg); }
+  .student-body { padding: 0 12px 12px; border-top: 1px solid #f1f5fa; }
+
+  .rec-card {
+    background: #f7fafe; border-radius: 12px; padding: 14px; margin-top: 10px;
+    display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+  }
+  .rec-main { flex: 1; min-width: 180px; }
+  .rec-text { color: #3c4f68; margin-bottom: 4px; word-break: break-word; font-weight: 600; }
   .rec-meta { font-size: 12px; color: #91a3bb; }
   .rec-audio { flex: 0 0 auto; }
   .rec-audio audio { width: 220px; max-width: 100%; height: 36px; }
@@ -175,7 +208,7 @@
 
   /* Toast */
   #toast {
-    position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%) translateY(20px);
+    position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%) translateY(20px);
     background: #1e3c72; color: #fff; padding: 12px 24px; border-radius: 40px;
     font-weight: 600; font-size: 14px; opacity: 0; pointer-events: none; transition: .25s;
     z-index: 999; box-shadow: 0 10px 30px rgba(0,20,40,.3);
@@ -191,6 +224,56 @@
     background: #fff; padding: 1px 6px; border-radius: 5px; font-family: monospace;
     border: 1px solid #eed9b0;
   }
+
+  /* 搜索悬浮按钮 */
+  .search-fab {
+    position: fixed; right: 20px; bottom: 20px; width: 54px; height: 54px; border-radius: 50%;
+    border: none; background: #1e3c72; color: #fff; font-size: 20px; cursor: pointer;
+    box-shadow: 0 10px 26px rgba(30,60,114,.4); z-index: 70;
+    display: flex; align-items: center; justify-content: center; transition: .2s;
+  }
+  .search-fab:hover { transform: translateY(-2px) scale(1.05); background: #2a5298; }
+
+  /* 搜索面板 */
+  .search-panel {
+    position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+    width: min(560px, calc(100vw - 32px)); max-height: 70vh; z-index: 80;
+    background: #fff; border-radius: 18px; box-shadow: 0 24px 60px rgba(0,20,40,.28);
+    display: flex; flex-direction: column; overflow: hidden; border: 1px solid #e1ebf6;
+  }
+  .search-input-wrap { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid #f1f5fa; }
+  .search-input-wrap > i { color: #91a3bb; }
+  .search-input-wrap input {
+    flex: 1; border: none; outline: none; font-size: 16px; background: transparent;
+    font-family: inherit; color: #1e2f4b;
+  }
+  .search-input-wrap kbd {
+    font-size: 11px; background: #f1f5fa; border: 1px solid #dde6f0; border-radius: 6px;
+    padding: 2px 6px; color: #7b8ba3; font-family: inherit;
+  }
+  .search-results { overflow-y: auto; padding: 8px; }
+  .search-item {
+    display: flex; align-items: center; gap: 12px; padding: 11px 14px;
+    border-radius: 10px; cursor: pointer;
+  }
+  .search-item:hover, .search-item.active { background: #eef4ff; }
+  .search-item .si-icon {
+    width: 32px; height: 32px; border-radius: 9px; background: #eef4ff; color: #2a5298;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .search-item .si-main { flex: 1; min-width: 0; }
+  .search-item .si-label {
+    font-weight: 600; color: #1e2f4b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .search-item .si-sub { font-size: 12px; color: #91a3bb; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .search-empty { text-align: center; color: #8fa0b6; padding: 30px 20px; font-size: 13px; }
+
+  /* 搜索定位高亮 */
+  @keyframes hlPulse {
+    0%, 100% { box-shadow: 0 2px 10px rgba(0,20,40,.05); }
+    25%, 75% { box-shadow: 0 0 0 3px #2a5298, 0 10px 30px rgba(42,82,152,.3); }
+  }
+  .search-highlight { animation: hlPulse 1.8s ease; }
 </style>
 </head>
 <body>
@@ -227,6 +310,20 @@
 
   <div id="settingsPanel" class="panel"></div>
   <div id="recordingsPanel" class="panel hidden"></div>
+</div>
+
+<!-- 浮动调色板 -->
+<div id="floatingPalette" class="floating-palette hidden"></div>
+
+<!-- 搜索 -->
+<button id="searchFab" class="search-fab hidden" title="搜索 (Ctrl+K)"><i class="fas fa-search"></i></button>
+<div id="searchPanel" class="search-panel hidden">
+  <div class="search-input-wrap">
+    <i class="fas fa-search"></i>
+    <input id="searchInput" placeholder="搜索设置、按钮、句子、学生名字…" autocomplete="off">
+    <kbd>Ctrl K</kbd>
+  </div>
+  <div class="search-results" id="searchResults"></div>
 </div>
 
 <div id="toast"></div>
@@ -276,13 +373,14 @@ const DEFAULT_CONFIG = {
    全局状态
    ============================================================ */
 let config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-let configSource = 'local';          // 'cloud' | 'local' | 'default'
+let configSource = 'local';
 let loggedIn = false;
 let expanded = new Set(['basic']);
 let pickedColor = '#e11d48';
 let currentTab = 'settings';
 let recRows = [];
 let recFilter = { name: '', part: '' };
+let expandedStudents = new Set();
 
 const PRESET_COLORS = [
   '#e11d48', '#f97316', '#eab308', '#16a34a',
@@ -298,11 +396,13 @@ function esc(s) {
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
-function encodePath(p) {
-  return String(p).split('/').map(encodeURIComponent).join('/');
-}
+function encodePath(p) { return String(p).split('/').map(encodeURIComponent).join('/'); }
 function genId(prefix) {
   return (prefix || 'id') + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+}
+function cssEscape(s) {
+  if (window.CSS && CSS.escape) return CSS.escape(s);
+  return String(s).replace(/[^a-zA-Z0-9_-]/g, ch => '\\' + ch);
 }
 function toast(msg, isError) {
   const el = document.getElementById('toast');
@@ -320,6 +420,11 @@ function pickFile(accept) {
     input.click();
   });
 }
+function formatTime(t) {
+  if (!t) return '';
+  try { return new Date(t).toLocaleString('zh-CN', { hour12: false }); }
+  catch (e) { return t; }
+}
 
 /* ============================================================
    Supabase 请求封装
@@ -332,7 +437,6 @@ async function sbFetch(path, options) {
   }, options.headers || {});
   return fetch(SUPABASE_URL + path, Object.assign({}, options, { headers }));
 }
-
 async function uploadFile(file, path, contentType) {
   try {
     const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodePath(path)}`, {
@@ -355,7 +459,6 @@ async function uploadFile(file, path, contentType) {
     return null;
   }
 }
-
 async function deleteStorageFile(path) {
   if (!path) return false;
   try {
@@ -366,7 +469,6 @@ async function deleteStorageFile(path) {
     return res.ok;
   } catch (e) { return false; }
 }
-
 function storagePathFromUrl(url) {
   if (!url) return null;
   const marker = `/storage/v1/object/public/${BUCKET}/`;
@@ -414,7 +516,6 @@ function normalizeConfig(cfg) {
   if (!cfg.settingPassword) cfg.settingPassword = '0303';
   return cfg;
 }
-
 function alignColors(item) {
   const len = Array.from(item.text || '').length;
   const old = Array.isArray(item.colors) ? item.colors : [];
@@ -440,7 +541,6 @@ async function loadConfigFromCloud(showToast) {
     return false;
   }
 }
-
 function loadConfigFromStorage() {
   const stored = localStorage.getItem(LS_KEY);
   if (stored) {
@@ -453,7 +553,6 @@ function loadConfigFromStorage() {
   config = normalizeConfig(JSON.parse(JSON.stringify(DEFAULT_CONFIG)));
   configSource = 'default';
 }
-
 async function publishToCloud() {
   if (!confirm('确定要把当前配置发布到云端吗？所有学生端会立即使用新配置。')) return;
   config.listenReadParts.forEach(p => p.items.forEach(alignColors));
@@ -478,7 +577,6 @@ async function publishToCloud() {
     btn.disabled = false;
   }
 }
-
 function updateStatusBadge() {
   const el = document.getElementById('statusBadge');
   if (!el) return;
@@ -503,11 +601,11 @@ function enterApp() {
   loggedIn = true;
   document.getElementById('loginOverlay').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
+  document.getElementById('searchFab').classList.remove('hidden');
   updateStatusBadge();
   renderSettings();
   renderRecordings();
 }
-
 document.getElementById('loginBtn').onclick = () => {
   const pwd = document.getElementById('loginPwd').value;
   if (pwd === (config.settingPassword || '0303')) {
@@ -538,6 +636,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.getElementById('settingsPanel').classList.toggle('hidden', currentTab !== 'settings');
     document.getElementById('recordingsPanel').classList.toggle('hidden', currentTab !== 'recordings');
     if (currentTab === 'recordings') renderRecordings();
+    updateFloatingPalette();
   };
 });
 
@@ -549,6 +648,40 @@ document.getElementById('pullBtn').onclick = async () => {
   else toast('❌ 拉取失败', true);
 };
 document.getElementById('publishBtn').onclick = publishToCloud;
+
+/* ============================================================
+   浮动调色板
+   ============================================================ */
+function updateFloatingPalette() {
+  let el = document.getElementById('floatingPalette');
+  if (!el) return;
+  const show = loggedIn && currentTab === 'settings';
+  el.classList.toggle('hidden', !show);
+  if (!show) return;
+
+  const collapsed = localStorage.getItem('fp_collapsed') === '1';
+  el.classList.toggle('collapsed', collapsed);
+
+  el.innerHTML = `
+    <div class="fp-inner">
+      <button class="fp-toggle" id="fpToggle" title="展开 / 收起调色板"><i class="fas fa-palette"></i></button>
+      <div class="fp-body">
+        <span class="label">🎨 选颜色 → 点字母：</span>
+        ${PRESET_COLORS.map(c =>
+          `<button class="swatch ${pickedColor === c ? 'active' : ''}" data-action="pick-color" data-color="${c}" style="background:${c}" title="${c}"></button>`
+        ).join('')}
+        <button class="swatch eraser ${pickedColor === '' ? 'active' : ''}" data-action="pick-color" data-color="">橡皮擦</button>
+        <input type="color" id="customColor" value="${pickedColor || '#e11d48'}" title="自定义颜色">
+      </div>
+    </div>`;
+}
+document.getElementById('floatingPalette').addEventListener('click', e => {
+  if (e.target.closest('#fpToggle')) {
+    const el = document.getElementById('floatingPalette');
+    const collapsed = el.classList.toggle('collapsed');
+    localStorage.setItem('fp_collapsed', collapsed ? '1' : '0');
+  }
+});
 
 /* ============================================================
    渲染：设置面板
@@ -564,7 +697,6 @@ function sectionHtml(id, title, body) {
       <div class="section-body ${open ? '' : 'hidden'}">${body}</div>
     </div>`;
 }
-
 function imgFieldHtml(opts) {
   const { label, value, scope, fixedBase, key, id, partId, gameId } = opts;
   const attrs = [];
@@ -586,25 +718,11 @@ function imgFieldHtml(opts) {
     </div>`;
 }
 
-function paletteHtml() {
-  const swatches = PRESET_COLORS.map(c =>
-    `<button class="swatch ${pickedColor === c ? 'active' : ''}" data-action="pick-color" data-color="${c}" style="background:${c}" title="${c}"></button>`
-  ).join('');
-  return `
-    <div class="palette">
-      <span class="label">🎨 当前颜色：</span>
-      ${swatches}
-      <button class="swatch eraser ${pickedColor === '' ? 'active' : ''}" data-action="pick-color" data-color="">橡皮擦</button>
-      <input type="color" id="customColor" value="${pickedColor || '#e11d48'}" title="自定义颜色">
-    </div>`;
-}
-
 function renderSettings() {
   const panel = document.getElementById('settingsPanel');
   const scrollTop = panel.scrollTop;
   const html = [];
 
-  /* ---- 1. 基本设置 ---- */
   html.push(sectionHtml('basic', '🔑 基本设置', `
     <div class="field">
       <label>管理后台密码</label>
@@ -613,23 +731,21 @@ function renderSettings() {
     </div>
   `));
 
-  /* ---- 2. 页面背景 ---- */
   html.push(sectionHtml('pageBg', '🖼 页面背景', `
-    ${imgFieldHtml({ label:'首页背景',     value:config.homeBgUrl,          scope:'config', key:'homeBgUrl',          fixedBase:'home_bg' })}
-    ${imgFieldHtml({ label:'游戏页背景',   value:config.gamePageBgUrl,      scope:'config', key:'gamePageBgUrl',      fixedBase:'game_page_bg' })}
+    ${imgFieldHtml({ label:'首页背景', value:config.homeBgUrl, scope:'config', key:'homeBgUrl', fixedBase:'home_bg' })}
+    ${imgFieldHtml({ label:'游戏页背景', value:config.gamePageBgUrl, scope:'config', key:'gamePageBgUrl', fixedBase:'game_page_bg' })}
     ${imgFieldHtml({ label:'Role-Play 页背景', value:config.rolePlayPageBgUrl, scope:'config', key:'rolePlayPageBgUrl', fixedBase:'roleplay_page_bg' })}
     ${imgFieldHtml({ label:'Listen & Read 页背景', value:config.listenReadPageBgUrl, scope:'config', key:'listenReadPageBgUrl', fixedBase:'listenread_page_bg' })}
   `));
 
-  /* ---- 3. 主按钮背景 ---- */
   html.push(sectionHtml('btnBg', '🎛 首页按钮背景', `
-    ${imgFieldHtml({ label:'Game 按钮',       value:config.btnGameBgUrl,      scope:'config', key:'btnGameBgUrl',      fixedBase:'btn_game_bg' })}
-    ${imgFieldHtml({ label:'Role-Play 按钮',  value:config.btnRolePlayBgUrl,  scope:'config', key:'btnRolePlayBgUrl',  fixedBase:'btn_roleplay_bg' })}
+    ${imgFieldHtml({ label:'Game 按钮', value:config.btnGameBgUrl, scope:'config', key:'btnGameBgUrl', fixedBase:'btn_game_bg' })}
+    ${imgFieldHtml({ label:'Role-Play 按钮', value:config.btnRolePlayBgUrl, scope:'config', key:'btnRolePlayBgUrl', fixedBase:'btn_roleplay_bg' })}
     ${imgFieldHtml({ label:'Listen & Read 按钮', value:config.btnListenReadBgUrl, scope:'config', key:'btnListenReadBgUrl', fixedBase:'btn_listenread_bg' })}
-    ${imgFieldHtml({ label:'AI Talk 按钮',    value:config.btnAITalkBgUrl,    scope:'config', key:'btnAITalkBgUrl',    fixedBase:'btn_aitalk_bg' })}
+    ${imgFieldHtml({ label:'AI Talk 按钮', value:config.btnAITalkBgUrl, scope:'config', key:'btnAITalkBgUrl', fixedBase:'btn_aitalk_bg' })}
   `));
 
-  /* ---- 4. Role Play AI ---- */
+  /* Role Play AI */
   let aiTalkHtml = '';
   config.aiTalkButtons.forEach((b, i) => {
     aiTalkHtml += `
@@ -654,7 +770,7 @@ function renderSettings() {
     <button class="btn btn-outline" data-action="add-aiTalk"><i class="fas fa-plus"></i> 新增 Role-Play 按钮</button>
   `));
 
-  /* ---- 5. AI Talk ---- */
+  /* AI Talk */
   let discHtml = '';
   config.discussionButtons.forEach((b, i) => {
     discHtml += `
@@ -679,7 +795,7 @@ function renderSettings() {
     <button class="btn btn-outline" data-action="add-discussion"><i class="fas fa-plus"></i> 新增 AI Talk 按钮</button>
   `));
 
-  /* ---- 6. 游戏管理 ---- */
+  /* 游戏 */
   let gameHtml = '';
   config.gameParts.forEach(part => {
     let gamesHtml = '';
@@ -718,10 +834,10 @@ function renderSettings() {
     <button class="btn btn-primary" data-action="add-gamePart"><i class="fas fa-plus"></i> 新建 Part</button>
   `));
 
-  /* ---- 7. Listen & Read（核心） ---- */
+  /* Listen & Read */
   html.push(sectionHtml('lrMgmt', '🎧 Listen &amp; Read 管理', buildListenReadHtml()));
 
-  /* ---- 8. 发布 / 导入导出 ---- */
+  /* 发布 */
   html.push(sectionHtml('publish', '☁️ 发布 / 备份', `
     <div class="help-box">
       <b>数据库准备（首次使用）</b><br>
@@ -738,20 +854,11 @@ function renderSettings() {
   `));
 
   panel.innerHTML = html.join('');
-
-  // 绑定自定义颜色选择器
-  const cp = document.getElementById('customColor');
-  if (cp) {
-    cp.addEventListener('input', e => {
-      pickedColor = e.target.value;
-      document.querySelectorAll('.palette .swatch').forEach(s => s.classList.remove('active'));
-    });
-  }
-
   panel.scrollTop = scrollTop;
+
+  updateFloatingPalette();
 }
 
-/* ---- Listen & Read 区块 HTML ---- */
 function buildListenReadHtml() {
   let partsHtml = '';
 
@@ -771,7 +878,7 @@ function buildListenReadHtml() {
           </div>
 
           <div class="field">
-            <label>逐字母上色（先在顶部选颜色，再点下面字母）</label>
+            <label>逐字母上色（底部浮动调色板选颜色，再点下面字母）</label>
             <div class="lr-chars" data-chars-for="${esc(it.id)}" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}">
               ${renderCharsHtml(it)}
             </div>
@@ -804,9 +911,8 @@ function buildListenReadHtml() {
   });
 
   return `
-    ${paletteHtml()}
     <div class="hint" style="margin-bottom:16px;">
-      学生端会自动把文本放大到适配屏幕的大小，因此可以放心输入长句子。
+      学生端会自动把文本放大到适配屏幕的大小，因此可以放心输入长句子。调色板已悬浮在页面底部，随时可用。
     </div>
     ${partsHtml}
     <button class="btn btn-primary" data-action="add-lrPart"><i class="fas fa-plus"></i> 新建单元</button>
@@ -832,6 +938,14 @@ function renderCharsHtml(item) {
 /* ---------- input 输入绑定 ---------- */
 document.addEventListener('input', e => {
   const el = e.target;
+
+  // 自定义颜色选择器
+  if (el.id === 'customColor') {
+    pickedColor = el.value;
+    document.querySelectorAll('.floating-palette .swatch').forEach(s => s.classList.remove('active'));
+    return;
+  }
+
   const scope = el.dataset.scope;
   if (!scope) return;
   const key = el.dataset.key;
@@ -863,7 +977,6 @@ document.addEventListener('input', e => {
     if (key === 'text') {
       it.text = val;
       alignColors(it);
-      // 只局部刷新字符预览，避免输入框失去焦点
       const box = document.querySelector(`.lr-chars[data-item-id="${cssEscape(it.id)}"]`);
       if (box) box.innerHTML = renderCharsHtml(it);
     } else {
@@ -872,18 +985,13 @@ document.addEventListener('input', e => {
   }
 });
 
-function cssEscape(s) {
-  if (window.CSS && CSS.escape) return CSS.escape(s);
-  return String(s).replace(/[^a-zA-Z0-9_-]/g, ch => '\\' + ch);
-}
-
 /* ---------- click 事件 ---------- */
 document.addEventListener('click', async e => {
   const target = e.target.closest('[data-action]');
   if (!target) return;
   const action = target.dataset.action;
 
-  /* --- 折叠 --- */
+  /* 折叠 section */
   if (action === 'toggle-section') {
     const id = target.dataset.sectionId;
     const body = target.parentElement.querySelector('.section-body');
@@ -892,15 +1000,15 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  /* --- 选颜色 --- */
+  /* 选颜色 */
   if (action === 'pick-color') {
     pickedColor = target.dataset.color || '';
-    document.querySelectorAll('.palette .swatch').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.floating-palette .swatch').forEach(s => s.classList.remove('active'));
     target.classList.add('active');
     return;
   }
 
-  /* --- 给字符上色 --- */
+  /* 给字母上色 */
   if (action === 'paint-char') {
     const itemId = target.dataset.itemId;
     const idx = parseInt(target.dataset.idx, 10);
@@ -914,7 +1022,7 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  /* --- 图片上传 --- */
+  /* 图片上传 */
   if (action === 'img-upload') {
     const field = target.closest('.img-field');
     if (!field) return;
@@ -930,7 +1038,7 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  /* --- 图片清除 --- */
+  /* 图片清除 */
   if (action === 'img-clear') {
     const field = target.closest('.img-field');
     if (!field) return;
@@ -944,7 +1052,7 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  /* --- 音频上传 --- */
+  /* 音频上传 */
   if (action === 'upload-lrAudio') {
     const partId = target.dataset.partId;
     const itemId = target.dataset.itemId;
@@ -958,7 +1066,6 @@ document.addEventListener('click', async e => {
     const url = await uploadFile(file, `lr_audio/${itemId}.${ext}`, file.type);
     if (!url) { toast('❌ 上传失败', true); return; }
     it.audioUrl = url + '?t=' + Date.now();
-    // 局部刷新这个 item 的音频行
     const itemEl = document.querySelector(`.editor-item[data-lr-item="${cssEscape(itemId)}"]`);
     if (itemEl) {
       const audioRow = itemEl.querySelector('.audio-row');
@@ -971,7 +1078,7 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  /* --- 音频清除 --- */
+  /* 音频清除 */
   if (action === 'clear-lrAudio') {
     const partId = target.dataset.partId;
     const itemId = target.dataset.itemId;
@@ -985,73 +1092,62 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  /* --- 增删改结构 --- */
+  /* 增删结构 */
   if (action === 'add-aiTalk') {
     config.aiTalkButtons.push({ id: genId('aitalk'), name: 'New Role-Play', url: 'https://', bgUrl: '' });
-    renderSettings(); toast('已添加');
-    return;
+    renderSettings(); toast('已添加'); return;
   }
   if (action === 'del-aiTalk') {
     if (!confirm('删除这个 Role-Play 按钮？')) return;
     config.aiTalkButtons = config.aiTalkButtons.filter(b => b.id !== target.dataset.id);
-    renderSettings(); toast('已删除');
-    return;
+    renderSettings(); toast('已删除'); return;
   }
   if (action === 'add-discussion') {
     config.discussionButtons.push({ id: genId('discussion'), name: 'New AI Talk', url: 'https://', bgUrl: '' });
-    renderSettings(); toast('已添加');
-    return;
+    renderSettings(); toast('已添加'); return;
   }
   if (action === 'del-discussion') {
     if (!confirm('删除这个 AI Talk 按钮？')) return;
     config.discussionButtons = config.discussionButtons.filter(b => b.id !== target.dataset.id);
-    renderSettings(); toast('已删除');
-    return;
+    renderSettings(); toast('已删除'); return;
   }
   if (action === 'add-gamePart') {
     config.gameParts.push({ id: genId('part'), name: 'New Part', games: [] });
-    renderSettings(); toast('已添加 Part');
-    return;
+    renderSettings(); toast('已添加 Part'); return;
   }
   if (action === 'del-gamePart') {
     if (config.gameParts.length <= 1) { toast('至少保留一个 Part', true); return; }
     if (!confirm('删除这个 Part 及其所有游戏？')) return;
     config.gameParts = config.gameParts.filter(p => p.id !== target.dataset.partId);
-    renderSettings(); toast('已删除');
-    return;
+    renderSettings(); toast('已删除'); return;
   }
   if (action === 'add-game') {
     const p = config.gameParts.find(x => x.id === target.dataset.partId);
     if (!p) return;
     p.games.push({ id: genId('game'), name: 'New Game', embedCode: '<iframe width="500" height="380" src="https://"></iframe>', bgUrl: '' });
-    renderSettings(); toast('已添加游戏');
-    return;
+    renderSettings(); toast('已添加游戏'); return;
   }
   if (action === 'del-game') {
     if (!confirm('删除这个游戏？')) return;
     const p = config.gameParts.find(x => x.id === target.dataset.partId);
     if (!p) return;
     p.games = p.games.filter(g => g.id !== target.dataset.gameId);
-    renderSettings(); toast('已删除');
-    return;
+    renderSettings(); toast('已删除'); return;
   }
   if (action === 'add-lrPart') {
     config.listenReadParts.push({ id: genId('lr'), name: 'New Unit', bgUrl: '', items: [] });
-    renderSettings(); toast('已新建单元');
-    return;
+    renderSettings(); toast('已新建单元'); return;
   }
   if (action === 'del-lrPart') {
     if (!confirm('删除这个单元及其所有内容？')) return;
     config.listenReadParts = config.listenReadParts.filter(p => p.id !== target.dataset.partId);
-    renderSettings(); toast('已删除单元');
-    return;
+    renderSettings(); toast('已删除单元'); return;
   }
   if (action === 'add-lrItem') {
     const p = config.listenReadParts.find(x => x.id === target.dataset.partId);
     if (!p) return;
     p.items.push({ id: genId('lri'), text: '', colors: [], audioUrl: '' });
     renderSettings(); toast('已添加条目');
-    // 滚动到新条目附近
     setTimeout(() => {
       const items = document.querySelectorAll('.editor-item[data-lr-item]');
       if (items.length) items[items.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1063,11 +1159,10 @@ document.addEventListener('click', async e => {
     const p = config.listenReadParts.find(x => x.id === target.dataset.partId);
     if (!p) return;
     p.items = p.items.filter(it => it.id !== target.dataset.itemId);
-    renderSettings(); toast('已删除');
-    return;
+    renderSettings(); toast('已删除'); return;
   }
 
-  /* --- 发布 / 导入导出 --- */
+  /* 发布 / 备份 */
   if (action === 'publish') { publishToCloud(); return; }
   if (action === 'export-json') {
     const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
@@ -1103,7 +1198,21 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  /* --- 录音删除 --- */
+  /* 展开/收起学生分组 */
+  if (action === 'toggle-student') {
+    const name = target.dataset.student;
+    if (expandedStudents.has(name)) expandedStudents.delete(name);
+    else expandedStudents.add(name);
+    const group = target.closest('.student-group');
+    if (group) {
+      group.classList.toggle('open');
+      const body = group.querySelector('.student-body');
+      if (body) body.classList.toggle('hidden');
+    }
+    return;
+  }
+
+  /* 删除录音 */
   if (action === 'delete-recording') {
     if (!confirm('删除这条录音？')) return;
     const id = target.dataset.id;
@@ -1113,7 +1222,7 @@ document.addEventListener('click', async e => {
       await sbFetch(`/rest/v1/recordings?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
       if (path) await deleteStorageFile(path);
       recRows = recRows.filter(r => String(r.id) !== String(id));
-      renderRecordings();
+      paintRecList();
       toast('🗑 已删除');
     } catch (e) {
       toast('删除失败', true);
@@ -1123,11 +1232,9 @@ document.addEventListener('click', async e => {
   }
 });
 
-/* 给某个图片字段写入值并局部刷新 UI */
 function applyImgFieldValue(field, value) {
   const scope = field.dataset.imgScope;
   const urlInput = field.querySelector('.img-url');
-  let target = null;
 
   if (scope === 'config') {
     config[field.dataset.key] = value;
@@ -1161,7 +1268,7 @@ function applyImgFieldValue(field, value) {
 }
 
 /* ============================================================
-   渲染：学生录音
+   渲染：学生录音（按学生分组）
    ============================================================ */
 async function renderRecordings() {
   const panel = document.getElementById('recordingsPanel');
@@ -1225,28 +1332,54 @@ function paintRecList() {
   let rows = recRows.slice();
   if (recFilter.name) {
     const kw = recFilter.name.toLowerCase();
-    rows = rows.filter(r => (r.student_name || '').toLowerCase().includes(kw));
+    rows = rows.filter(r => (r.student_name || '未命名').toLowerCase().includes(kw));
   }
   if (recFilter.part) {
     rows = rows.filter(r => r.part_id === recFilter.part);
   }
 
-  if (countEl) countEl.textContent = `共 ${rows.length} 条录音`;
+  const names = new Set(rows.map(r => r.student_name || '未命名'));
+  if (countEl) countEl.textContent = `共 ${rows.length} 条录音 · ${names.size} 位学生`;
 
   if (!rows.length) {
     listEl.innerHTML = '<p class="empty">暂无录音</p>';
     return;
   }
 
-  listEl.innerHTML = rows.map(r => `
+  // 按学生分组（rows 已按时间倒序，组内保持最新在上）
+  const groups = new Map();
+  rows.forEach(r => {
+    const name = r.student_name || '未命名';
+    if (!groups.has(name)) groups.set(name, []);
+    groups.get(name).push(r);
+  });
+
+  listEl.innerHTML = [...groups.keys()].map(name => {
+    const list = groups.get(name);
+    const open = expandedStudents.has(name);
+    const latest = list[0];
+    return `
+      <div class="student-group ${open ? 'open' : ''}" data-student="${esc(name)}">
+        <button class="student-head" data-action="toggle-student" data-student="${esc(name)}">
+          <span class="avatar">${esc((name || '?').slice(0, 1).toUpperCase())}</span>
+          <span class="student-name">${esc(name)}</span>
+          <span class="student-count">${list.length} 条</span>
+          <span class="student-latest">${esc(formatTime(latest.created_at))}</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="student-body ${open ? '' : 'hidden'}">
+          ${list.map(r => renderRecCard(r)).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderRecCard(r) {
+  return `
     <div class="rec-card">
       <div class="rec-main">
-        <div class="rec-name">
-          <i class="fas fa-user-circle"></i> ${esc(r.student_name || '未命名')}
-          <span style="font-weight:400;color:#91a3bb;font-size:13px;margin-left:6px;">· ${esc(r.part_name || r.part_id || '')}</span>
-        </div>
         <div class="rec-text">${esc(r.item_text || '')}</div>
-        <div class="rec-meta">${esc(formatTime(r.created_at))}</div>
+        <div class="rec-meta">${esc(r.part_name || r.part_id || '')} · ${esc(formatTime(r.created_at))}</div>
       </div>
       <div class="rec-audio">
         ${r.public_url ? `<audio controls preload="none" src="${esc(r.public_url)}"></audio>` : '<span class="hint" style="margin:0;">无音频文件</span>'}
@@ -1254,15 +1387,258 @@ function paintRecList() {
       <button class="btn btn-danger btn-mini" data-action="delete-recording" data-id="${esc(r.id)}" data-path="${esc(r.file_path || '')}">
         <i class="fas fa-trash"></i>
       </button>
-    </div>`).join('');
+    </div>`;
 }
 
-function formatTime(t) {
-  if (!t) return '';
-  try {
-    return new Date(t).toLocaleString('zh-CN', { hour12: false });
-  } catch (e) { return t; }
+/* ============================================================
+   搜索
+   ============================================================ */
+const searchState = { items: [], active: -1, results: [] };
+
+function buildSearchIndex() {
+  const items = [];
+  const sectionTitles = {
+    basic: '基本设置', pageBg: '页面背景', btnBg: '首页按钮背景',
+    aiTalkMgmt: 'Role-Play AI 管理', discMgmt: 'AI Talk 管理',
+    gameMgmt: '游戏管理', lrMgmt: 'Listen & Read 管理', publish: '发布 / 备份'
+  };
+  Object.keys(sectionTitles).forEach(id => {
+    items.push({ kind: 'section', label: sectionTitles[id], sub: '设置区块', sectionId: id, tab: 'settings' });
+  });
+
+  (config.aiTalkButtons || []).forEach(b => items.push({
+    kind: 'aiTalk', label: b.name || '(未命名)', sub: 'Role-Play AI',
+    sectionId: 'aiTalkMgmt', tab: 'settings',
+    anchor: { scope: 'aiTalk', id: b.id }
+  }));
+  (config.discussionButtons || []).forEach(b => items.push({
+    kind: 'discussion', label: b.name || '(未命名)', sub: 'AI Talk',
+    sectionId: 'discMgmt', tab: 'settings',
+    anchor: { scope: 'discussion', id: b.id }
+  }));
+  (config.gameParts || []).forEach(p => {
+    items.push({
+      kind: 'part', label: p.name || '(未命名 Part)', sub: '游戏 Part',
+      sectionId: 'gameMgmt', tab: 'settings',
+      anchor: { scope: 'gamePart', partId: p.id }
+    });
+    (p.games || []).forEach(g => items.push({
+      kind: 'game', label: g.name || '(未命名游戏)', sub: '游戏 · ' + (p.name || ''),
+      sectionId: 'gameMgmt', tab: 'settings',
+      anchor: { scope: 'game', partId: p.id, gameId: g.id }
+    }));
+  });
+  (config.listenReadParts || []).forEach(p => {
+    items.push({
+      kind: 'lrPart', label: p.name || '(未命名单元)', sub: '听读单元',
+      sectionId: 'lrMgmt', tab: 'settings',
+      anchor: { scope: 'lrPart', partId: p.id }
+    });
+    (p.items || []).forEach(it => {
+      const full = it.text || '';
+      items.push({
+        kind: 'lrItem',
+        label: full.length > 46 ? full.slice(0, 46) + '…' : (full || '(空句子)'),
+        sub: '听读 · ' + (p.name || ''),
+        fullText: full,
+        sectionId: 'lrMgmt', tab: 'settings',
+        anchor: { scope: 'lrItem', partId: p.id, itemId: it.id }
+      });
+    });
+  });
+
+  const names = [...new Set(recRows.map(r => r.student_name).filter(Boolean))];
+  names.forEach(n => items.push({ kind: 'student', label: n, sub: '学生录音', tab: 'recordings' }));
+
+  return items;
 }
+
+function kindIcon(kind) {
+  return {
+    section: 'fa-layer-group', aiTalk: 'fa-comment-dots', discussion: 'fa-comments',
+    part: 'fa-puzzle-piece', game: 'fa-gamepad', lrPart: 'fa-book-open',
+    lrItem: 'fa-font', student: 'fa-user-circle'
+  }[kind] || 'fa-search';
+}
+
+function openSearch() {
+  const panel = document.getElementById('searchPanel');
+  const input = document.getElementById('searchInput');
+  panel.classList.remove('hidden');
+  input.value = '';
+  searchState.items = buildSearchIndex();
+  runSearch('');
+  setTimeout(() => input.focus(), 30);
+
+  // 如果还没加载过录音，静默拉一次，方便搜学生名字
+  if (!recRows.length) {
+    loadRecordings(false).then(() => {
+      if (!document.getElementById('searchPanel').classList.contains('hidden')) {
+        searchState.items = buildSearchIndex();
+        runSearch(document.getElementById('searchInput').value);
+      }
+    });
+  }
+}
+function closeSearch() {
+  document.getElementById('searchPanel').classList.add('hidden');
+  searchState.active = -1;
+}
+function runSearch(q) {
+  const kw = q.trim().toLowerCase();
+  const resultsEl = document.getElementById('searchResults');
+  let res = searchState.items;
+
+  if (kw) {
+    res = res.filter(it =>
+      (it.label || '').toLowerCase().includes(kw) ||
+      (it.sub || '').toLowerCase().includes(kw) ||
+      (it.fullText || '').toLowerCase().includes(kw)
+    );
+  } else {
+    res = res.slice(0, 12);
+  }
+  searchState.results = res.slice(0, 40);
+  searchState.active = searchState.results.length ? 0 : -1;
+
+  if (!searchState.results.length) {
+    resultsEl.innerHTML = '<div class="search-empty">没有找到匹配项</div>';
+    return;
+  }
+
+  resultsEl.innerHTML = searchState.results.map((it, i) => `
+    <div class="search-item ${i === searchState.active ? 'active' : ''}" data-idx="${i}">
+      <div class="si-icon"><i class="fas ${kindIcon(it.kind)}"></i></div>
+      <div class="si-main">
+        <div class="si-label">${esc(it.label)}</div>
+        <div class="si-sub">${esc(it.sub || '')}</div>
+      </div>
+    </div>`).join('');
+}
+function setSearchActive(idx) {
+  const items = document.querySelectorAll('#searchResults .search-item');
+  if (!items.length) return;
+  if (idx < 0) idx = items.length - 1;
+  if (idx >= items.length) idx = 0;
+  searchState.active = idx;
+  items.forEach((el, i) => el.classList.toggle('active', i === idx));
+  items[idx].scrollIntoView({ block: 'nearest' });
+}
+
+function jumpToResult(item) {
+  closeSearch();
+
+  /* 学生录音 */
+  if (item.tab === 'recordings') {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'recordings'));
+    currentTab = 'recordings';
+    document.getElementById('settingsPanel').classList.add('hidden');
+    document.getElementById('recordingsPanel').classList.remove('hidden');
+    updateFloatingPalette();
+
+    recFilter.name = item.kind === 'student' ? item.label : '';
+    recFilter.part = '';
+    if (item.kind === 'student') expandedStudents.add(item.label);
+
+    renderRecordings().then(() => {
+      const inp = document.getElementById('recNameFilter');
+      if (inp) inp.value = recFilter.name;
+      paintRecList();
+      const targetGroup = document.querySelector(`.student-group[data-student="${cssEscape(item.label)}"]`);
+      if (targetGroup) {
+        targetGroup.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetGroup.classList.add('search-highlight');
+        setTimeout(() => targetGroup.classList.remove('search-highlight'), 1800);
+      }
+    });
+    return;
+  }
+
+  /* 设置页 */
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'settings'));
+  currentTab = 'settings';
+  document.getElementById('settingsPanel').classList.remove('hidden');
+  document.getElementById('recordingsPanel').classList.add('hidden');
+  expanded.add(item.sectionId);
+  updateFloatingPalette();
+  renderSettings();
+
+  setTimeout(() => {
+    let targetEl = null;
+    const a = item.anchor;
+    if (a) {
+      if (a.scope === 'aiTalk') {
+        const inp = document.querySelector(`[data-scope="aiTalk"][data-id="${cssEscape(a.id)}"]`);
+        targetEl = inp && inp.closest('.editor-item');
+      } else if (a.scope === 'discussion') {
+        const inp = document.querySelector(`[data-scope="discussion"][data-id="${cssEscape(a.id)}"]`);
+        targetEl = inp && inp.closest('.editor-item');
+      } else if (a.scope === 'gamePart') {
+        const inp = document.querySelector(`[data-scope="gamePart"][data-part-id="${cssEscape(a.partId)}"]`);
+        targetEl = inp && inp.closest('.editor-item');
+      } else if (a.scope === 'game') {
+        const inp = document.querySelector(`[data-scope="game"][data-part-id="${cssEscape(a.partId)}"][data-game-id="${cssEscape(a.gameId)}"]`);
+        targetEl = inp && inp.closest('.editor-item');
+      } else if (a.scope === 'lrPart') {
+        const inp = document.querySelector(`[data-scope="lrPart"][data-part-id="${cssEscape(a.partId)}"]`);
+        targetEl = inp && inp.closest('.editor-item');
+      } else if (a.scope === 'lrItem') {
+        targetEl = document.querySelector(`.editor-item[data-lr-item="${cssEscape(a.itemId)}"]`);
+      }
+    }
+    if (!targetEl) {
+      targetEl = document.querySelector(`.section[data-section="${item.sectionId}"]`);
+    }
+    if (targetEl) {
+      targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      targetEl.classList.add('search-highlight');
+      setTimeout(() => targetEl.classList.remove('search-highlight'), 1800);
+    }
+  }, 60);
+}
+
+/* 搜索交互绑定 */
+document.getElementById('searchFab').onclick = () => {
+  const panel = document.getElementById('searchPanel');
+  if (panel.classList.contains('hidden')) openSearch();
+  else closeSearch();
+};
+document.getElementById('searchInput').addEventListener('input', e => {
+  runSearch(e.target.value);
+});
+document.getElementById('searchInput').addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown') { e.preventDefault(); setSearchActive(searchState.active + 1); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); setSearchActive(searchState.active - 1); }
+  else if (e.key === 'Enter') {
+    e.preventDefault();
+    const item = searchState.results[searchState.active];
+    if (item) jumpToResult(item);
+  } else if (e.key === 'Escape') {
+    closeSearch();
+  }
+});
+document.getElementById('searchResults').addEventListener('click', e => {
+  const row = e.target.closest('.search-item');
+  if (!row) return;
+  const idx = parseInt(row.dataset.idx, 10);
+  const item = searchState.results[idx];
+  if (item) jumpToResult(item);
+});
+document.addEventListener('mousedown', e => {
+  const panel = document.getElementById('searchPanel');
+  if (!panel || panel.classList.contains('hidden')) return;
+  if (e.target.closest('#searchPanel') || e.target.closest('#searchFab')) return;
+  closeSearch();
+});
+document.addEventListener('keydown', e => {
+  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  if ((isMac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    if (!loggedIn) return;
+    openSearch();
+  }
+  if (e.key === 'Escape') closeSearch();
+});
 
 /* ============================================================
    启动
@@ -1270,10 +1646,8 @@ function formatTime(t) {
 (async function init() {
   loadConfigFromStorage();
   showLogin();
-  // 尝试拉取云端；无论成功与否都停留在登录页
   const ok = await loadConfigFromCloud(false);
   if (ok) updateStatusBadge();
-  // 若已登录（刷新后重新进入），需要重新校验密码
   document.getElementById('loginPwd').focus();
 })();
 </script>
