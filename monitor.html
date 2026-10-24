@@ -936,6 +936,10 @@ document.addEventListener('click', async e => {
     exportStudent(target.dataset.campus, target.dataset.level, target.dataset.student);
     return;
   }
+  if (action === 'export-level') {
+    exportLevel(target.dataset.campus, target.dataset.level);
+    return;
+  }
 
   if (action === 'delete-student') {
     const campus = target.dataset.campus;
@@ -1138,6 +1142,7 @@ function paintRecList() {
               <span class="count-pill">${studentMap.size} students · ${levelTotal} recordings</span>
               <i class="fas fa-chevron-down"></i>
             </button>
+            <button class="btn btn-outline btn-mini" data-action="export-level" data-campus="${esc(campus)}" data-level="${esc(level)}" title="Export all recordings for this class as a zip"><i class="fas fa-file-archive"></i> Export Group</button>
             <button class="btn btn-danger btn-mini" data-action="delete-level" data-campus="${esc(campus)}" data-level="${esc(level)}" title="Delete all recordings for this class"><i class="fas fa-trash-alt"></i> Delete Group</button>
           </div>
           <div class="level-body ${levelOpen ? '' : 'hidden'}">${studentsHtml}</div>
@@ -1226,6 +1231,62 @@ async function exportStudent(campus, level, studentName) {
   setTimeout(() => URL.revokeObjectURL(a.href), 3000);
   toast(`✅ Exported ${success} recordings`);
 }
+async function exportLevel(campus, level) {
+  const rows = recRows.filter(r =>
+    (r.campus || '未分类') === campus &&
+    (r.level || '未分类') === level
+  );
+  if (!rows.length) { toast('No recordings in this group', true); return; }
+
+  const ok = await ensureJSZip();
+  if (!ok) { toast('Failed to load zip library', true); return; }
+
+  // 按学生分组
+  const byStudent = new Map();
+  rows.forEach(r => {
+    const name = r.student_name || '未命名';
+    if (!byStudent.has(name)) byStudent.set(name, []);
+    byStudent.get(name).push(r);
+  });
+
+  const zip = new JSZip();
+  const rootName = `${campus}-${level}`.replace(/[\\/:*?"<>|]/g, '_');
+  const root = zip.folder(rootName);
+
+  let total = 0;
+  let success = 0;
+  for (const [name, list] of byStudent) {
+    const safeStudent = name.replace(/[\\/:*?"<>|]/g, '_');
+    const folder = root.folder(safeStudent);
+    for (let i = 0; i < list.length; i++) {
+      const r = list[i];
+      total++;
+      if (!r.public_url) continue;
+      try {
+        if (success % 10 === 0) toast(`⏳ Downloading ${success} / ${total}…`);
+        const res = await fetch(r.public_url);
+        if (!res.ok) continue;
+        const blob = await res.blob();
+        const ext = (r.file_path || '').split('.').pop() || 'webm';
+        const itemText = (r.item_text || 'recording').replace(/[\\/:*?"<>|]/g, '_').slice(0, 30);
+        const idx = String(i + 1).padStart(2, '0');
+        folder.file(`${idx}_${itemText}.${ext}`, blob);
+        success++;
+      } catch (e) { console.warn('download failed', r.public_url, e); }
+    }
+  }
+
+  if (!success) { toast('No downloadable audio', true); return; }
+
+  toast('⏳ Packing zip…');
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${rootName}.zip`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  toast(`✅ Exported ${success} recordings from ${byStudent.size} students`);
+} 
 
 async function deleteRecords(rows, label) {
   if (!rows.length) return;
