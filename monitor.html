@@ -159,6 +159,11 @@
     25%, 75% { box-shadow:0 0 0 3px #2a5298, 0 10px 30px rgba(42,82,152,.3); }
   }
   .search-highlight { animation:hlPulse 1.8s ease; }
+ .rec-stars { display:flex; gap:2px; margin-top:8px; align-items:center; }
+ .rec-stars .star-btn { border:none; background:none; font-size:22px; color:#d1d9e4; cursor:pointer; padding:0; line-height:1; transition:.15s; }
+ .rec-stars .star-btn:hover { transform:scale(1.2); }
+ .rec-stars .star-btn.active { color:#f5b301; }
+ .rec-stars .star-label { font-size:12px; color:#91a3bb; margin-left:6px; }
 </style>
 </head>
 <body>
@@ -650,6 +655,7 @@ function renderSettings() {
       <b>Database setup</b><br>
       Run the table SQL first. If upgrading from an older version, run:<br>
       <code>ALTER TABLE public.recordings ADD COLUMN IF NOT EXISTS campus text, ADD COLUMN IF NOT EXISTS level text;</code>
+      <code>ALTER TABLE public.recordings ADD COLUMN IF NOT EXISTS star int DEFAULT 0;</code>
     </div>
     <div class="row">
       <button class="btn btn-primary" data-action="publish"><i class="fas fa-cloud-upload-alt"></i> One-Click Publish</button>
@@ -932,6 +938,11 @@ document.addEventListener('click', async e => {
     return;
   }
 
+   if (action === 'set-star') {
+    setRecordingStar(target.dataset.id, Number(target.dataset.star));
+    return;
+  }
+
   if (action === 'export-student') {
     exportStudent(target.dataset.campus, target.dataset.level, target.dataset.student);
     return;
@@ -1165,11 +1176,16 @@ function paintRecList() {
 }
 
 function renderRecCard(r) {
+  const star = Number(r.star) || 0;
   return `
     <div class="rec-card">
       <div class="rec-main">
         <div class="rec-text">${esc(r.item_text || '')}</div>
         <div class="rec-meta">${esc(r.part_name || r.part_id || '')} · ${esc(formatTime(r.created_at))}</div>
+        <div class="rec-stars" data-id="${esc(r.id)}">
+          ${[1,2,3].map(n => `<button class="star-btn ${n <= star ? 'active' : ''}" data-action="set-star" data-id="${esc(r.id)}" data-star="${n}" title="${n} star">★</button>`).join('')}
+          <span class="star-label">${star ? star + ' / 3' : 'Not rated'}</span>
+        </div>
       </div>
       <div class="rec-audio">
         ${r.public_url ? `<audio controls preload="none" src="${esc(r.public_url)}"></audio>` : '<span class="hint" style="margin:0;">No audio file</span>'}
@@ -1306,6 +1322,31 @@ async function deleteRecords(rows, label) {
   recRows = recRows.filter(r => !idSet.has(String(r.id)));
   paintRecList();
   toast(`🗑 Deleted ${rows.length} recordings`);
+}
+
+async function setRecordingStar(id, star) {
+  try {
+    const res = await sbFetch(`/rest/v1/recordings?id=eq.${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ star })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const idx = recRows.findIndex(r => String(r.id) === String(id));
+    if (idx >= 0) recRows[idx].star = star;
+    const box = document.querySelector(`.rec-stars[data-id="${cssEscape(String(id))}"]`);
+    if (box) {
+      box.querySelectorAll('.star-btn').forEach(btn => {
+        btn.classList.toggle('active', Number(btn.dataset.star) <= star);
+      });
+      const label = box.querySelector('.star-label');
+      if (label) label.textContent = star ? star + ' / 3' : 'Not rated';
+    }
+    toast('⭐ Star saved');
+  } catch (e) {
+    console.error(e);
+    toast('Failed to save star', true);
+  }
 }
 
 /* search */
