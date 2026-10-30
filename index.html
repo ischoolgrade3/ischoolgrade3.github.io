@@ -505,20 +505,17 @@ function renderListenReadPartsView() {
           </div>`).join('')}
       </div>` : '<p class="empty-message">No content yet</p>'}
     </div>`;
-  viewContainer.querySelectorAll('.part-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const part = parts.find(p => p.id === card.dataset.partId);
-      if (!part) return;
-      if (!part.items || !part.items.length) { showSnackbar('This unit has no content', true); return; }
-      askIdentity(part.name, info => {
-        lr.partId = part.id;
-        lr.items = part.items;
-        lr.index = 0;
-        lr.campus = info.campus;
-        lr.level = info.level;
-        lr.studentName = info.name;
-        lr.done = {};
-        setView('listenReadPractice');
+    viewContainer.querySelectorAll('.part-card').forEach(function (card) {
+      card.addEventListener('click', function () {
+        const unit = units.find(function (u) { return u.id === card.dataset.unitId; });
+        if (!unit) return;
+        if (!unit.turns || !unit.turns.length) { showSnackbar('This unit has no dialogue', true); return; }
+        rp.unit = unit;
+        rp.campus = '';
+        rp.level = '';
+        rp.studentName = '';
+        rp.studentRole = 'B';
+        setView('roleplayPractice');
       });
     });
   });
