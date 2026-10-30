@@ -863,8 +863,7 @@ async function handleRecordingDone(blob) {
         item_text: item.text || '',
         student_name: lr.studentName || '',
         file_path: path,
-        public_url: url,
-        star: 0
+        public_url: url
       })
     });
     if (!res.ok) {
@@ -994,9 +993,6 @@ function renderMyRecordingDetail() {
           ${items.map(item => `
             <div class="myrec-item">
               <div class="myrec-item-text">${escapeHtml(item.text)}</div>
-              <div class="myrec-item-stars">
-                ${[1,2,3].map(n => `<span class="myrec-star ${n <= item.star ? 'active' : ''}">★</span>`).join('')}
-              </div>
               ${item.audioUrl ? `
                 <button class="myrec-audio-btn" data-url="${escapeHtml(item.audioUrl)}">
                   <i class="fas fa-play"></i> Correct audio
