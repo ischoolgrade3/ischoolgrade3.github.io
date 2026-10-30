@@ -505,24 +505,28 @@ function renderListenReadPartsView() {
           </div>`).join('')}
       </div>` : '<p class="empty-message">No content yet</p>'}
     </div>`;
-  viewContainer.querySelectorAll('.part-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const part = parts.find(p => p.id === card.dataset.partId);
-      if (!part) return;
-      if (!part.items || !part.items.length) { showSnackbar('This unit has no content', true); return; }
-      askIdentity(part.name, info => {
-        lr.partId = part.id;
-        lr.items = part.items;
-        lr.index = 0;
-        lr.campus = info.campus;
-        lr.level = info.level;
-        lr.studentName = info.name;
-        lr.done = {};
-        setView('listenReadPractice');
+  const cards = viewContainer.querySelectorAll('.part-card');
+  for (let idx = 0; idx < cards.length; idx++) {
+    const card = cards[idx];
+    (function (c) {
+      c.addEventListener('click', function () {
+        const part = parts.find(function (p) { return p.id === c.dataset.partId; });
+        if (!part) return;
+        if (!part.items || !part.items.length) { showSnackbar('This unit has no content', true); return; }
+        askIdentity(part.name, function (info) {
+          lr.partId = part.id;
+          lr.items = part.items;
+          lr.index = 0;
+          lr.campus = info.campus;
+          lr.level = info.level;
+          lr.studentName = info.name;
+          lr.done = {};
+          setView('listenReadPractice');
+        });
       });
-    });
+    })(card);
+  }
 }
-
 /* ---------- 选校区 → Level → 名字（无语音） ---------- */
 function askIdentity(subtitle, onOk) {
   const overlay = document.createElement('div');
