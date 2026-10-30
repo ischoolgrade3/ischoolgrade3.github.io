@@ -984,6 +984,10 @@ function playCorrectAudio(url) {
    ============================================================ */
 const RP_FN_TTS = SUPABASE_URL + '/functions/v1/tencent-tts';
 const RP_FN_ASR = SUPABASE_URL + '/functions/v1/tencent-asr';
+// 🔧 Role Play 是否保存练习记录到 Supabase
+// false = 纯前端实时分析，不写任何数据库/Storage（推荐，零占用）
+// true  = 保存 attempt / answers / 录音文件
+const RP_PERSIST_TO_DB = false;
 
 const rp = {
   unit: null, campus: '', level: '', studentName: '',
@@ -1447,6 +1451,7 @@ async function rpSaveAnswer(turnIndex, transcript, similarity, matched) {
 }
 
 async function rpCreateAttempt() {
+  if (!RP_PERSIST_TO_DB) return null;
   const res = await sbFetch('/rest/v1/roleplay_attempts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
