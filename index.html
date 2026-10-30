@@ -802,7 +802,44 @@ async function handleRecordingDone(blob) {
   const item = lr.items[lr.index];
   if (!item) return;
   if (!blob || blob.size < 800) { showSnackbar('Recording too short, try again', true); return; }
-  showSnackbar('⏳ Uploading…');
+
+  // ── Step 1: 语音识别 + 比对 ──
+  lrEls.rec.disabled = true;
+  lrEls.prev.disabled = true;
+  lrEls.next.disabled = true;
+  showSnackbar('🔍 Recognizing…');
+
+  let matched = false;
+  let transcript = '';
+  let sim = 0;
+  try {
+    const wavBlob = await rpWebmToWav16k(blob);
+    transcript = await rpFetchAsr(wavBlob);
+    const threshold = (config.roleplaySettings && config.roleplaySettings.matchThreshold) || 0.62;
+    sim = rpSimilarity(transcript, item.text);
+    matched = sim >= threshold;
+    console.log('[LR] transcript:', transcript, '| expected:', item.text, '| sim:', sim.toFixed(3), '| matched:', matched);
+  } catch (e) {
+    console.error('Listen & Read ASR failed', e);
+    lrEls.rec.disabled = false;
+    lrEls.prev.disabled = (lr.index === 0);
+    lrEls.next.disabled = false;
+    showSnackbar('Recognition failed, please try again', true);
+    return;
+  }
+
+  lrEls.rec.disabled = false;
+  lrEls.prev.disabled = (lr.index === 0);
+  lrEls.next.disabled = false;
+
+  if (!matched) {
+    // 不通过：不上传、不写库、不打勾，停在原地
+    showSnackbar('Your pronunciation doesn\'t match. Please try again.', true);
+    return;
+  }
+
+  // ── Step 2: 通过 → 走原来的上传 + 写库 + 打勾流程 ──
+  showSnackbar('✅ Passed! Uploading…');
   const part = (config.listenReadParts || []).find(p => p.id === lr.partId);
   const ext = blob.type.indexOf('mp4') >= 0 ? 'mp4' : blob.type.indexOf('ogg') >= 0 ? 'ogg' : 'webm';
   const safeCampus = (lr.campus || 'Unknown').replace(/[^\w-]/g, '_');
@@ -840,7 +877,7 @@ async function handleRecordingDone(blob) {
   }
 
   lr.done[item.id] = true;
-  showSnackbar('✅ Uploaded');
+  showSnackbar('✅ Passed!');
   updateLrItem();
 }
 
