@@ -1109,6 +1109,27 @@ function rpUpdateUi() {
     const isStudent = t.role === rp.studentRole;
     const isCurrent = i === rp.turnIndex;
     const res = rp.turnResults[i];
+
+    // ── 决定这一轮气泡里显示什么 ──
+    let bubbleText;
+    if (isStudent) {
+      if (res && res.matched) {
+        // 已通过：显示学生实际说的（或预设答案兜底）
+        bubbleText = res.transcript || t.text;
+      } else if (res && res.transcript) {
+        // 说错了但说过：显示学生实际说的
+        bubbleText = res.transcript;
+      } else if (isCurrent) {
+        // 当前轮到学生但还没答：不显示答案
+        bubbleText = '（轮到你了，点击麦克风说话）';
+      } else {
+        bubbleText = '...';
+      }
+    } else {
+      // AI 回合：显示预设台词
+      bubbleText = t.text;
+    }
+
     let statusHtml = '';
     if (isStudent && res && res.matched) {
       statusHtml = '<div class="rp-turn-status ok">✓ 通过'
@@ -1121,7 +1142,7 @@ function rpUpdateUi() {
       + '<div class="rp-turn-avatar">' + t.role + '</div>'
       + '<div class="rp-turn-bubble">'
       + '<div class="rp-turn-role">' + (isStudent ? '你' : 'AI') + ' · 角色 ' + t.role + '</div>'
-      + '<div class="rp-turn-text">' + escapeHtml(t.text) + '</div>'
+      + '<div class="rp-turn-text">' + escapeHtml(bubbleText) + '</div>'
       + statusHtml
       + '</div></div>';
   });
