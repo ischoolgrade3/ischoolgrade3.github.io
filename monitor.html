@@ -15,7 +15,7 @@
   .login-card { background:#fff; border-radius:24px; padding:32px; width:100%; max-width:400px; box-shadow:0 30px 60px rgba(0,0,0,.35); text-align:center; }
   .login-card h2 { margin:0 0 8px; font-size:22px; color:#1e3c72; }
   .login-card p.sub { margin:0 0 22px; color:#7b8ba3; font-size:13px; }
-  .login-card input { width:100%; padding:14px 18px; border-radius:40px; border:2px solid #dbe4f0; font-size:16px; outline:none; text-align:center; margin-bottom:16px; }
+  .login-card input { width:100%; padding:14px 18px; border-radius:40px; border:2px solid #dbe4f0; font-size:16px; outline:none; text-align:center; margin-bottom:16px; font-family:inherit; }
   .login-card input:focus { border-color:#2a5298; }
   .login-err { color:#d33; font-size:13px; min-height:18px; margin:10px 0 0; }
 
@@ -26,7 +26,7 @@
   .badge.local { background:#fff4e5; color:#a15c00; }
 
   .tabs { display:flex; gap:8px; padding:14px 22px 0; }
-  .tab { border:none; background:transparent; padding:12px 20px; border-radius:14px 14px 0 0; font-size:14px; font-weight:600; color:#7b8ba3; cursor:pointer; }
+  .tab { border:none; background:transparent; padding:12px 20px; border-radius:14px 14px 0 0; font-size:14px; font-weight:600; color:#7b8ba3; cursor:pointer; font-family:inherit; }
   .tab.active { background:#fff; color:#1e3c72; box-shadow:0 -2px 10px rgba(0,20,40,.04); }
 
   .panel { padding:18px 22px 120px; max-width:1080px; margin:0 auto; }
@@ -88,7 +88,6 @@
   .audio-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px; }
   .audio-row audio { height:36px; max-width:100%; }
 
-  /* 录音三级分组 */
   .campus-group { margin-bottom:14px; }
   .campus-head { width:100%; border:none; background:linear-gradient(135deg,#1e3c72,#2a5298); color:#fff; padding:14px 18px; border-radius:14px; display:flex; align-items:center; gap:12px; cursor:pointer; font-size:15px; font-weight:700; font-family:inherit; text-align:left; }
   .campus-head .campus-name { font-size:16px; }
@@ -159,11 +158,31 @@
     25%, 75% { box-shadow:0 0 0 3px #2a5298, 0 10px 30px rgba(42,82,152,.3); }
   }
   .search-highlight { animation:hlPulse 1.8s ease; }
- .rec-stars { display:flex; gap:2px; margin-top:8px; align-items:center; }
- .rec-stars .star-btn { border:none; background:none; font-size:22px; color:#d1d9e4; cursor:pointer; padding:0; line-height:1; transition:.15s; }
- .rec-stars .star-btn:hover { transform:scale(1.2); }
- .rec-stars .star-btn.active { color:#f5b301; }
- .rec-stars .star-label { font-size:12px; color:#91a3bb; margin-left:6px; }
+
+  .rec-stars { display:flex; gap:2px; margin-top:8px; align-items:center; }
+  .rec-stars .star-btn { border:none; background:none; font-size:22px; color:#d1d9e4; cursor:pointer; padding:0; line-height:1; transition:.15s; }
+  .rec-stars .star-btn:hover { transform:scale(1.2); }
+  .rec-stars .star-btn.active { color:#f5b301; }
+  .rec-stars .star-label { font-size:12px; color:#91a3bb; margin-left:6px; }
+
+  /* ================= Role Play Editor ================= */
+  .rp-turn-row { display:flex; gap:8px; align-items:center; margin-bottom:8px; padding:10px; background:#fff; border-radius:12px; border:1px solid #eef4ff; }
+  .rp-role-toggle { display:flex; gap:2px; background:#eef4ff; border-radius:20px; padding:2px; flex-shrink:0; }
+  .rp-role-btn { border:none; background:transparent; padding:6px 14px; border-radius:18px; font-weight:700; cursor:pointer; color:#5a7391; font-family:inherit; font-size:13px; transition:.15s; }
+  .rp-role-btn.active-a { background:#2a5298; color:#fff; }
+  .rp-role-btn.active-b { background:#f5b301; color:#fff; }
+  .rp-turn-input { flex:1; padding:10px 14px; border-radius:10px; border:1.5px solid #dbe4f0; font-size:14px; outline:none; font-family:inherit; background:#fafcff; color:#1e2f4b; min-width:0; }
+  .rp-turn-input:focus { border-color:#2a5298; background:#fff; }
+  .rp-del-btn { background:#fff0f0; color:#c0392b; border:1.5px solid #f3c7c2; border-radius:8px; padding:6px 10px; cursor:pointer; font-size:12px; flex-shrink:0; }
+  .rp-del-btn:hover { background:#ffe4e0; }
+
+  /* 密码修改弹窗 */
+  .pwd-modal-overlay { position:fixed; inset:0; background:rgba(10,30,50,.5); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; z-index:200; padding:20px; }
+  .pwd-modal-card { background:#fff; border-radius:20px; padding:28px; width:100%; max-width:420px; box-shadow:0 30px 60px rgba(0,0,0,.3); }
+  .pwd-modal-card h2 { margin:0 0 20px; font-size:18px; color:#1e3c72; }
+  .pwd-modal-card input { width:100%; padding:12px 16px; border-radius:12px; border:1.5px solid #dbe4f0; font-size:14px; margin-bottom:12px; outline:none; font-family:inherit; }
+  .pwd-modal-card input:focus { border-color:#2a5298; }
+  .pwd-modal-card .row { display:flex; gap:10px; justify-content:flex-end; margin-top:8px; }
 </style>
 </head>
 <body>
@@ -223,7 +242,6 @@ const BUCKET = 'site-assets';
 const LS_KEY = 'english_integrated_config';
 
 const DEFAULT_CONFIG = {
-  settingPassword: '0303',
   aiTalkButtons: [
     { id:'aitalk-1', name:'Topic 06 - 1', url:'https://doubao.com/bot/Ew35NrPV', bgUrl:'' },
     { id:'aitalk-2', name:'Topic 06 - 2', url:'https://doubao.com/bot/3Ts8VUxv', bgUrl:'' },
@@ -246,7 +264,9 @@ const DEFAULT_CONFIG = {
   listenReadParts: [
     { id:'lr-1', name:'Unit 1', bgUrl:'', items:[] },
     { id:'lr-2', name:'Unit 2', bgUrl:'', items:[] }
-  ]
+  ],
+  roleplayUnits: [],
+  roleplaySettings: { matchThreshold: 0.62, maxStars: 3, maxRetryPerTurn: 5 }
 };
 
 let config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
@@ -369,11 +389,24 @@ function normalizeConfig(cfg) {
       alignColors(it);
     });
   });
+  if (!Array.isArray(cfg.roleplayUnits)) cfg.roleplayUnits = [];
+  cfg.roleplayUnits.forEach(u => {
+    if (typeof u.id !== 'string' || !u.id) u.id = genId('rp');
+    if (typeof u.name !== 'string') u.name = '';
+    if (!Array.isArray(u.turns)) u.turns = [];
+    u.turns.forEach(t => {
+      if (typeof t.text !== 'string') t.text = '';
+      if (t.role !== 'A' && t.role !== 'B') t.role = 'A';
+    });
+  });
+  if (!cfg.roleplaySettings || typeof cfg.roleplaySettings !== 'object') {
+    cfg.roleplaySettings = { matchThreshold: 0.62, maxStars: 3, maxRetryPerTurn: 5 };
+  }
   ['homeBgUrl','gamePageBgUrl','rolePlayPageBgUrl','listenReadPageBgUrl',
    'btnGameBgUrl','btnRolePlayBgUrl','btnListenReadBgUrl','btnAITalkBgUrl'].forEach(f => {
     if (typeof cfg[f] !== 'string') cfg[f] = '';
   });
-  if (!cfg.settingPassword) cfg.settingPassword = '0303';
+  delete cfg.settingPassword;
   return cfg;
 }
 function alignColors(item) {
@@ -384,7 +417,7 @@ function alignColors(item) {
   item.colors = next;
 }
 
-async function loadConfigFromCloud(showToast) {
+async function loadConfigFromCloud(showToastMsg) {
   try {
     const res = await sbFetch('/rest/v1/config?id=eq.1&select=data', { headers: { 'Accept': 'application/json' } });
     if (!res.ok) throw new Error('http ' + res.status);
@@ -393,11 +426,11 @@ async function loadConfigFromCloud(showToast) {
     config = normalizeConfig(Object.assign({}, DEFAULT_CONFIG, rows[0].data));
     configSource = 'cloud';
     localStorage.setItem(LS_KEY, JSON.stringify(config));
-    if (showToast) toast('✅ Cloud config loaded');
+    if (showToastMsg) toast('✅ Cloud config loaded');
     return true;
   } catch (e) {
     console.warn('cloud loading failed', e);
-    if (showToast) toast('⚠️ Cloud loading failed', true);
+    if (showToastMsg) toast('⚠️ Cloud loading failed', true);
     return false;
   }
 }
@@ -455,15 +488,38 @@ function enterApp() {
   renderSettings();
   renderRecordings();
 }
-document.getElementById('loginBtn').onclick = () => {
+
+/* ---------- 登录：RPC 校验（密码不存前端） ---------- */
+document.getElementById('loginBtn').onclick = async () => {
   const pwd = document.getElementById('loginPwd').value;
-  if (pwd === (config.settingPassword || '0303')) {
-    document.getElementById('loginErr').textContent = '';
-    enterApp();
-  } else {
-    document.getElementById('loginErr').textContent = 'Incorrect password';
-    document.getElementById('loginPwd').value = '';
-    document.getElementById('loginPwd').focus();
+  const errEl = document.getElementById('loginErr');
+  if (!pwd) { errEl.textContent = 'Please enter password'; return; }
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  const orig = btn.textContent;
+  btn.textContent = 'Verifying…';
+  errEl.textContent = '';
+  try {
+    const res = await sbFetch('/rest/v1/rpc/verify_admin_password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pwd: pwd })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const ok = await res.json();
+    if (ok === true) {
+      errEl.textContent = '';
+      enterApp();
+    } else {
+      errEl.textContent = 'Incorrect password';
+      document.getElementById('loginPwd').value = '';
+      document.getElementById('loginPwd').focus();
+    }
+  } catch (e) {
+    errEl.textContent = 'Verification failed: ' + (e.message || 'unknown');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
   }
 };
 document.getElementById('loginPwd').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginBtn').click(); });
@@ -472,6 +528,59 @@ document.getElementById('loginSyncBtn').onclick = async () => {
   const ok = await loadConfigFromCloud(false);
   toast(ok ? '✅ Configuration synced from cloud' : '⚠️ Sync failed, using local cache', !ok);
 };
+
+/* ---------- 修改管理密码弹窗 ---------- */
+function openChangePasswordModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'pwd-modal-overlay';
+  overlay.innerHTML = ''
+    + '<div class="pwd-modal-card">'
+    + '<h2>🔑 修改管理密码</h2>'
+    + '<input type="password" id="oldPwd" placeholder="当前密码" autocomplete="current-password">'
+    + '<input type="password" id="newPwd" placeholder="新密码（至少 4 位）" autocomplete="new-password">'
+    + '<input type="password" id="newPwd2" placeholder="确认新密码" autocomplete="new-password">'
+    + '<div class="row">'
+    + '<button class="btn btn-outline" id="cancelPwd">取消</button>'
+    + '<button class="btn btn-primary" id="savePwd">保存</button>'
+    + '</div>'
+    + '</div>';
+  document.body.appendChild(overlay);
+  const close = () => overlay.remove();
+  overlay.querySelector('#cancelPwd').onclick = close;
+  overlay.addEventListener('mousedown', e => { if (e.target === overlay) close(); });
+  overlay.querySelector('#savePwd').onclick = async () => {
+    const oldPwd = overlay.querySelector('#oldPwd').value;
+    const newPwd = overlay.querySelector('#newPwd').value;
+    const newPwd2 = overlay.querySelector('#newPwd2').value;
+    if (!oldPwd) { toast('请输入当前密码', true); return; }
+    if (!newPwd || newPwd.length < 4) { toast('新密码至少 4 位', true); return; }
+    if (newPwd !== newPwd2) { toast('两次输入不一致', true); return; }
+    const saveBtn = overlay.querySelector('#savePwd');
+    saveBtn.disabled = true;
+    saveBtn.textContent = '保存中…';
+    try {
+      const res = await sbFetch('/rest/v1/rpc/set_admin_password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ old_pwd: oldPwd, new_pwd: newPwd })
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const ok = await res.json();
+      if (ok === true) {
+        toast('✅ 密码修改成功');
+        close();
+      } else {
+        toast('当前密码错误或新密码不合规', true);
+        saveBtn.disabled = false;
+        saveBtn.textContent = '保存';
+      }
+    } catch (e) {
+      toast('保存失败：' + (e.message || 'unknown'), true);
+      saveBtn.disabled = false;
+      saveBtn.textContent = '保存';
+    }
+  };
+}
 
 document.querySelectorAll('.tab').forEach(tab => {
   tab.onclick = () => {
@@ -502,16 +611,16 @@ function updateFloatingPalette() {
   if (!show) return;
   const collapsed = localStorage.getItem('fp_collapsed') === '1';
   el.classList.toggle('collapsed', collapsed);
-  el.innerHTML = `
-    <div class="fp-inner">
-      <button class="fp-toggle" id="fpToggle" title="Toggle palette"><i class="fas fa-palette"></i></button>
-      <div class="fp-body">
-        <span class="label">🎨 Pick a color → click a letter:</span>
-        ${PRESET_COLORS.map(c => `<button class="swatch ${pickedColor === c ? 'active' : ''}" data-action="pick-color" data-color="${c}" style="background:${c}" title="${c}"></button>`).join('')}
-        <button class="swatch eraser ${pickedColor === '' ? 'active' : ''}" data-action="pick-color" data-color="">Eraser</button>
-        <input type="color" id="customColor" value="${pickedColor || '#e11d48'}" title="Custom color">
-      </div>
-    </div>`;
+  el.innerHTML = ''
+    + '<div class="fp-inner">'
+    + '<button class="fp-toggle" id="fpToggle" title="Toggle palette"><i class="fas fa-palette"></i></button>'
+    + '<div class="fp-body">'
+    + '<span class="label">🎨 Pick a color → click a letter:</span>'
+    + PRESET_COLORS.map(c => '<button class="swatch ' + (pickedColor === c ? 'active' : '') + '" data-action="pick-color" data-color="' + c + '" style="background:' + c + '" title="' + c + '"></button>').join('')
+    + '<button class="swatch eraser ' + (pickedColor === '' ? 'active' : '') + '" data-action="pick-color" data-color="">Eraser</button>'
+    + '<input type="color" id="customColor" value="' + (pickedColor || '#e11d48') + '" title="Custom color">'
+    + '</div>'
+    + '</div>';
 }
 document.getElementById('floatingPalette').addEventListener('click', e => {
   if (e.target.closest('#fpToggle')) {
@@ -524,34 +633,34 @@ document.getElementById('floatingPalette').addEventListener('click', e => {
 /* settings rendering */
 function sectionHtml(id, title, body) {
   const open = expanded.has(id);
-  return `
-    <div class="section" data-section="${id}">
-      <div class="section-head ${open ? '' : 'collapsed'}" data-action="toggle-section" data-section-id="${id}">
-        <span>${title}</span>
-        <i class="fas fa-chevron-down"></i>
-      </div>
-      <div class="section-body ${open ? '' : 'hidden'}">${body}</div>
-    </div>`;
+  return ''
+    + '<div class="section" data-section="' + id + '">'
+    + '<div class="section-head ' + (open ? '' : 'collapsed') + '" data-action="toggle-section" data-section-id="' + id + '">'
+    + '<span>' + title + '</span>'
+    + '<i class="fas fa-chevron-down"></i>'
+    + '</div>'
+    + '<div class="section-body ' + (open ? '' : 'hidden') + '">' + body + '</div>'
+    + '</div>';
 }
 function imgFieldHtml(opts) {
   const { label, value, scope, fixedBase, key, id, partId, gameId } = opts;
   const attrs = [];
-  attrs.push(`data-img-scope="${esc(scope)}"`);
-  attrs.push(`data-fixed="${esc(fixedBase)}"`);
-  if (key) attrs.push(`data-key="${esc(key)}"`);
-  if (id) attrs.push(`data-id="${esc(id)}"`);
-  if (partId) attrs.push(`data-part-id="${esc(partId)}"`);
-  if (gameId) attrs.push(`data-game-id="${esc(gameId)}"`);
-  return `
-    <div class="img-field" ${attrs.join(' ')}>
-      <label>${esc(label)}</label>
-      <div class="row">
-        <input type="text" class="grow img-url" readonly value="${esc(value || '')}" placeholder="Not set">
-        <button class="btn btn-outline btn-mini" data-action="img-upload"><i class="fas fa-upload"></i> Upload</button>
-        <button class="btn btn-danger btn-mini" data-action="img-clear"><i class="fas fa-times"></i></button>
-      </div>
-      ${value ? `<div class="img-thumb" style="background-image:url('${esc(value)}')"></div>` : ''}
-    </div>`;
+  attrs.push('data-img-scope="' + esc(scope) + '"');
+  attrs.push('data-fixed="' + esc(fixedBase) + '"');
+  if (key) attrs.push('data-key="' + esc(key) + '"');
+  if (id) attrs.push('data-id="' + esc(id) + '"');
+  if (partId) attrs.push('data-part-id="' + esc(partId) + '"');
+  if (gameId) attrs.push('data-game-id="' + esc(gameId) + '"');
+  return ''
+    + '<div class="img-field" ' + attrs.join(' ') + '>'
+    + '<label>' + esc(label) + '</label>'
+    + '<div class="row">'
+    + '<input type="text" class="grow img-url" readonly value="' + esc(value || '') + '" placeholder="Not set">'
+    + '<button class="btn btn-outline btn-mini" data-action="img-upload"><i class="fas fa-upload"></i> Upload</button>'
+    + '<button class="btn btn-danger btn-mini" data-action="img-clear"><i class="fas fa-times"></i></button>'
+    + '</div>'
+    + (value ? '<div class="img-thumb" style="background-image:url(\'' + esc(value) + '\')"></div>' : '')
+    + '</div>';
 }
 
 function renderSettings() {
@@ -559,111 +668,118 @@ function renderSettings() {
   const scrollTop = panel.scrollTop;
   const html = [];
 
-  html.push(sectionHtml('basic', '🔑 Basic Setting', `
-    <div class="field">
-      <label>Admin Password</label>
-      <input type="text" data-scope="config" data-key="settingPassword" value="${esc(config.settingPassword)}">
-      <div class="hint">Click "Publish to Cloud" after editing for changes to take effect.</div>
-    </div>
-  `));
+  html.push(sectionHtml('basic', '🔐 Security &amp; Admin', ''
+    + '<div class="field">'
+    + '<label>Admin Password</label>'
+    + '<div class="row">'
+    + '<button class="btn btn-primary" data-action="open-change-pwd"><i class="fas fa-key"></i> 修改管理密码</button>'
+    + '</div>'
+    + '<div class="hint">密码使用 bcrypt 加密存储在 Supabase 的 <code>admin_secret</code> 表里，前端无法直接读取。修改后立即生效。</div>'
+    + '</div>'
+    + '<div class="help-box">'
+    + '<b>首次部署提示：</b> 如果登录时提示 "Verification failed" 或返回 <code>false</code>，说明 <code>admin_secret</code> 表未创建或默认密码未写入。请在 Supabase SQL Editor 执行迁移 SQL 后再试。'
+    + '</div>'
+  ));
 
-  html.push(sectionHtml('pageBg', '🖼 Page Backgrounds', `
-    ${imgFieldHtml({ label:'Home Page Background', value:config.homeBgUrl, scope:'config', key:'homeBgUrl', fixedBase:'home_bg' })}
-    ${imgFieldHtml({ label:'Game Page Background', value:config.gamePageBgUrl, scope:'config', key:'gamePageBgUrl', fixedBase:'game_page_bg' })}
-    ${imgFieldHtml({ label:'Role-Play Page Background', value:config.rolePlayPageBgUrl, scope:'config', key:'rolePlayPageBgUrl', fixedBase:'roleplay_page_bg' })}
-    ${imgFieldHtml({ label:'Listen & Read Page Background', value:config.listenReadPageBgUrl, scope:'config', key:'listenReadPageBgUrl', fixedBase:'listenread_page_bg' })}
-  `));
+  html.push(sectionHtml('pageBg', '🖼 Page Backgrounds', ''
+    + imgFieldHtml({ label:'Home Page Background', value:config.homeBgUrl, scope:'config', key:'homeBgUrl', fixedBase:'home_bg' })
+    + imgFieldHtml({ label:'Game Page Background', value:config.gamePageBgUrl, scope:'config', key:'gamePageBgUrl', fixedBase:'game_page_bg' })
+    + imgFieldHtml({ label:'Role-Play Page Background', value:config.rolePlayPageBgUrl, scope:'config', key:'rolePlayPageBgUrl', fixedBase:'roleplay_page_bg' })
+    + imgFieldHtml({ label:'Listen & Read Page Background', value:config.listenReadPageBgUrl, scope:'config', key:'listenReadPageBgUrl', fixedBase:'listenread_page_bg' })
+  ));
 
-  html.push(sectionHtml('btnBg', '🎛 Home Button Backgrounds', `
-    ${imgFieldHtml({ label:'Game Button', value:config.btnGameBgUrl, scope:'config', key:'btnGameBgUrl', fixedBase:'btn_game_bg' })}
-    ${imgFieldHtml({ label:'Role-Play Button', value:config.btnRolePlayBgUrl, scope:'config', key:'btnRolePlayBgUrl', fixedBase:'btn_roleplay_bg' })}
-    ${imgFieldHtml({ label:'Listen & Read Button', value:config.btnListenReadBgUrl, scope:'config', key:'btnListenReadBgUrl', fixedBase:'btn_listenread_bg' })}
-    ${imgFieldHtml({ label:'AI Talk Button', value:config.btnAITalkBgUrl, scope:'config', key:'btnAITalkBgUrl', fixedBase:'btn_aitalk_bg' })}
-  `));
+  html.push(sectionHtml('btnBg', '🎛 Home Button Backgrounds', ''
+    + imgFieldHtml({ label:'Game Button', value:config.btnGameBgUrl, scope:'config', key:'btnGameBgUrl', fixedBase:'btn_game_bg' })
+    + imgFieldHtml({ label:'Role-Play Button', value:config.btnRolePlayBgUrl, scope:'config', key:'btnRolePlayBgUrl', fixedBase:'btn_roleplay_bg' })
+    + imgFieldHtml({ label:'Listen & Read Button', value:config.btnListenReadBgUrl, scope:'config', key:'btnListenReadBgUrl', fixedBase:'btn_listenread_bg' })
+    + imgFieldHtml({ label:'AI Talk Button', value:config.btnAITalkBgUrl, scope:'config', key:'btnAITalkBgUrl', fixedBase:'btn_aitalk_bg' })
+  ));
 
   let aiTalkHtml = '';
   config.aiTalkButtons.forEach((b, i) => {
-    aiTalkHtml += `
-      <div class="editor-item">
-        <div class="editor-head">
-          <span>🎭 Role-Play ${i + 1}</span>
-          <button class="btn btn-danger btn-mini" data-action="del-aiTalk" data-id="${esc(b.id)}"><i class="fas fa-trash"></i> Delete</button>
-        </div>
-        <div class="field"><label>Name</label><input type="text" data-scope="aiTalk" data-id="${esc(b.id)}" data-key="name" value="${esc(b.name)}"></div>
-        <div class="field"><label>Link URL</label><input type="text" data-scope="aiTalk" data-id="${esc(b.id)}" data-key="url" value="${esc(b.url)}"></div>
-        ${imgFieldHtml({ label:'Button Background Image', value:b.bgUrl, scope:'aiTalk', id:b.id, fixedBase:'aitalk_' + b.id })}
-      </div>`;
+    aiTalkHtml += ''
+      + '<div class="editor-item">'
+      + '<div class="editor-head">'
+      + '<span>🎭 Role-Play Legacy ' + (i + 1) + '</span>'
+      + '<button class="btn btn-danger btn-mini" data-action="del-aiTalk" data-id="' + esc(b.id) + '"><i class="fas fa-trash"></i> Delete</button>'
+      + '</div>'
+      + '<div class="field"><label>Name</label><input type="text" data-scope="aiTalk" data-id="' + esc(b.id) + '" data-key="name" value="' + esc(b.name) + '"></div>'
+      + '<div class="field"><label>Link URL</label><input type="text" data-scope="aiTalk" data-id="' + esc(b.id) + '" data-key="url" value="' + esc(b.url) + '"></div>'
+      + imgFieldHtml({ label:'Button Background Image', value:b.bgUrl, scope:'aiTalk', id:b.id, fixedBase:'aitalk_' + b.id })
+      + '</div>';
   });
-  html.push(sectionHtml('aiTalkMgmt', '🎭 Role-Play AI Management', `
-    ${aiTalkHtml || '<p class="empty">No buttons yet</p>'}
-    <button class="btn btn-outline" data-action="add-aiTalk"><i class="fas fa-plus"></i> Add Role-Play Button</button>
-  `));
+  html.push(sectionHtml('aiTalkMgmt', '🎭 Legacy Role-Play Buttons (豆包外部链接)', ''
+    + '<div class="hint" style="margin-bottom:12px;">这些是旧版「打开豆包 bot」按钮。如果你已经使用新 Role Play 对话，可以保留也可以删除。</div>'
+    + (aiTalkHtml || '<p class="empty">No buttons yet</p>')
+    + '<button class="btn btn-outline" data-action="add-aiTalk"><i class="fas fa-plus"></i> Add Legacy Button</button>'
+  ));
 
   let discHtml = '';
   config.discussionButtons.forEach((b, i) => {
-    discHtml += `
-      <div class="editor-item">
-        <div class="editor-head">
-          <span>💬 AI Talk ${i + 1}</span>
-          <button class="btn btn-danger btn-mini" data-action="del-discussion" data-id="${esc(b.id)}"><i class="fas fa-trash"></i> Delete</button>
-        </div>
-        <div class="field"><label>Name</label><input type="text" data-scope="discussion" data-id="${esc(b.id)}" data-key="name" value="${esc(b.name)}"></div>
-        <div class="field"><label>Link URL</label><input type="text" data-scope="discussion" data-id="${esc(b.id)}" data-key="url" value="${esc(b.url)}"></div>
-        ${imgFieldHtml({ label:'Button Background Image', value:b.bgUrl, scope:'discussion', id:b.id, fixedBase:'discussion_' + b.id })}
-      </div>`;
+    discHtml += ''
+      + '<div class="editor-item">'
+      + '<div class="editor-head">'
+      + '<span>💬 AI Talk ' + (i + 1) + '</span>'
+      + '<button class="btn btn-danger btn-mini" data-action="del-discussion" data-id="' + esc(b.id) + '"><i class="fas fa-trash"></i> Delete</button>'
+      + '</div>'
+      + '<div class="field"><label>Name</label><input type="text" data-scope="discussion" data-id="' + esc(b.id) + '" data-key="name" value="' + esc(b.name) + '"></div>'
+      + '<div class="field"><label>Link URL</label><input type="text" data-scope="discussion" data-id="' + esc(b.id) + '" data-key="url" value="' + esc(b.url) + '"></div>'
+      + imgFieldHtml({ label:'Button Background Image', value:b.bgUrl, scope:'discussion', id:b.id, fixedBase:'discussion_' + b.id })
+      + '</div>';
   });
-  html.push(sectionHtml('discMgmt', '💬 AI Talk Management', `
-    ${discHtml || '<p class="empty">No buttons yet</p>'}
-    <button class="btn btn-outline" data-action="add-discussion"><i class="fas fa-plus"></i> Add AI Talk Button</button>
-  `));
+  html.push(sectionHtml('discMgmt', '💬 AI Talk Management', ''
+    + (discHtml || '<p class="empty">No buttons yet</p>')
+    + '<button class="btn btn-outline" data-action="add-discussion"><i class="fas fa-plus"></i> Add AI Talk Button</button>'
+  ));
 
   let gameHtml = '';
   config.gameParts.forEach(part => {
     let gamesHtml = '';
     (part.games || []).forEach((g, gi) => {
-      gamesHtml += `
-        <div class="editor-item" style="background:#fff;">
-          <div class="editor-head">
-            <span>🎮 Game ${gi + 1}</span>
-            <button class="btn btn-danger btn-mini" data-action="del-game" data-part-id="${esc(part.id)}" data-game-id="${esc(g.id)}"><i class="fas fa-trash"></i> Delete</button>
-          </div>
-          <div class="field"><label>Game Name</label><input type="text" data-scope="game" data-part-id="${esc(part.id)}" data-game-id="${esc(g.id)}" data-key="name" value="${esc(g.name)}"></div>
-          <div class="field"><label>Embed Code (iframe)</label><textarea rows="3" data-scope="game" data-part-id="${esc(part.id)}" data-game-id="${esc(g.id)}" data-key="embedCode">${esc(g.embedCode)}</textarea></div>
-          ${imgFieldHtml({ label:'Game Button Background Image', value:g.bgUrl, scope:'game', partId:part.id, gameId:g.id, fixedBase:'game_' + g.id })}
-        </div>`;
+      gamesHtml += ''
+        + '<div class="editor-item" style="background:#fff;">'
+        + '<div class="editor-head">'
+        + '<span>🎮 Game ' + (gi + 1) + '</span>'
+        + '<button class="btn btn-danger btn-mini" data-action="del-game" data-part-id="' + esc(part.id) + '" data-game-id="' + esc(g.id) + '"><i class="fas fa-trash"></i> Delete</button>'
+        + '</div>'
+        + '<div class="field"><label>Game Name</label><input type="text" data-scope="game" data-part-id="' + esc(part.id) + '" data-game-id="' + esc(g.id) + '" data-key="name" value="' + esc(g.name) + '"></div>'
+        + '<div class="field"><label>Embed Code (iframe)</label><textarea rows="3" data-scope="game" data-part-id="' + esc(part.id) + '" data-game-id="' + esc(g.id) + '" data-key="embedCode">' + esc(g.embedCode) + '</textarea></div>'
+        + imgFieldHtml({ label:'Game Button Background Image', value:g.bgUrl, scope:'game', partId:part.id, gameId:g.id, fixedBase:'game_' + g.id })
+        + '</div>';
     });
-    gameHtml += `
-      <div class="editor-item">
-        <div class="editor-head">
-          <input type="text" data-scope="gamePart" data-part-id="${esc(part.id)}" data-key="name" value="${esc(part.name)}"
-                 style="flex:1; padding:10px 14px; border-radius:10px; border:1.5px solid #dbe4f0; font-size:15px; font-weight:700; color:#1e3c72; background:#fff; outline:none;">
-          <button class="btn btn-danger btn-mini" data-action="del-gamePart" data-part-id="${esc(part.id)}"><i class="fas fa-trash-alt"></i> Delete Part</button>
-        </div>
-        ${gamesHtml || '<p class="empty" style="padding:16px 0;">No games in this part yet</p>'}
-        <button class="btn btn-outline btn-mini" data-action="add-game" data-part-id="${esc(part.id)}"><i class="fas fa-plus"></i> Add Game</button>
-      </div>`;
+    gameHtml += ''
+      + '<div class="editor-item">'
+      + '<div class="editor-head">'
+      + '<input type="text" data-scope="gamePart" data-part-id="' + esc(part.id) + '" data-key="name" value="' + esc(part.name) + '" style="flex:1; padding:10px 14px; border-radius:10px; border:1.5px solid #dbe4f0; font-size:15px; font-weight:700; color:#1e3c72; background:#fff; outline:none;">'
+      + '<button class="btn btn-danger btn-mini" data-action="del-gamePart" data-part-id="' + esc(part.id) + '"><i class="fas fa-trash-alt"></i> Delete Part</button>'
+      + '</div>'
+      + (gamesHtml || '<p class="empty" style="padding:16px 0;">No games in this part yet</p>')
+      + '<button class="btn btn-outline btn-mini" data-action="add-game" data-part-id="' + esc(part.id) + '"><i class="fas fa-plus"></i> Add Game</button>'
+      + '</div>';
   });
-  html.push(sectionHtml('gameMgmt', '🎮 Game Management', `
-    ${gameHtml}
-    <button class="btn btn-primary" data-action="add-gamePart"><i class="fas fa-plus"></i> New Part</button>
-  `));
+  html.push(sectionHtml('gameMgmt', '🎮 Game Management', ''
+    + gameHtml
+    + '<button class="btn btn-primary" data-action="add-gamePart"><i class="fas fa-plus"></i> New Part</button>'
+  ));
 
   html.push(sectionHtml('lrMgmt', '🎧 Listen &amp; Read Management', buildListenReadHtml()));
 
-  html.push(sectionHtml('publish', '☁️ Publish / Backup', `
-    <div class="help-box">
-      <b>Database setup</b><br>
-      Run the table SQL first. If upgrading from an older version, run:<br>
-      <code>ALTER TABLE public.recordings ADD COLUMN IF NOT EXISTS campus text, ADD COLUMN IF NOT EXISTS level text;</code>
-      <code>ALTER TABLE public.recordings ADD COLUMN IF NOT EXISTS star int DEFAULT 0;</code>
-    </div>
-    <div class="row">
-      <button class="btn btn-primary" data-action="publish"><i class="fas fa-cloud-upload-alt"></i> One-Click Publish</button>
-      <button class="btn btn-outline" data-action="export-json"><i class="fas fa-download"></i> Export JSON</button>
-      <button class="btn btn-outline" data-action="import-json"><i class="fas fa-upload"></i> Import JSON</button>
-      <button class="btn btn-danger" data-action="reset-default"><i class="fas fa-undo"></i> Reset Default</button>
-    </div>
-  `));
+  html.push(sectionHtml('roleplayMgmt', '🎭 Role Play Management (Tencent Cloud)', buildRolePlayHtml()));
+
+  html.push(sectionHtml('publish', '☁️ Publish / Backup', ''
+    + '<div class="help-box">'
+    + '<b>Database setup</b><br>'
+    + 'Run the table SQL first. If upgrading from an older version, run:<br>'
+    + '<code>ALTER TABLE public.recordings ADD COLUMN IF NOT EXISTS campus text, ADD COLUMN IF NOT EXISTS level text;</code>'
+    + '<code>ALTER TABLE public.recordings ADD COLUMN IF NOT EXISTS star int DEFAULT 0;</code>'
+    + '</div>'
+    + '<div class="row">'
+    + '<button class="btn btn-primary" data-action="publish"><i class="fas fa-cloud-upload-alt"></i> One-Click Publish</button>'
+    + '<button class="btn btn-outline" data-action="export-json"><i class="fas fa-download"></i> Export JSON</button>'
+    + '<button class="btn btn-outline" data-action="import-json"><i class="fas fa-upload"></i> Import JSON</button>'
+    + '<button class="btn btn-danger" data-action="reset-default"><i class="fas fa-undo"></i> Reset Default</button>'
+    + '</div>'
+  ));
 
   panel.innerHTML = html.join('');
   panel.scrollTop = scrollTop;
@@ -675,44 +791,95 @@ function buildListenReadHtml() {
   (config.listenReadParts || []).forEach((part, pi) => {
     let itemsHtml = '';
     (part.items || []).forEach((it, ii) => {
-      itemsHtml += `
-        <div class="editor-item" style="background:#fff;" data-lr-item="${esc(it.id)}">
-          <div class="editor-head">
-            <span>📝 Item ${ii + 1}</span>
-            <button class="btn btn-danger btn-mini" data-action="del-lrItem" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}"><i class="fas fa-trash"></i> Delete</button>
-          </div>
-          <div class="field"><label>Text (word / sentence)</label>
-            <textarea rows="2" data-scope="lrItem" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}" data-key="text" placeholder="e.g. Hello world">${esc(it.text)}</textarea>
-          </div>
-          <div class="field"><label>Per-letter colors (pick a color at the bottom, then click a letter)</label>
-            <div class="lr-chars" data-chars-for="${esc(it.id)}" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}">${renderCharsHtml(it)}</div>
-          </div>
-          <div class="field" style="margin-bottom:0;">
-            <label>Reference audio (played when students click Slow / Normal)</label>
-            <div class="audio-row">
-              <button class="btn btn-outline btn-mini" data-action="upload-lrAudio" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}"><i class="fas fa-upload"></i> Upload Audio</button>
-              ${it.audioUrl ? `<audio controls src="${esc(it.audioUrl)}"></audio><button class="btn btn-danger btn-mini" data-action="clear-lrAudio" data-part-id="${esc(part.id)}" data-item-id="${esc(it.id)}"><i class="fas fa-times"></i> Remove</button>` : '<span class="hint" style="margin:0;">No audio uploaded (browser speech synthesis will be used)</span>'}
-            </div>
-          </div>
-        </div>`;
+      itemsHtml += ''
+        + '<div class="editor-item" style="background:#fff;" data-lr-item="' + esc(it.id) + '">'
+        + '<div class="editor-head">'
+        + '<span>📝 Item ' + (ii + 1) + '</span>'
+        + '<button class="btn btn-danger btn-mini" data-action="del-lrItem" data-part-id="' + esc(part.id) + '" data-item-id="' + esc(it.id) + '"><i class="fas fa-trash"></i> Delete</button>'
+        + '</div>'
+        + '<div class="field"><label>Text (word / sentence)</label>'
+        + '<textarea rows="2" data-scope="lrItem" data-part-id="' + esc(part.id) + '" data-item-id="' + esc(it.id) + '" data-key="text" placeholder="e.g. Hello world">' + esc(it.text) + '</textarea>'
+        + '</div>'
+        + '<div class="field"><label>Per-letter colors (pick a color at the bottom, then click a letter)</label>'
+        + '<div class="lr-chars" data-chars-for="' + esc(it.id) + '" data-part-id="' + esc(part.id) + '" data-item-id="' + esc(it.id) + '">' + renderCharsHtml(it) + '</div>'
+        + '</div>'
+        + '<div class="field" style="margin-bottom:0;">'
+        + '<label>Reference audio (played when students click Slow / Normal)</label>'
+        + '<div class="audio-row">'
+        + '<button class="btn btn-outline btn-mini" data-action="upload-lrAudio" data-part-id="' + esc(part.id) + '" data-item-id="' + esc(it.id) + '"><i class="fas fa-upload"></i> Upload Audio</button>'
+        + (it.audioUrl ? '<audio controls src="' + esc(it.audioUrl) + '"></audio><button class="btn btn-danger btn-mini" data-action="clear-lrAudio" data-part-id="' + esc(part.id) + '" data-item-id="' + esc(it.id) + '"><i class="fas fa-times"></i> Remove</button>' : '<span class="hint" style="margin:0;">No audio uploaded (browser speech synthesis will be used)</span>')
+        + '</div>'
+        + '</div>'
+        + '</div>';
     });
-    partsHtml += `
-      <div class="editor-item">
-        <div class="editor-head">
-          <span>📚 Unit ${pi + 1}</span>
-          <button class="btn btn-danger btn-mini" data-action="del-lrPart" data-part-id="${esc(part.id)}"><i class="fas fa-trash-alt"></i> Delete Unit</button>
-        </div>
-        <div class="field"><label>Unit Name</label><input type="text" data-scope="lrPart" data-part-id="${esc(part.id)}" data-key="name" value="${esc(part.name)}"></div>
-        ${itemsHtml || '<p class="empty" style="padding:16px 0;">No items in this unit yet</p>'}
-        <button class="btn btn-outline btn-mini" data-action="add-lrItem" data-part-id="${esc(part.id)}"><i class="fas fa-plus"></i> Add Word / Sentence</button>
-      </div>`;
+    partsHtml += ''
+      + '<div class="editor-item">'
+      + '<div class="editor-head">'
+      + '<span>📚 Unit ' + (pi + 1) + '</span>'
+      + '<button class="btn btn-danger btn-mini" data-action="del-lrPart" data-part-id="' + esc(part.id) + '"><i class="fas fa-trash-alt"></i> Delete Unit</button>'
+      + '</div>'
+      + '<div class="field"><label>Unit Name</label><input type="text" data-scope="lrPart" data-part-id="' + esc(part.id) + '" data-key="name" value="' + esc(part.name) + '"></div>'
+      + (itemsHtml || '<p class="empty" style="padding:16px 0;">No items in this unit yet</p>')
+      + '<button class="btn btn-outline btn-mini" data-action="add-lrItem" data-part-id="' + esc(part.id) + '"><i class="fas fa-plus"></i> Add Word / Sentence</button>'
+      + '</div>';
   });
-  return `
-    <div class="hint" style="margin-bottom:16px;">The student side auto-scales text to fit the screen, so long sentences are fine. The palette floats at the bottom for quick access.</div>
-    ${partsHtml}
-    <button class="btn btn-primary" data-action="add-lrPart"><i class="fas fa-plus"></i> New Unit</button>
-  `;
+  return ''
+    + '<div class="hint" style="margin-bottom:16px;">The student side auto-scales text to fit the screen, so long sentences are fine. The palette floats at the bottom for quick access.</div>'
+    + partsHtml
+    + '<button class="btn btn-primary" data-action="add-lrPart"><i class="fas fa-plus"></i> New Unit</button>';
 }
+
+/* ---------- Role Play editor HTML ---------- */
+function buildRolePlayHtml() {
+  let unitsHtml = '';
+  (config.roleplayUnits || []).forEach((u) => {
+    let turnsHtml = '';
+    (u.turns || []).forEach((t, ti) => {
+      const isA = t.role === 'A';
+      turnsHtml += ''
+        + '<div class="rp-turn-row">'
+        + '<div class="rp-role-toggle">'
+        + '<button class="rp-role-btn ' + (isA ? 'active-a' : '') + '" data-action="rp-toggle-role" data-unit-id="' + esc(u.id) + '" data-turn-index="' + ti + '" data-role="A" title="Set as role A (AI)">A</button>'
+        + '<button class="rp-role-btn ' + (!isA ? 'active-b' : '') + '" data-action="rp-toggle-role" data-unit-id="' + esc(u.id) + '" data-turn-index="' + ti + '" data-role="B" title="Set as role B (student)">B</button>'
+        + '</div>'
+        + '<input type="text" class="rp-turn-input" data-scope="rpTurn" data-unit-id="' + esc(u.id) + '" data-turn-index="' + ti + '" data-key="text" value="' + esc(t.text || '') + '" placeholder="台词内容...">'
+        + '<button class="rp-del-btn" data-action="del-roleplayTurn" data-unit-id="' + esc(u.id) + '" data-turn-index="' + ti + '"><i class="fas fa-times"></i></button>'
+        + '</div>';
+    });
+    unitsHtml += ''
+      + '<div class="editor-item">'
+      + '<div class="editor-head">'
+      + '<input type="text" data-scope="rpUnit" data-unit-id="' + esc(u.id) + '" data-key="name" value="' + esc(u.name || '') + '" placeholder="单元名称" style="flex:1; padding:10px 14px; border-radius:10px; border:1.5px solid #dbe4f0; font-size:15px; font-weight:700; color:#1e3c72; background:#fff; outline:none;">'
+      + '<button class="btn btn-danger btn-mini" data-action="del-roleplayUnit" data-unit-id="' + esc(u.id) + '"><i class="fas fa-trash-alt"></i> Delete Unit</button>'
+      + '</div>'
+      + '<div style="margin-top:12px;">'
+      + (turnsHtml || '<p class="empty" style="padding:12px 0;">No turns yet. Add a turn below.</p>')
+      + '</div>'
+      + '<button class="btn btn-outline btn-mini" data-action="add-roleplayTurn" data-unit-id="' + esc(u.id) + '"><i class="fas fa-plus"></i> Add Turn</button>'
+      + '</div>';
+  });
+
+  const s = config.roleplaySettings || { matchThreshold: 0.62, maxStars: 3, maxRetryPerTurn: 5 };
+  return ''
+    + '<div class="help-box">'
+    + '<b>How it works:</b> 每个单元包含多轮对话。<b>A</b> 是 AI 角色（会通过腾讯云 TTS 朗读），<b>B</b> 是学生角色（学生端默认扮演 B）。学生回答后会被 ASR 识别并与 B 台词比较，相似度 ≥ 阈值时判定通过。学生也可以切换到 A 重新答。'
+    + '</div>'
+    + (unitsHtml || '<p class="empty" style="padding:16px 0;">No units yet. Click "New Unit" below.</p>')
+    + '<button class="btn btn-primary" data-action="add-roleplayUnit"><i class="fas fa-plus"></i> New Unit</button>'
+    + '<div style="margin-top:20px; padding-top:16px; border-top:1px solid #f1f5fa;">'
+    + '<div class="field" style="margin-bottom:14px;">'
+    + '<label>Match Threshold (0 – 1)</label>'
+    + '<input type="text" data-scope="rpSetting" data-key="matchThreshold" value="' + esc(String(s.matchThreshold)) + '">'
+    + '<div class="hint">相似度阈值。0.62 = 62% 相似算通过。调高更严格（建议 0.7–0.8），调低更宽松。</div>'
+    + '</div>'
+    + '<div class="field" style="margin-bottom:0;">'
+    + '<label>Max Stars</label>'
+    + '<input type="text" data-scope="rpSetting" data-key="maxStars" value="' + esc(String(s.maxStars)) + '">'
+    + '<div class="hint">学生全部通过时能拿到的最大星星数（1–5）。</div>'
+    + '</div>'
+    + '</div>';
+}
+
 function renderCharsHtml(item) {
   const chars = Array.from(item.text || '');
   if (!chars.length) return '<span style="color:#b6c2d2; font-weight:400; font-size:14px;">(Enter text above to show colorable letters)</span>';
@@ -720,8 +887,8 @@ function renderCharsHtml(item) {
   return chars.map((ch, i) => {
     const c = colors[i] || '';
     if (ch === '\n') return '<br>';
-    if (ch === ' ') return `<span class="lr-char space" data-action="paint-char" data-item-id="${esc(item.id)}" data-idx="${i}" style="color:${c || '#1e2f4b'}"> </span>`;
-    return `<span class="lr-char" data-action="paint-char" data-item-id="${esc(item.id)}" data-idx="${i}" style="color:${c || '#1e2f4b'}">${esc(ch)}</span>`;
+    if (ch === ' ') return '<span class="lr-char space" data-action="paint-char" data-item-id="' + esc(item.id) + '" data-idx="' + i + '" style="color:' + (c || '#1e2f4b') + '"> </span>';
+    return '<span class="lr-char" data-action="paint-char" data-item-id="' + esc(item.id) + '" data-idx="' + i + '" style="color:' + (c || '#1e2f4b') + '">' + esc(ch) + '</span>';
   }).join('');
 }
 
@@ -755,9 +922,35 @@ document.addEventListener('input', e => {
     if (key === 'text') {
       it.text = val;
       alignColors(it);
-      const box = document.querySelector(`.lr-chars[data-item-id="${cssEscape(it.id)}"]`);
+      const box = document.querySelector('.lr-chars[data-item-id="' + cssEscape(it.id) + '"]');
       if (box) box.innerHTML = renderCharsHtml(it);
     } else it[key] = val;
+  }
+  else if (scope === 'rpUnit') {
+    const u = config.roleplayUnits.find(x => x.id === el.dataset.unitId);
+    if (u) u[key] = val;
+  }
+  else if (scope === 'rpTurn') {
+    const u = config.roleplayUnits.find(x => x.id === el.dataset.unitId);
+    if (!u || !u.turns) return;
+    const ti = parseInt(el.dataset.turnIndex, 10);
+    if (u.turns[ti]) u.turns[ti][key] = val;
+  }
+  else if (scope === 'rpSetting') {
+    if (!config.roleplaySettings) config.roleplaySettings = {};
+    if (key === 'matchThreshold') {
+      let v = parseFloat(val);
+      if (isNaN(v)) v = 0.62;
+      if (v < 0) v = 0;
+      if (v > 1) v = 1;
+      config.roleplaySettings.matchThreshold = v;
+    } else if (key === 'maxStars') {
+      let v = parseInt(val, 10);
+      if (isNaN(v)) v = 3;
+      if (v < 1) v = 1;
+      if (v > 5) v = 5;
+      config.roleplaySettings.maxStars = v;
+    }
   }
 });
 
@@ -793,6 +986,8 @@ document.addEventListener('click', async e => {
     return;
   }
 
+  if (action === 'open-change-pwd') { openChangePasswordModal(); return; }
+
   if (action === 'img-upload') {
     const field = target.closest('.img-field');
     if (!field) return;
@@ -801,7 +996,7 @@ document.addEventListener('click', async e => {
     const base = field.dataset.fixed;
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
     toast('⏳ Uploading…');
-    const url = await uploadFile(file, `${base}.${ext}`, file.type);
+    const url = await uploadFile(file, base + '.' + ext, file.type);
     if (!url) { toast('❌ Upload failed', true); return; }
     applyImgFieldValue(field, url + '?t=' + Date.now());
     toast('✅ Image uploaded');
@@ -830,16 +1025,16 @@ document.addEventListener('click', async e => {
     if (!file) return;
     const ext = (file.name.split('.').pop() || 'mp3').toLowerCase();
     toast('⏳ Uploading audio…');
-    const url = await uploadFile(file, `lr_audio/${itemId}.${ext}`, file.type);
+    const url = await uploadFile(file, 'lr_audio/' + itemId + '.' + ext, file.type);
     if (!url) { toast('❌ Upload failed', true); return; }
     it.audioUrl = url + '?t=' + Date.now();
-    const itemEl = document.querySelector(`.editor-item[data-lr-item="${cssEscape(itemId)}"]`);
+    const itemEl = document.querySelector('.editor-item[data-lr-item="' + cssEscape(itemId) + '"]');
     if (itemEl) {
       const audioRow = itemEl.querySelector('.audio-row');
-      audioRow.innerHTML = `
-        <button class="btn btn-outline btn-mini" data-action="upload-lrAudio" data-part-id="${esc(partId)}" data-item-id="${esc(itemId)}"><i class="fas fa-upload"></i> Re-upload</button>
-        <audio controls src="${esc(it.audioUrl)}"></audio>
-        <button class="btn btn-danger btn-mini" data-action="clear-lrAudio" data-part-id="${esc(partId)}" data-item-id="${esc(itemId)}"><i class="fas fa-times"></i> Remove</button>`;
+      audioRow.innerHTML = ''
+        + '<button class="btn btn-outline btn-mini" data-action="upload-lrAudio" data-part-id="' + esc(partId) + '" data-item-id="' + esc(itemId) + '"><i class="fas fa-upload"></i> Re-upload</button>'
+        + '<audio controls src="' + esc(it.audioUrl) + '"></audio>'
+        + '<button class="btn btn-danger btn-mini" data-action="clear-lrAudio" data-part-id="' + esc(partId) + '" data-item-id="' + esc(itemId) + '"><i class="fas fa-times"></i> Remove</button>';
     }
     toast('✅ Audio uploaded');
     return;
@@ -894,6 +1089,50 @@ document.addEventListener('click', async e => {
     renderSettings(); toast('Deleted'); return;
   }
 
+  /* Role Play actions */
+  if (action === 'add-roleplayUnit') {
+    config.roleplayUnits.push({ id: genId('rp'), name: 'New Unit', turns: [] });
+    renderSettings(); toast('Unit created');
+    setTimeout(() => {
+      const items = document.querySelectorAll('.editor-item');
+      let last = null;
+      items.forEach(el => { if (el.querySelector('[data-scope="rpUnit"]')) last = el; });
+      if (last) last.scrollIntoView({ behavior:'smooth', block:'center' });
+    }, 60);
+    return;
+  }
+  if (action === 'del-roleplayUnit') {
+    if (!confirm('Delete this Role Play unit and all its turns?')) return;
+    config.roleplayUnits = config.roleplayUnits.filter(u => u.id !== target.dataset.unitId);
+    renderSettings(); toast('Deleted'); return;
+  }
+  if (action === 'add-roleplayTurn') {
+    const u = config.roleplayUnits.find(x => x.id === target.dataset.unitId);
+    if (!u) return;
+    const lastRole = u.turns.length ? u.turns[u.turns.length - 1].role : 'B';
+    const nextRole = lastRole === 'A' ? 'B' : 'A';
+    u.turns.push({ role: nextRole, text: '' });
+    renderSettings(); toast('Turn added');
+    return;
+  }
+  if (action === 'del-roleplayTurn') {
+    const u = config.roleplayUnits.find(x => x.id === target.dataset.unitId);
+    if (!u) return;
+    const ti = parseInt(target.dataset.turnIndex, 10);
+    if (!isNaN(ti)) u.turns.splice(ti, 1);
+    renderSettings(); toast('Deleted'); return;
+  }
+  if (action === 'rp-toggle-role') {
+    const u = config.roleplayUnits.find(x => x.id === target.dataset.unitId);
+    if (!u) return;
+    const ti = parseInt(target.dataset.turnIndex, 10);
+    if (u.turns[ti]) {
+      u.turns[ti].role = target.dataset.role;
+      renderSettings();
+    }
+    return;
+  }
+
   if (action === 'publish') { publishToCloud(); return; }
   if (action === 'export-json') {
     const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
@@ -938,7 +1177,7 @@ document.addEventListener('click', async e => {
     return;
   }
 
-   if (action === 'set-star') {
+  if (action === 'set-star') {
     setRecordingStar(target.dataset.id, Number(target.dataset.star));
     return;
   }
@@ -961,7 +1200,7 @@ document.addEventListener('click', async e => {
       (r.level || '未分类') === level &&
       (r.student_name || '未命名') === student
     );
-    deleteRecords(rows, `${campus} / ${level} / ${student}`);
+    deleteRecords(rows, campus + ' / ' + level + ' / ' + student);
     return;
   }
 
@@ -972,7 +1211,7 @@ document.addEventListener('click', async e => {
       (r.campus || '未分类') === campus &&
       (r.level || '未分类') === level
     );
-    deleteRecords(rows, `${campus} / ${level} (all students)`);
+    deleteRecords(rows, campus + ' / ' + level + ' (all students)');
     return;
   }
 
@@ -982,7 +1221,7 @@ document.addEventListener('click', async e => {
     const path = target.dataset.path;
     target.disabled = true;
     try {
-      await sbFetch(`/rest/v1/recordings?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
+      await sbFetch('/rest/v1/recordings?id=eq.' + encodeURIComponent(id), { method: 'DELETE' });
       if (path) await deleteStorageFile(path);
       recRows = recRows.filter(r => String(r.id) !== String(id));
       paintRecList();
@@ -1004,7 +1243,7 @@ function applyImgFieldValue(field, value) {
   let thumb = field.querySelector('.img-thumb');
   if (value) {
     if (!thumb) { thumb = document.createElement('div'); thumb.className = 'img-thumb'; field.appendChild(thumb); }
-    thumb.style.backgroundImage = `url('${value}')`;
+    thumb.style.backgroundImage = 'url(\'' + value + '\')';
   } else if (thumb) thumb.remove();
 }
 
@@ -1022,25 +1261,25 @@ function paintRecToolbarAndList() {
   const panel = document.getElementById('recordingsPanel');
   const campuses = [...new Set(recRows.map(r => r.campus || '未分类'))].sort();
   const levels = [...new Set(recRows.map(r => r.level || '未分类'))].sort();
-  panel.innerHTML = `
-    <div class="toolbar">
-      <select id="recCampusFilter">
-        <option value="">All Campuses</option>
-        ${campuses.map(c => `<option value="${esc(c)}" ${recFilter.campus === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}
-      </select>
-      <select id="recLevelFilter">
-        <option value="">All Levels</option>
-        ${levels.map(l => `<option value="${esc(l)}" ${recFilter.level === l ? 'selected' : ''}>${esc(l)}</option>`).join('')}
-      </select>
-      <input type="text" id="recNameFilter" placeholder="Filter by student name" value="${esc(recFilter.name)}" style="min-width:160px;">
-      <select id="recPartFilter">
-        <option value="">All Units</option>
-        ${config.listenReadParts.map(p => `<option value="${esc(p.id)}" ${recFilter.part === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
-      </select>
-      <button class="btn btn-outline btn-mini" id="recRefreshBtn"><i class="fas fa-sync"></i> Refresh</button>
-      <span class="hint" style="margin:0;" id="recCount"></span>
-    </div>
-    <div id="recList"></div>`;
+  panel.innerHTML = ''
+    + '<div class="toolbar">'
+    + '<select id="recCampusFilter">'
+    + '<option value="">All Campuses</option>'
+    + campuses.map(c => '<option value="' + esc(c) + '" ' + (recFilter.campus === c ? 'selected' : '') + '>' + esc(c) + '</option>').join('')
+    + '</select>'
+    + '<select id="recLevelFilter">'
+    + '<option value="">All Levels</option>'
+    + levels.map(l => '<option value="' + esc(l) + '" ' + (recFilter.level === l ? 'selected' : '') + '>' + esc(l) + '</option>').join('')
+    + '</select>'
+    + '<input type="text" id="recNameFilter" placeholder="Filter by student name" value="' + esc(recFilter.name) + '" style="min-width:160px;">'
+    + '<select id="recPartFilter">'
+    + '<option value="">All Units</option>'
+    + config.listenReadParts.map(p => '<option value="' + esc(p.id) + '" ' + (recFilter.part === p.id ? 'selected' : '') + '>' + esc(p.name) + '</option>').join('')
+    + '</select>'
+    + '<button class="btn btn-outline btn-mini" id="recRefreshBtn"><i class="fas fa-sync"></i> Refresh</button>'
+    + '<span class="hint" style="margin:0;" id="recCount"></span>'
+    + '</div>'
+    + '<div id="recList"></div>';
   document.getElementById('recCampusFilter').onchange = e => { recFilter.campus = e.target.value; paintRecList(); };
   document.getElementById('recLevelFilter').onchange = e => { recFilter.level = e.target.value; paintRecList(); };
   document.getElementById('recNameFilter').oninput = e => { recFilter.name = e.target.value.trim(); paintRecList(); };
@@ -1049,7 +1288,7 @@ function paintRecToolbarAndList() {
   paintRecList();
 }
 
-async function loadRecordings(showToast) {
+async function loadRecordings(showToastMsg) {
   const listEl = document.getElementById('recList');
   if (listEl) listEl.innerHTML = '<p class="empty">Loading…</p>';
   try {
@@ -1060,15 +1299,15 @@ async function loadRecordings(showToast) {
     }
     recRows = await res.json();
     paintRecToolbarAndList();
-    if (showToast) toast('✅ Refreshed');
+    if (showToastMsg) toast('✅ Refreshed');
   } catch (e) {
     console.error(e);
-    if (listEl) listEl.innerHTML = `
-      <div class="help-box" style="background:#fff0f0;border-color:#f3c7c2;color:#a03528;">
-        <b>Failed to load recordings</b><br>Make sure the <code>recordings</code> table exists in Supabase and allows anon reads.<br>
-        <span style="font-size:12px;opacity:.8;">Error: ${esc(e.message)}</span>
-      </div>`;
-    if (showToast) toast('Load failed', true);
+    if (listEl) listEl.innerHTML = ''
+      + '<div class="help-box" style="background:#fff0f0;border-color:#f3c7c2;color:#a03528;">'
+      + '<b>Failed to load recordings</b><br>Make sure the <code>recordings</code> table exists in Supabase and allows anon reads.<br>'
+      + '<span style="font-size:12px;opacity:.8;">Error: ' + esc(e.message) + '</span>'
+      + '</div>';
+    if (showToastMsg) toast('Load failed', true);
   }
 }
 
@@ -1087,7 +1326,7 @@ function paintRecList() {
   if (recFilter.level) rows = rows.filter(r => (r.level || '未分类') === recFilter.level);
 
   const names = new Set(rows.map(r => r.student_name || '未命名'));
-  if (countEl) countEl.textContent = `${rows.length} recordings · ${names.size} students`;
+  if (countEl) countEl.textContent = rows.length + ' recordings · ' + names.size + ' students';
 
   if (!rows.length) { listEl.innerHTML = '<p class="empty">No recordings yet</p>'; return; }
 
@@ -1125,51 +1364,51 @@ function paintRecList() {
         const studentKey = 's:' + campus + '::' + level + '::' + name;
         const studentOpen = expandedKeys.has(studentKey);
         const list = studentMap.get(name);
-        studentsHtml += `
-          <div class="student-group ${studentOpen ? 'open' : ''}" data-student-key="${esc(studentKey)}">
-            <div class="student-head-row">
-              <button class="student-head" data-action="toggle-key" data-key="${esc(studentKey)}">
-                <span class="avatar">${esc((name || '?').slice(0,1).toUpperCase())}</span>
-                <span class="student-name">${esc(name)}</span>
-                <span class="count-pill small">${list.length} recordings</span>
-                <span class="student-latest">${esc(formatTime(list[0].created_at))}</span>
-                <i class="fas fa-chevron-down"></i>
-              </button>
-              <button class="btn btn-outline btn-mini" data-action="export-student" data-campus="${esc(campus)}" data-level="${esc(level)}" data-student="${esc(name)}" title="Export this student's recordings"><i class="fas fa-download"></i> Export</button>
-              <button class="btn btn-danger btn-mini" data-action="delete-student" data-campus="${esc(campus)}" data-level="${esc(level)}" data-student="${esc(name)}" title="Delete all recordings for this student"><i class="fas fa-trash"></i></button>
-            </div>
-            <div class="student-body ${studentOpen ? '' : 'hidden'}">
-              ${list.map(renderRecCard).join('')}
-            </div>
-          </div>`;
+        studentsHtml += ''
+          + '<div class="student-group ' + (studentOpen ? 'open' : '') + '" data-student-key="' + esc(studentKey) + '">'
+          + '<div class="student-head-row">'
+          + '<button class="student-head" data-action="toggle-key" data-key="' + esc(studentKey) + '">'
+          + '<span class="avatar">' + esc((name || '?').slice(0,1).toUpperCase()) + '</span>'
+          + '<span class="student-name">' + esc(name) + '</span>'
+          + '<span class="count-pill small">' + list.length + ' recordings</span>'
+          + '<span class="student-latest">' + esc(formatTime(list[0].created_at)) + '</span>'
+          + '<i class="fas fa-chevron-down"></i>'
+          + '</button>'
+          + '<button class="btn btn-outline btn-mini" data-action="export-student" data-campus="' + esc(campus) + '" data-level="' + esc(level) + '" data-student="' + esc(name) + '" title="Export this student\'s recordings"><i class="fas fa-download"></i> Export</button>'
+          + '<button class="btn btn-danger btn-mini" data-action="delete-student" data-campus="' + esc(campus) + '" data-level="' + esc(level) + '" data-student="' + esc(name) + '" title="Delete all recordings for this student"><i class="fas fa-trash"></i></button>'
+          + '</div>'
+          + '<div class="student-body ' + (studentOpen ? '' : 'hidden') + '">'
+          + list.map(renderRecCard).join('')
+          + '</div>'
+          + '</div>';
       });
 
-      levelsHtml += `
-        <div class="level-group ${levelOpen ? 'open' : ''}">
-          <div class="level-head-row">
-            <button class="level-head" data-action="toggle-key" data-key="${esc(levelKey)}">
-              <i class="fas fa-layer-group"></i>
-              <span class="level-name">${esc(level)}</span>
-              <span class="count-pill">${studentMap.size} students · ${levelTotal} recordings</span>
-              <i class="fas fa-chevron-down"></i>
-            </button>
-            <button class="btn btn-outline btn-mini" data-action="export-level" data-campus="${esc(campus)}" data-level="${esc(level)}" title="Export all recordings for this class as a zip"><i class="fas fa-file-archive"></i> Export Group</button>
-            <button class="btn btn-danger btn-mini" data-action="delete-level" data-campus="${esc(campus)}" data-level="${esc(level)}" title="Delete all recordings for this class"><i class="fas fa-trash-alt"></i> Delete Group</button>
-          </div>
-          <div class="level-body ${levelOpen ? '' : 'hidden'}">${studentsHtml}</div>
-        </div>`;
+      levelsHtml += ''
+        + '<div class="level-group ' + (levelOpen ? 'open' : '') + '">'
+        + '<div class="level-head-row">'
+        + '<button class="level-head" data-action="toggle-key" data-key="' + esc(levelKey) + '">'
+        + '<i class="fas fa-layer-group"></i>'
+        + '<span class="level-name">' + esc(level) + '</span>'
+        + '<span class="count-pill">' + studentMap.size + ' students · ' + levelTotal + ' recordings</span>'
+        + '<i class="fas fa-chevron-down"></i>'
+        + '</button>'
+        + '<button class="btn btn-outline btn-mini" data-action="export-level" data-campus="' + esc(campus) + '" data-level="' + esc(level) + '" title="Export all recordings for this class as a zip"><i class="fas fa-file-archive"></i> Export Group</button>'
+        + '<button class="btn btn-danger btn-mini" data-action="delete-level" data-campus="' + esc(campus) + '" data-level="' + esc(level) + '" title="Delete all recordings for this class"><i class="fas fa-trash-alt"></i> Delete Group</button>'
+        + '</div>'
+        + '<div class="level-body ' + (levelOpen ? '' : 'hidden') + '">' + studentsHtml + '</div>'
+        + '</div>';
     });
 
-    html.push(`
-      <div class="campus-group ${campusOpen ? 'open' : ''}">
-        <button class="campus-head" data-action="toggle-key" data-key="${esc(campusKey)}">
-          <i class="fas fa-school"></i>
-          <span class="campus-name">${esc(campus)}</span>
-          <span class="count-pill">${campusTotal} recordings</span>
-          <i class="fas fa-chevron-down"></i>
-        </button>
-        <div class="campus-body ${campusOpen ? '' : 'hidden'}">${levelsHtml}</div>
-      </div>`);
+    html.push(''
+      + '<div class="campus-group ' + (campusOpen ? 'open' : '') + '">'
+      + '<button class="campus-head" data-action="toggle-key" data-key="' + esc(campusKey) + '">'
+      + '<i class="fas fa-school"></i>'
+      + '<span class="campus-name">' + esc(campus) + '</span>'
+      + '<span class="count-pill">' + campusTotal + ' recordings</span>'
+      + '<i class="fas fa-chevron-down"></i>'
+      + '</button>'
+      + '<div class="campus-body ' + (campusOpen ? '' : 'hidden') + '">' + levelsHtml + '</div>'
+      + '</div>');
   });
 
   listEl.innerHTML = html.join('');
@@ -1177,21 +1416,21 @@ function paintRecList() {
 
 function renderRecCard(r) {
   const star = Number(r.star) || 0;
-  return `
-    <div class="rec-card">
-      <div class="rec-main">
-        <div class="rec-text">${esc(r.item_text || '')}</div>
-        <div class="rec-meta">${esc(r.part_name || r.part_id || '')} · ${esc(formatTime(r.created_at))}</div>
-        <div class="rec-stars" data-id="${esc(r.id)}">
-          ${[1,2,3].map(n => `<button class="star-btn ${n <= star ? 'active' : ''}" data-action="set-star" data-id="${esc(r.id)}" data-star="${n}" title="${n} star">★</button>`).join('')}
-          <span class="star-label">${star ? star + ' / 3' : 'Not rated'}</span>
-        </div>
-      </div>
-      <div class="rec-audio">
-        ${r.public_url ? `<audio controls preload="none" src="${esc(r.public_url)}"></audio>` : '<span class="hint" style="margin:0;">No audio file</span>'}
-      </div>
-      <button class="btn btn-danger btn-mini" data-action="delete-recording" data-id="${esc(r.id)}" data-path="${esc(r.file_path || '')}"><i class="fas fa-trash"></i></button>
-    </div>`;
+  return ''
+    + '<div class="rec-card">'
+    + '<div class="rec-main">'
+    + '<div class="rec-text">' + esc(r.item_text || '') + '</div>'
+    + '<div class="rec-meta">' + esc(r.part_name || r.part_id || '') + ' · ' + esc(formatTime(r.created_at)) + '</div>'
+    + '<div class="rec-stars" data-id="' + esc(r.id) + '">'
+    + [1,2,3].map(n => '<button class="star-btn ' + (n <= star ? 'active' : '') + '" data-action="set-star" data-id="' + esc(r.id) + '" data-star="' + n + '" title="' + n + ' star">★</button>').join('')
+    + '<span class="star-label">' + (star ? star + ' / 3' : 'Not rated') + '</span>'
+    + '</div>'
+    + '</div>'
+    + '<div class="rec-audio">'
+    + (r.public_url ? '<audio controls preload="none" src="' + esc(r.public_url) + '"></audio>' : '<span class="hint" style="margin:0;">No audio file</span>')
+    + '</div>'
+    + '<button class="btn btn-danger btn-mini" data-action="delete-recording" data-id="' + esc(r.id) + '" data-path="' + esc(r.file_path || '') + '"><i class="fas fa-trash"></i></button>'
+    + '</div>';
 }
 
 /* export & batch delete */
@@ -1219,7 +1458,7 @@ async function exportStudent(campus, level, studentName) {
   if (!ok) { toast('Failed to load zip library', true); return; }
 
   const zip = new JSZip();
-  const folderName = `${campus}-${level}-${studentName}`.replace(/[\\/:*?"<>|]/g, '_');
+  const folderName = (campus + '-' + level + '-' + studentName).replace(/[\\/:*?"<>|]/g, '_');
   const folder = zip.folder(folderName);
 
   let success = 0;
@@ -1233,7 +1472,7 @@ async function exportStudent(campus, level, studentName) {
       const ext = (r.file_path || '').split('.').pop() || 'webm';
       const itemText = (r.item_text || 'recording').replace(/[\\/:*?"<>|]/g, '_').slice(0, 30);
       const idx = String(i + 1).padStart(2, '0');
-      folder.file(`${idx}_${itemText}.${ext}`, blob);
+      folder.file(idx + '_' + itemText + '.' + ext, blob);
       success++;
     } catch (e) { console.warn('download failed', r.public_url, e); }
   }
@@ -1242,10 +1481,10 @@ async function exportStudent(campus, level, studentName) {
   const blob = await zip.generateAsync({ type: 'blob' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `${folderName}.zip`;
+  a.download = folderName + '.zip';
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 3000);
-  toast(`✅ Exported ${success} recordings`);
+  toast('✅ Exported ' + success + ' recordings');
 }
 async function exportLevel(campus, level) {
   const rows = recRows.filter(r =>
@@ -1257,7 +1496,6 @@ async function exportLevel(campus, level) {
   const ok = await ensureJSZip();
   if (!ok) { toast('Failed to load zip library', true); return; }
 
-  // 按学生分组
   const byStudent = new Map();
   rows.forEach(r => {
     const name = r.student_name || '未命名';
@@ -1266,12 +1504,14 @@ async function exportLevel(campus, level) {
   });
 
   const zip = new JSZip();
-  const rootName = `${campus}-${level}`.replace(/[\\/:*?"<>|]/g, '_');
+  const rootName = (campus + '-' + level).replace(/[\\/:*?"<>|]/g, '_');
   const root = zip.folder(rootName);
 
   let total = 0;
   let success = 0;
-  for (const [name, list] of byStudent) {
+  for (const entry of byStudent) {
+    const name = entry[0];
+    const list = entry[1];
     const safeStudent = name.replace(/[\\/:*?"<>|]/g, '_');
     const folder = root.folder(safeStudent);
     for (let i = 0; i < list.length; i++) {
@@ -1279,14 +1519,14 @@ async function exportLevel(campus, level) {
       total++;
       if (!r.public_url) continue;
       try {
-        if (success % 10 === 0) toast(`⏳ Downloading ${success} / ${total}…`);
+        if (success % 10 === 0) toast('⏳ Downloading ' + success + ' / ' + total + '…');
         const res = await fetch(r.public_url);
         if (!res.ok) continue;
         const blob = await res.blob();
         const ext = (r.file_path || '').split('.').pop() || 'webm';
         const itemText = (r.item_text || 'recording').replace(/[\\/:*?"<>|]/g, '_').slice(0, 30);
         const idx = String(i + 1).padStart(2, '0');
-        folder.file(`${idx}_${itemText}.${ext}`, blob);
+        folder.file(idx + '_' + itemText + '.' + ext, blob);
         success++;
       } catch (e) { console.warn('download failed', r.public_url, e); }
     }
@@ -1298,21 +1538,21 @@ async function exportLevel(campus, level) {
   const blob = await zip.generateAsync({ type: 'blob' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `${rootName}.zip`;
+  a.download = rootName + '.zip';
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 3000);
-  toast(`✅ Exported ${success} recordings from ${byStudent.size} students`);
-} 
+  toast('✅ Exported ' + success + ' recordings from ' + byStudent.size + ' students');
+}
 
 async function deleteRecords(rows, label) {
   if (!rows.length) return;
-  if (!confirm(`Delete ${rows.length} recordings for ${label}? This cannot be undone.`)) return;
+  if (!confirm('Delete ' + rows.length + ' recordings for ' + label + '? This cannot be undone.')) return;
 
   toast('⏳ Deleting…');
   const ids = rows.map(r => String(r.id));
   const idList = ids.map(id => encodeURIComponent(id)).join(',');
   try {
-    await sbFetch(`/rest/v1/recordings?id=in.(${idList})`, { method: 'DELETE' });
+    await sbFetch('/rest/v1/recordings?id=in.(' + idList + ')', { method: 'DELETE' });
   } catch (e) { console.warn('batch db delete failed', e); }
 
   const paths = rows.map(r => r.file_path).filter(Boolean);
@@ -1321,18 +1561,18 @@ async function deleteRecords(rows, label) {
   const idSet = new Set(ids);
   recRows = recRows.filter(r => !idSet.has(String(r.id)));
   paintRecList();
-  toast(`🗑 Deleted ${rows.length} recordings`);
+  toast('🗑 Deleted ' + rows.length + ' recordings');
 }
 
 async function setRecordingStar(id, star) {
   try {
-    const res = await sbFetch(`/rest/v1/recordings?id=eq.${encodeURIComponent(id)}`, {
+    const res = await sbFetch('/rest/v1/recordings?id=eq.' + encodeURIComponent(id), {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
         'Prefer': 'return=representation'
       },
-      body: JSON.stringify({ star })
+      body: JSON.stringify({ star: star })
     });
     if (!res.ok) {
       const errText = await res.text().catch(() => '');
@@ -1346,7 +1586,7 @@ async function setRecordingStar(id, star) {
     const idx = recRows.findIndex(r => String(r.id) === String(id));
     if (idx >= 0) recRows[idx].star = star;
 
-    const box = document.querySelector(`.rec-stars[data-id="${cssEscape(String(id))}"]`);
+    const box = document.querySelector('.rec-stars[data-id="' + cssEscape(String(id)) + '"]');
     if (box) {
       box.querySelectorAll('.star-btn').forEach(btn => {
         btn.classList.toggle('active', Number(btn.dataset.star) <= star);
@@ -1367,12 +1607,13 @@ const searchState = { items: [], active: -1, results: [] };
 function buildSearchIndex() {
   const items = [];
   const sectionTitles = {
-    basic:'Basic Setting', pageBg:'Page Backgrounds', btnBg:'Home Button Backgrounds',
-    aiTalkMgmt:'Role-Play AI Management', discMgmt:'AI Talk Management',
-    gameMgmt:'Game Management', lrMgmt:'Listen & Read Management', publish:'Publish / Backup'
+    basic:'Security & Admin', pageBg:'Page Backgrounds', btnBg:'Home Button Backgrounds',
+    aiTalkMgmt:'Legacy Role-Play Buttons', discMgmt:'AI Talk Management',
+    gameMgmt:'Game Management', lrMgmt:'Listen & Read Management',
+    roleplayMgmt:'Role Play Management', publish:'Publish / Backup'
   };
   Object.keys(sectionTitles).forEach(id => items.push({ kind:'section', label:sectionTitles[id], sub:'Settings section', sectionId:id, tab:'settings' }));
-  (config.aiTalkButtons || []).forEach(b => items.push({ kind:'aiTalk', label:b.name || '(Untitled)', sub:'Role-Play AI', sectionId:'aiTalkMgmt', tab:'settings', anchor:{ scope:'aiTalk', id:b.id } }));
+  (config.aiTalkButtons || []).forEach(b => items.push({ kind:'aiTalk', label:b.name || '(Untitled)', sub:'Legacy Role-Play AI', sectionId:'aiTalkMgmt', tab:'settings', anchor:{ scope:'aiTalk', id:b.id } }));
   (config.discussionButtons || []).forEach(b => items.push({ kind:'discussion', label:b.name || '(Untitled)', sub:'AI Talk', sectionId:'discMgmt', tab:'settings', anchor:{ scope:'discussion', id:b.id } }));
   (config.gameParts || []).forEach(p => {
     items.push({ kind:'part', label:p.name || '(Untitled Part)', sub:'Game Part', sectionId:'gameMgmt', tab:'settings', anchor:{ scope:'gamePart', partId:p.id } });
@@ -1392,6 +1633,20 @@ function buildSearchIndex() {
       });
     });
   });
+  (config.roleplayUnits || []).forEach(u => {
+    items.push({ kind:'roleplayUnit', label:u.name || '(Untitled RP Unit)', sub:'Role Play · ' + (u.turns || []).length + ' turns', sectionId:'roleplayMgmt', tab:'settings', anchor:{ scope:'roleplayUnit', id:u.id } });
+    (u.turns || []).forEach(t => {
+      const full = t.text || '';
+      items.push({
+        kind:'roleplayTurn',
+        label: (t.role || 'A') + ' · ' + (full.length > 42 ? full.slice(0, 42) + '…' : (full || '(Empty)')),
+        sub: 'Role Play · ' + (u.name || ''),
+        fullText: full,
+        sectionId:'roleplayMgmt', tab:'settings',
+        anchor:{ scope:'roleplayUnit', id:u.id }
+      });
+    });
+  });
   const seen = new Set();
   recRows.forEach(r => {
     const name = r.student_name;
@@ -1406,7 +1661,7 @@ function buildSearchIndex() {
   return items;
 }
 function kindIcon(kind) {
-  return { section:'fa-layer-group', aiTalk:'fa-comment-dots', discussion:'fa-comments', part:'fa-puzzle-piece', game:'fa-gamepad', lrPart:'fa-book-open', lrItem:'fa-font', student:'fa-user-circle' }[kind] || 'fa-search';
+  return { section:'fa-layer-group', aiTalk:'fa-comment-dots', discussion:'fa-comments', part:'fa-puzzle-piece', game:'fa-gamepad', lrPart:'fa-book-open', lrItem:'fa-font', roleplayUnit:'fa-theater-masks', roleplayTurn:'fa-theater-masks', student:'fa-user-circle' }[kind] || 'fa-search';
 }
 function openSearch() {
   const panel = document.getElementById('searchPanel');
@@ -1436,14 +1691,14 @@ function runSearch(q) {
   searchState.results = res.slice(0, 40);
   searchState.active = searchState.results.length ? 0 : -1;
   if (!searchState.results.length) { resultsEl.innerHTML = '<div class="search-empty">No matches found</div>'; return; }
-  resultsEl.innerHTML = searchState.results.map((it, i) => `
-    <div class="search-item ${i === searchState.active ? 'active' : ''}" data-idx="${i}">
-      <div class="si-icon"><i class="fas ${kindIcon(it.kind)}"></i></div>
-      <div class="si-main">
-        <div class="si-label">${esc(it.label)}</div>
-        <div class="si-sub">${esc(it.sub || '')}</div>
-      </div>
-    </div>`).join('');
+  resultsEl.innerHTML = searchState.results.map((it, i) => ''
+    + '<div class="search-item ' + (i === searchState.active ? 'active' : '') + '" data-idx="' + i + '">'
+    + '<div class="si-icon"><i class="fas ' + kindIcon(it.kind) + '"></i></div>'
+    + '<div class="si-main">'
+    + '<div class="si-label">' + esc(it.label) + '</div>'
+    + '<div class="si-sub">' + esc(it.sub || '') + '</div>'
+    + '</div>'
+    + '</div>').join('');
 }
 function setSearchActive(idx) {
   const items = document.querySelectorAll('#searchResults .search-item');
@@ -1475,7 +1730,7 @@ function jumpToResult(item) {
     }
     paintRecToolbarAndList();
     setTimeout(() => {
-      const targetGroup = document.querySelector(`.student-group[data-student-key="${cssEscape('s:' + item.campus + '::' + item.level + '::' + item.label)}"]`);
+      const targetGroup = document.querySelector('.student-group[data-student-key="' + cssEscape('s:' + item.campus + '::' + item.level + '::' + item.label) + '"]');
       if (targetGroup) {
         targetGroup.scrollIntoView({ behavior: 'smooth', block: 'center' });
         targetGroup.classList.add('search-highlight');
@@ -1497,14 +1752,15 @@ function jumpToResult(item) {
     let targetEl = null;
     const a = item.anchor;
     if (a) {
-      if (a.scope === 'aiTalk') { const inp = document.querySelector(`[data-scope="aiTalk"][data-id="${cssEscape(a.id)}"]`); targetEl = inp && inp.closest('.editor-item'); }
-      else if (a.scope === 'discussion') { const inp = document.querySelector(`[data-scope="discussion"][data-id="${cssEscape(a.id)}"]`); targetEl = inp && inp.closest('.editor-item'); }
-      else if (a.scope === 'gamePart') { const inp = document.querySelector(`[data-scope="gamePart"][data-part-id="${cssEscape(a.partId)}"]`); targetEl = inp && inp.closest('.editor-item'); }
-      else if (a.scope === 'game') { const inp = document.querySelector(`[data-scope="game"][data-part-id="${cssEscape(a.partId)}"][data-game-id="${cssEscape(a.gameId)}"]`); targetEl = inp && inp.closest('.editor-item'); }
-      else if (a.scope === 'lrPart') { const inp = document.querySelector(`[data-scope="lrPart"][data-part-id="${cssEscape(a.partId)}"]`); targetEl = inp && inp.closest('.editor-item'); }
-      else if (a.scope === 'lrItem') { targetEl = document.querySelector(`.editor-item[data-lr-item="${cssEscape(a.itemId)}"]`); }
+      if (a.scope === 'aiTalk') { const inp = document.querySelector('[data-scope="aiTalk"][data-id="' + cssEscape(a.id) + '"]'); targetEl = inp && inp.closest('.editor-item'); }
+      else if (a.scope === 'discussion') { const inp = document.querySelector('[data-scope="discussion"][data-id="' + cssEscape(a.id) + '"]'); targetEl = inp && inp.closest('.editor-item'); }
+      else if (a.scope === 'gamePart') { const inp = document.querySelector('[data-scope="gamePart"][data-part-id="' + cssEscape(a.partId) + '"]'); targetEl = inp && inp.closest('.editor-item'); }
+      else if (a.scope === 'game') { const inp = document.querySelector('[data-scope="game"][data-part-id="' + cssEscape(a.partId) + '"][data-game-id="' + cssEscape(a.gameId) + '"]'); targetEl = inp && inp.closest('.editor-item'); }
+      else if (a.scope === 'lrPart') { const inp = document.querySelector('[data-scope="lrPart"][data-part-id="' + cssEscape(a.partId) + '"]'); targetEl = inp && inp.closest('.editor-item'); }
+      else if (a.scope === 'lrItem') { targetEl = document.querySelector('.editor-item[data-lr-item="' + cssEscape(a.itemId) + '"]'); }
+      else if (a.scope === 'roleplayUnit') { const inp = document.querySelector('[data-scope="rpUnit"][data-unit-id="' + cssEscape(a.id) + '"]'); targetEl = inp && inp.closest('.editor-item'); }
     }
-    if (!targetEl) targetEl = document.querySelector(`.section[data-section="${item.sectionId}"]`);
+    if (!targetEl) targetEl = document.querySelector('.section[data-section="' + item.sectionId + '"]');
     if (targetEl) {
       targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       targetEl.classList.add('search-highlight');
