@@ -86,29 +86,6 @@
   .btn-primary { background:#1e3c72; color:#fff; border:none; padding:14px 30px; border-radius:60px; font-weight:700; cursor:pointer; font-size:1.05rem; box-shadow:0 8px 16px #1e3c7240; font-family:inherit; }
   .btn-outline { background:transparent; border:2px solid #1e3c72; color:#1e3c72; padding:12px 28px; border-radius:60px; font-weight:700; cursor:pointer; font-size:1.05rem; font-family:inherit; }
 
-  /* My Recordings FAB + 页面 */
-  .my-rec-fab { position:absolute; right:24px; bottom:24px; width:64px; height:64px; border-radius:50%; border:none; background:linear-gradient(145deg,#f5b301,#e6a000); color:#fff; font-size:1.6rem; cursor:pointer; box-shadow:0 10px 24px rgba(245,179,1,.45); display:flex; align-items:center; justify-content:center; z-index:20; transition:.2s; }
-  .my-rec-fab:hover { transform:translateY(-3px) scale(1.05); }
-  .my-rec-fab.hidden { display:none !important; }
-  .myrec-header { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
-  .myrec-header h2 { font-size:2rem; }
-  .myrec-sub { color:#6b7c93; margin-bottom:16px; font-size:1rem; }
-  .myrec-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; margin-top:16px; width:100%; }
-  .myrec-part-card { background:#fff; border-radius:24px; padding:24px; text-align:center; cursor:pointer; box-shadow:0 8px 18px rgba(0,0,0,.05); border:1px solid #eef4ff; transition:.15s; }
-  .myrec-part-card:hover { transform:translateY(-4px); box-shadow:0 16px 26px -8px #1e3c7240; }
-  .myrec-part-card i { font-size:2.2rem; color:#e6a000; margin-bottom:10px; }
-  .myrec-part-card h3 { font-size:1.4rem; font-weight:700; color:#1e2f4b; }
-  .myrec-part-card .sub { font-size:.95rem; color:#6b7c93; margin-top:6px; }
-  .myrec-item-list { display:flex; flex-direction:column; gap:12px; margin-top:16px; width:100%; }
-  .myrec-item { background:#fff; border-radius:20px; padding:16px 20px; box-shadow:0 4px 12px rgba(0,0,0,.04); border:1px solid #eef4ff; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
-  .myrec-item-text { flex:1; min-width:200px; font-size:1.3rem; font-weight:700; color:#1e2f4b; }
-  .myrec-item-stars { display:flex; gap:2px; }
-  .myrec-star { font-size:1.6rem; color:#d1d9e4; }
-  .myrec-star.active { color:#f5b301; }
-  .myrec-audio-btn { background:#eef4ff; color:#1e3c72; border:none; border-radius:40px; padding:10px 20px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:8px; font-family:inherit; font-size:.95rem; transition:.15s; }
-  .myrec-audio-btn:hover { background:#dce9ff; }
-  .myrec-no-audio { color:#8fa0b6; font-size:.85rem; }
-
   /* ================= Role Play ================= */
   .rp-screen { position:absolute; inset:0; display:flex; flex-direction:column; border-radius:0; overflow:hidden; }
   .rp-header { display:flex; align-items:center; gap:12px; padding:14px 20px; background:rgba(255,255,255,.85); backdrop-filter:blur(8px); border-bottom:1px solid rgba(0,0,0,.05); flex-shrink:0; }
@@ -172,7 +149,6 @@
     <button class="cloud-refresh-btn" id="cloudRefreshBtn" title="Sync cloud config"><i class="fas fa-cloud-download-alt"></i></button>
   </div>
   <div id="viewContainer" class="view-container"></div>
-  <button id="myRecFab" class="my-rec-fab" title="My Recordings"><i class="fas fa-star"></i></button>
 </div>
 <div id="snackbar">⚙️ Done</div>
 
@@ -247,13 +223,11 @@ async function uploadToStorage(blob, path, contentType) {
 let config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 let currentView = 'home';
 let currentPartId = null;
-const myRec = { campus:'', level:'', studentName:'', rows:[], parts:[], currentPartId:null };
 
 const viewContainer = document.getElementById('viewContainer');
 const backButton = document.getElementById('backButton');
 const cloudRefreshBtn = document.getElementById('cloudRefreshBtn');
 const snackbar = document.getElementById('snackbar');
-const myRecFab = document.getElementById('myRecFab');
 
 function showSnackbar(text, isError) {
   snackbar.textContent = text || '⚙️ Done';
@@ -355,7 +329,6 @@ function setView(view, partId) {
     stopPlayback();
     rpCleanup();
   }
-  myRecFab.classList.toggle('hidden', view !== 'home');
   renderCurrentView();
 }
 function goBack() {
@@ -376,8 +349,6 @@ function renderCurrentView() {
   else if (currentView === 'partDetail') renderPartDetailView();
   else if (currentView === 'listenReadParts') renderListenReadPartsView();
   else if (currentView === 'listenReadPractice') renderListenReadPractice();
-  else if (currentView === 'myRecordings') renderMyRecordings();
-  else if (currentView === 'myRecordingDetail') renderMyRecordingDetail();
   else renderHomeView();
 }
 
@@ -883,137 +854,6 @@ async function handleRecordingDone(blob) {
 window.addEventListener('resize', () => {
   if (currentView === 'listenReadPractice' && lrEls.text && lrEls.wrap) fitText(lrEls.text, lrEls.wrap);
 });
-
-/* ============================================================
-   My Recordings
-   ============================================================ */
-async function fetchStudentRecordings(campus, level, name) {
-  const safeName = String(name).replace(/[%_]/g, '\\$&');
-  const url = `/rest/v1/recordings?select=*&campus=eq.${encodeURIComponent(campus)}&level=eq.${encodeURIComponent(level)}&student_name=ilike.${encodeURIComponent(safeName)}&order=created_at.desc`;
-  const res = await sbFetch(url, { headers: { 'Accept': 'application/json' } });
-  if (!res.ok) throw new Error('query failed');
-  return await res.json();
-}
-
-function groupRecordingsByPart(rows) {
-  const map = new Map();
-  rows.forEach(r => {
-    if (!map.has(r.part_id)) map.set(r.part_id, []);
-    map.get(r.part_id).push(r);
-  });
-  return [...map.entries()].map(([partId, list]) => {
-    const cfg = (config.listenReadParts || []).find(p => p.id === partId);
-    return { partId, name: cfg ? cfg.name : (list[0].part_name || partId), rows: list };
-  });
-}
-
-function groupRecordingsByItem(rows) {
-  const map = new Map();
-  rows.forEach(r => {
-    if (!map.has(r.item_id)) map.set(r.item_id, []);
-    map.get(r.item_id).push(r);
-  });
-  return [...map.entries()].map(([itemId, list]) => {
-    const latest = list[0];
-    let cfgItem = null;
-    (config.listenReadParts || []).forEach(p => {
-      (p.items || []).forEach(it => { if (it.id === itemId) cfgItem = it; });
-    });
-    return {
-      itemId,
-      text: latest.item_text || (cfgItem ? cfgItem.text : ''),
-      audioUrl: cfgItem ? cfgItem.audioUrl : '',
-      star: Number(latest.star) || 0,
-      latest
-    };
-  });
-}
-
-async function verifyAndLoadRecordings(info) {
-  showSnackbar('⏳ Looking for your recordings…');
-  try {
-    const rows = await fetchStudentRecordings(info.campus, info.level, info.name);
-    if (!rows.length) {
-      showSnackbar('No recordings found for this name, please check your spelling', true);
-      return false;
-    }
-    myRec.campus = info.campus;
-    myRec.level = info.level;
-    myRec.studentName = rows[0].student_name;
-    myRec.rows = rows;
-    myRec.parts = groupRecordingsByPart(rows);
-    myRec.currentPartId = null;
-    return true;
-  } catch (e) {
-    console.error(e);
-    showSnackbar('Query failed, please retry', true);
-    return false;
-  }
-}
-
-function renderMyRecordings() {
-  applyContainerBackground('');
-  viewContainer.innerHTML = `
-    <div style="width:100%;">
-      <div class="myrec-header">
-        <i class="fas fa-star" style="font-size:2rem;color:#f5b301;"></i>
-        <h2>My Recordings</h2>
-      </div>
-      <div class="myrec-sub">${escapeHtml(myRec.campus)} · ${escapeHtml(myRec.level)} · ${escapeHtml(myRec.studentName)}</div>
-      ${myRec.parts.length === 0 ? '<p class="empty-message">No recordings yet</p>' : `
-        <div class="myrec-grid">
-          ${myRec.parts.map(p => `
-            <div class="myrec-part-card" data-part-id="${escapeHtml(p.partId)}">
-              <i class="fas fa-book-open"></i>
-              <h3>${escapeHtml(p.name)}</h3>
-              <div class="sub">${p.rows.length} recordings</div>
-            </div>
-          `).join('')}
-        </div>
-      `}
-    </div>`;
-  viewContainer.querySelectorAll('.myrec-part-card').forEach(card => {
-    card.addEventListener('click', () => {
-      myRec.currentPartId = card.dataset.partId;
-      setView('myRecordingDetail');
-    });
-  });
-}
-
-function renderMyRecordingDetail() {
-  clearContainerBackground();
-  const part = myRec.parts.find(p => p.partId === myRec.currentPartId);
-  if (!part) { setView('myRecordings'); return; }
-  const items = groupRecordingsByItem(part.rows);
-  viewContainer.innerHTML = `
-    <div style="width:100%;">
-      <div class="myrec-header"><h2>${escapeHtml(part.name)}</h2></div>
-      ${items.length === 0 ? '<p class="empty-message">No recordings in this unit</p>' : `
-        <div class="myrec-item-list">
-          ${items.map(item => `
-            <div class="myrec-item">
-              <div class="myrec-item-text">${escapeHtml(item.text)}</div>
-              ${item.audioUrl ? `
-                <button class="myrec-audio-btn" data-url="${escapeHtml(item.audioUrl)}">
-                  <i class="fas fa-play"></i> Correct audio
-                </button>
-              ` : `<span class="myrec-no-audio">No reference audio</span>`}
-            </div>
-          `).join('')}
-        </div>
-      `}
-    </div>`;
-  viewContainer.querySelectorAll('.myrec-audio-btn').forEach(btn => {
-    btn.addEventListener('click', () => playCorrectAudio(btn.dataset.url));
-  });
-}
-
-let correctAudio = null;
-function playCorrectAudio(url) {
-  if (correctAudio) { try { correctAudio.pause(); } catch (e) {} }
-  correctAudio = new Audio(url);
-  correctAudio.play().catch(() => showSnackbar('Audio play failed', true));
-}
 
 /* ============================================================
    Role Play · Tencent Cloud Powered
@@ -1589,13 +1429,6 @@ function rpShowResult(stars, correct, total, retryTotal, maxStars) {
    ============================================================ */
 backButton.onclick = goBack;
 cloudRefreshBtn.onclick = () => loadConfigFromCloud(true);
-
-myRecFab.onclick = () => {
-  askIdentity('My Recordings', async info => {
-    const ok = await verifyAndLoadRecordings(info);
-    if (ok) setView('myRecordings');
-  });
-};
 
 loadConfigFromStorage();
 renderCurrentView();
