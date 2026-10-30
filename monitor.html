@@ -1415,16 +1415,11 @@ function paintRecList() {
 }
 
 function renderRecCard(r) {
-  const star = Number(r.star) || 0;
   return ''
     + '<div class="rec-card">'
     + '<div class="rec-main">'
     + '<div class="rec-text">' + esc(r.item_text || '') + '</div>'
     + '<div class="rec-meta">' + esc(r.part_name || r.part_id || '') + ' · ' + esc(formatTime(r.created_at)) + '</div>'
-    + '<div class="rec-stars" data-id="' + esc(r.id) + '">'
-    + [1,2,3].map(n => '<button class="star-btn ' + (n <= star ? 'active' : '') + '" data-action="set-star" data-id="' + esc(r.id) + '" data-star="' + n + '" title="' + n + ' star">★</button>').join('')
-    + '<span class="star-label">' + (star ? star + ' / 3' : 'Not rated') + '</span>'
-    + '</div>'
     + '</div>'
     + '<div class="rec-audio">'
     + (r.public_url ? '<audio controls preload="none" src="' + esc(r.public_url) + '"></audio>' : '<span class="hint" style="margin:0;">No audio file</span>')
