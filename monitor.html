@@ -853,8 +853,9 @@ function buildRolePlayHtml() {
         + '<button class="rp-del-btn" data-action="del-roleplayTurn" data-unit-id="' + esc(u.id) + '" data-turn-index="' + ti + '"><i class="fas fa-times"></i></button>'
         + '</div>'
         + '<div class="rp-accept-row">'
+               + '<div class="rp-accept-row">'
         + '<span class="rp-accept-label">其他可接受答案（每行一个，可留空）</span>'
-        + '<textarea class="rp-accept-input" rows="2" data-scope="rpTurnAccept" data-unit-id="' + esc(u.id) + '" data-turn-index="' + ti + '" placeholder="每行写一个，例如：&#10;I am Tom.&#10;Tom is my name.">' + esc(acceptsText) + '</textarea>'
+        + '<textarea class="rp-accept-input" rows="2" data-scope="rpTurnAccept" data-key="acceptAnswers" data-unit-id="' + esc(u.id) + '" data-turn-index="' + ti + '" placeholder="每行写一个，例如：&#10;I am Tom.&#10;Tom is my name.">' + esc(acceptsText) + '</textarea>'
         + '</div>';
     });
     unitsHtml += ''
@@ -1132,7 +1133,7 @@ document.addEventListener('click', async e => {
     if (!u) return;
     const lastRole = u.turns.length ? u.turns[u.turns.length - 1].role : 'B';
     const nextRole = lastRole === 'A' ? 'B' : 'A';
-    u.turns.push({ role: nextRole, text: '' });
+    u.turns.push({ role: nextRole, text: '', acceptAnswers: [] });
     renderSettings(); toast('Turn added');
     return;
   }
