@@ -109,6 +109,8 @@
   .rp-turn-status.ok { color:#16a34a; font-weight:700; }
   .rp-turn-current .rp-turn-bubble { border-color:#2a5298; border-width:2px; box-shadow:0 8px 20px rgba(42,82,152,.25); }
   .rp-turn-speaking .rp-turn-bubble::after { content:'🔊'; margin-left:8px; }
+  .rp-turn-images { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .rp-turn-image { width:auto; height:auto; max-width:140px; max-height:140px; border-radius:12px; border:1px solid #eef4ff; display:block; object-fit:cover; background:#f7fafe; }
   .rp-bottom { padding:16px 20px; background:rgba(255,255,255,.92); backdrop-filter:blur(8px); border-top:1px solid rgba(0,0,0,.05); display:flex; flex-direction:column; gap:12px; align-items:center; flex-shrink:0; }
   .rp-actions { display:flex; gap:14px; align-items:center; flex-wrap:wrap; justify-content:center; }
   .rp-btn-round { width:58px; height:58px; border-radius:50%; border:none; background:#fff; color:#1e3c72; font-size:1.3rem; cursor:pointer; box-shadow:0 6px 16px rgba(0,0,0,.1); transition:.15s; display:flex; align-items:center; justify-content:center; }
@@ -266,6 +268,7 @@ function normalizeConfig(cfg) {
       if (typeof t.text !== 'string') t.text = '';
       if (t.role !== 'A' && t.role !== 'B') t.role = 'A';
       if (!Array.isArray(t.acceptAnswers)) t.acceptAnswers = [];
+      if (!Array.isArray(t.images)) t.images = [];
     });
   });
   if (!cfg.roleplaySettings || typeof cfg.roleplaySettings !== 'object') {
@@ -1013,6 +1016,15 @@ function rpUpdateUi() {
       bubbleText = t.text;
     }
 
+    let imagesHtml = '';
+    if (isStudent && Array.isArray(t.images) && t.images.length > 0) {
+      imagesHtml = '<div class="rp-turn-images">'
+        + t.images.map(function (url) {
+            return '<img class="rp-turn-image" src="' + escapeHtml(url) + '" alt="prompt" loading="lazy">';
+          }).join('')
+        + '</div>';
+    }
+
     let statusHtml = '';
     if (isStudent && res && res.matched) {
       statusHtml = '<div class="rp-turn-status ok">✓ 通过'
@@ -1025,6 +1037,7 @@ function rpUpdateUi() {
       + '<div class="rp-turn-avatar">' + t.role + '</div>'
       + '<div class="rp-turn-bubble">'
       + '<div class="rp-turn-role">' + (isStudent ? '你' : 'AI') + ' · 角色 ' + t.role + '</div>'
+      + imagesHtml
       + '<div class="rp-turn-text">' + escapeHtml(bubbleText) + '</div>'
       + statusHtml
       + '</div></div>';
