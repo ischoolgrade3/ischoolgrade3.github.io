@@ -688,9 +688,6 @@ function askIdentity(subtitle, onOk) {
 
 /* ---------- 听读练习 ---------- */
 function renderListenReadPractice() {
-
-/* ---------- 听读练习 ---------- */
-function renderListenReadPractice() {
   const part = (config.listenReadParts || []).find(p => p.id === lr.partId);
   if (!part || !part.items || !part.items.length) { setView('listenReadParts'); return; }
   lr.items = part.items;
