@@ -179,6 +179,15 @@
   .rp-accept-label { font-size:12px; color:#91a3bb; font-weight:600; padding-top:8px; white-space:nowrap; flex-shrink:0; }
   .rp-accept-input { flex:1; padding:8px 12px; border-radius:10px; border:1.5px dashed #dbe4f0; font-size:13px; outline:none; font-family:inherit; background:#fafcff; color:#1e2f4b; resize:vertical; min-height:44px; line-height:1.5; }
   .rp-accept-input:focus { border-color:#f5b301; background:#fffef8; }
+  .rp-images-row { margin:-4px 0 12px 0; padding:0 10px; display:flex; gap:10px; align-items:flex-start; }
+  .rp-images-label { font-size:12px; color:#91a3bb; font-weight:600; padding-top:8px; white-space:nowrap; flex-shrink:0; }
+  .rp-images-list { flex:1; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .rp-image-item { position:relative; width:80px; height:80px; border-radius:10px; overflow:hidden; border:1px solid #dbe4f0; flex-shrink:0; }
+  .rp-image-thumb { width:100%; height:100%; background-size:cover; background-position:center; }
+  .rp-image-del { position:absolute; top:2px; right:2px; width:22px; height:22px; border-radius:50%; border:none; background:rgba(0,0,0,.6); color:#fff; cursor:pointer; font-size:14px; line-height:1; padding:0; }
+  .rp-image-del:hover { background:#c0392b; }
+  .rp-image-add { width:80px; height:80px; border:1.5px dashed #dbe4f0; border-radius:10px; background:#fafcff; cursor:pointer; color:#91a3bb; font-size:11px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; font-family:inherit; flex-shrink:0; }
+  .rp-image-add:hover { border-color:#2a5298; color:#2a5298; background:#f0f6ff; }
 
   /* 密码修改弹窗 */
   .pwd-modal-overlay { position:fixed; inset:0; background:rgba(10,30,50,.5); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; z-index:200; padding:20px; }
@@ -402,6 +411,7 @@ function normalizeConfig(cfg) {
       if (typeof t.text !== 'string') t.text = '';
       if (t.role !== 'A' && t.role !== 'B') t.role = 'A';
       if (!Array.isArray(t.acceptAnswers)) t.acceptAnswers = [];
+      if (!Array.isArray(t.images)) t.images = [];
     });
   });
   if (!cfg.roleplaySettings || typeof cfg.roleplaySettings !== 'object') {
@@ -843,6 +853,16 @@ function buildRolePlayHtml() {
       const isA = t.role === 'A';
       const accepts = Array.isArray(t.acceptAnswers) ? t.acceptAnswers : [];
       const acceptsText = accepts.join('\n');
+      const images = Array.isArray(t.images) ? t.images : [];
+      let imagesHtml = '';
+      images.forEach((imgUrl, imgIdx) => {
+        imagesHtml += '<div class="rp-image-item">'
+          + '<div class="rp-image-thumb" style="background-image:url(\'' + esc(imgUrl) + '\')"></div>'
+          + '<button class="rp-image-del" data-action="rp-del-image" data-unit-id="' + esc(u.id) + '" data-turn-index="' + ti + '" data-img-index="' + imgIdx + '" title="Remove image">×</button>'
+          + '</div>';
+      });
+      imagesHtml += '<button class="rp-image-add" data-action="rp-add-image" data-unit-id="' + esc(u.id) + '" data-turn-index="' + ti + '"><i class="fas fa-plus"></i><span>Add</span></button>';
+
       turnsHtml += ''
         + '<div class="rp-turn-row">'
         + '<div class="rp-role-toggle">'
@@ -855,6 +875,10 @@ function buildRolePlayHtml() {
         + '<div class="rp-accept-row">'
         + '<span class="rp-accept-label">其他可接受答案（每行一个，可留空）</span>'
         + '<textarea class="rp-accept-input" rows="2" data-scope="rpTurnAccept" data-key="acceptAnswers" data-unit-id="' + esc(u.id) + '" data-turn-index="' + ti + '" placeholder="每行写一个，例如：&#10;I am Tom.&#10;Tom is my name.">' + esc(acceptsText) + '</textarea>'
+        + '</div>'
+        + '<div class="rp-images-row">'
+        + '<span class="rp-images-label">图片提示（仅学生回合显示）</span>'
+        + '<div class="rp-images-list">' + imagesHtml + '</div>'
         + '</div>';
     });
     unitsHtml += ''
@@ -1151,6 +1175,40 @@ document.addEventListener('click', async e => {
       u.turns[ti].role = target.dataset.role;
       renderSettings();
     }
+    return;
+  }
+   if (action === 'rp-add-image') {
+    const unitId = target.dataset.unitId;
+    const ti = parseInt(target.dataset.turnIndex, 10);
+    const u = config.roleplayUnits.find(x => x.id === unitId);
+    if (!u || !u.turns[ti]) return;
+    const file = await pickFile('image/*');
+    if (!file) return;
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    toast('⏳ Uploading image…');
+    const path = 'roleplay_images/' + unitId + '/' + ti + '_' + Date.now() + '.' + ext;
+    const url = await uploadFile(file, path, file.type);
+    if (!url) { toast('❌ Upload failed', true); return; }
+    if (!Array.isArray(u.turns[ti].images)) u.turns[ti].images = [];
+    u.turns[ti].images.push(url + '?t=' + Date.now());
+    renderSettings();
+    toast('✅ Image added');
+    return;
+  }
+  if (action === 'rp-del-image') {
+    const unitId = target.dataset.unitId;
+    const ti = parseInt(target.dataset.turnIndex, 10);
+    const imgIdx = parseInt(target.dataset.imgIndex, 10);
+    const u = config.roleplayUnits.find(x => x.id === unitId);
+    if (!u || !u.turns[ti] || !Array.isArray(u.turns[ti].images)) return;
+    const imgUrl = u.turns[ti].images[imgIdx];
+    if (!imgUrl) return;
+    if (!confirm('Remove this image?')) return;
+    const path = storagePathFromUrl(imgUrl);
+    u.turns[ti].images.splice(imgIdx, 1);
+    renderSettings();
+    if (path) await deleteStorageFile(path);
+    toast('🗑 Image removed');
     return;
   }
 
