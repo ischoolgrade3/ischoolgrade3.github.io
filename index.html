@@ -262,6 +262,11 @@ function normalizeConfig(cfg) {
     if (!Array.isArray(u.turns)) u.turns = [];
     if (typeof u.name !== 'string') u.name = '';
     if (typeof u.id !== 'string') u.id = '';
+    u.turns.forEach(function (t) {
+      if (typeof t.text !== 'string') t.text = '';
+      if (t.role !== 'A' && t.role !== 'B') t.role = 'A';
+      if (!Array.isArray(t.acceptAnswers)) t.acceptAnswers = [];
+    });
   });
   if (!cfg.roleplaySettings || typeof cfg.roleplaySettings !== 'object') {
     cfg.roleplaySettings = { matchThreshold: 0.62, maxStars: 3, maxRetryPerTurn: 5 };
@@ -1035,9 +1040,12 @@ function rpUpdateUi() {
     const hintBtn = rp.usedHint
       ? ''
       : '<button class="rp-btn-round" id="rpHintBtn" title="提示"><i class="fas fa-lightbulb"></i></button>';
-    const hintHtml = rp.usedHint
-      ? '<div class="rp-hint-box">💡 提示：<b>' + escapeHtml(currentTurn.text) + '</b></div>'
-      : '';
+    let hintHtml = '';
+    if (rp.usedHint) {
+      const answers = rpGetAcceptedAnswers(currentTurn);
+      const answersHtml = answers.map(function (a) { return escapeHtml(a); }).join('<br>');
+      hintHtml = '<div class="rp-hint-box">💡 提示：<b>' + answersHtml + '</b></div>';
+    }
     const replayBtn = '<button class="rp-btn-round" id="rpReplayBtn" title="重听上一句 AI 台词"><i class="fas fa-volume-up"></i></button>';
     const statusMsg = rp.isProcessing
       ? '<div class="rp-loading">🔍 正在识别你的回答…</div>'
@@ -1172,8 +1180,14 @@ async function rpProcessRecording(webmBlob) {
     transcript = await rpFetchAsr(wavBlob);
     const turn = rp.unit.turns[rp.turnIndex];
     const threshold = (config.roleplaySettings && config.roleplaySettings.matchThreshold) || 0.62;
-    sim = rpSimilarity(transcript, turn.text);
+    const acceptedAnswers = rpGetAcceptedAnswers(turn);
+    sim = 0;
+    acceptedAnswers.forEach(function (ans) {
+      const s = rpSimilarity(transcript, ans);
+      if (s > sim) sim = s;
+    });
     matched = sim >= threshold;
+    console.log('[RP] transcript:', transcript, '| accepted:', acceptedAnswers, '| bestSim:', sim.toFixed(3), '| matched:', matched);
   } catch (e) {
     console.error('ASR failed', e);
     rp.isProcessing = false;
@@ -1268,7 +1282,18 @@ async function rpFetchAsr(wavBlob) {
 function rpNormalizeText(s) {
   return String(s || '').toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
 }
-
+ 
+function rpGetAcceptedAnswers(turn) {
+  var list = [];
+  if (turn && typeof turn.text === 'string' && turn.text.trim()) list.push(turn.text);
+  if (turn && Array.isArray(turn.acceptAnswers)) {
+    turn.acceptAnswers.forEach(function (a) {
+      if (typeof a === 'string' && a.trim()) list.push(a);
+    });
+  }
+  return list;
+}
+ 
 function rpSimilarity(a, b) {
   a = rpNormalizeText(a);
   b = rpNormalizeText(b);
