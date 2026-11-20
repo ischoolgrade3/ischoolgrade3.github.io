@@ -161,7 +161,11 @@
 <script>
 "use strict";
 
-const SUPABASE_URL = 'https://dwagktwarlzkusawrtqq.supabase.co';
+const SUPABASE_ORIGIN = 'https://dwagktwarlzkusawrtqq.supabase.co';
+// 手机/受限网络直连 *.supabase.co 会 Failed to fetch：
+// 在 Cloudflare Pages 上改走同域 /api 代理（functions/api/[[path]].js），其他环境仍直连。
+const USE_PROXY = /\.pages\.dev$/i.test(location.hostname);
+const SUPABASE_URL = USE_PROXY ? '/api' : SUPABASE_ORIGIN;
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3YWdrdHdhcmx6a3VzYXdydHFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MzMwODQsImV4cCI6MjEwNzEwOTA4NH0.5iMbu7R3-LGHjZMFAuRH93sepxJr7bjrWexj3Invlmk';
 const LS_KEY = 'english_integrated_config';
 const BUCKET = 'site-assets';
@@ -223,7 +227,7 @@ async function uploadToStorage(blob, path, contentType) {
       body: blob
     });
     if (!res.ok) return null;
-    return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${encodePath(path)}`;
+    return `${SUPABASE_ORIGIN}/storage/v1/object/public/${BUCKET}/${encodePath(path)}`;
   } catch (e) { console.error(e); return null; }
 }
 
@@ -284,6 +288,12 @@ function normalizeConfig(cfg) {
     if (typeof cfg[f] !== 'string') cfg[f] = '';
   });
   if (!cfg.settingPassword) cfg.settingPassword = '0303';
+
+  // 走代理时，把配置里写死的 supabase 绝对地址改写成同域 /api 地址
+  if (USE_PROXY) {
+    cfg = JSON.parse(JSON.stringify(cfg).split(SUPABASE_ORIGIN).join(SUPABASE_URL));
+  }
+
   return cfg;
 }
 
