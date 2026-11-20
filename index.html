@@ -206,7 +206,8 @@ async function sbFetch(path, options) {
     'apikey': SUPABASE_KEY,
     'Authorization': 'Bearer ' + SUPABASE_KEY
   }, options.headers || {});
-  return fetch(SUPABASE_URL + path, Object.assign({}, options, { headers }));
+  // ⬇️ 新增：不读浏览器 HTTP 缓存，每次都向服务器要最新数据
+  return fetch(SUPABASE_URL + path, Object.assign({ cache: 'no-store' }, options, { headers }));
 }
 function encodePath(p) { return String(p).split('/').map(encodeURIComponent).join('/'); }
 async function uploadToStorage(blob, path, contentType) {
@@ -286,21 +287,76 @@ function normalizeConfig(cfg) {
   return cfg;
 }
 
+let lastConfigFetchTime = 0;
+let configUpdateBanner = null;
+
 async function loadConfigFromCloud(showSuccess) {
+  lastConfigFetchTime = Date.now();
   try {
-    const res = await sbFetch('/rest/v1/config?id=eq.1&select=data', { headers: { 'Accept': 'application/json' } });
+    // ⬇️ 加了时间戳参数，双保险防止中间代理缓存
+    const res = await sbFetch('/rest/v1/config?id=eq.1&select=data&_=' + Date.now(), {
+      headers: { 'Accept': 'application/json' }
+    });
     if (!res.ok) throw new Error('http ' + res.status);
     const rows = await res.json();
     if (!rows.length || !rows[0].data) throw new Error('empty');
+
+    const oldConfigJson = JSON.stringify(config);
     config = normalizeConfig(Object.assign({}, DEFAULT_CONFIG, rows[0].data));
+    const newConfigJson = JSON.stringify(config);
+    const configChanged = newConfigJson !== oldConfigJson;
+
     localStorage.setItem(LS_KEY, JSON.stringify(config));
     if (showSuccess) showSnackbar('✅ Cloud config synced');
-    return true;
+
+    return { ok: true, changed: configChanged };
   } catch (err) {
     console.warn('cloud load failed', err);
     if (showSuccess) showSnackbar('⚠️ Cloud failed, using local cache', true);
-    return false;
+    return { ok: false, changed: false };
   }
+}
+
+// ── 检测到配置变化时，根据当前所处页面决定怎么处理 ──
+function handleConfigUpdate() {
+  const inPractice = currentView === 'listenReadPractice' || currentView === 'roleplayPractice';
+  if (inPractice) {
+    // 正在练习中，不要暴力刷新打断学生，只弹提示条
+    showConfigUpdateBanner();
+  } else {
+    // 安全页面，直接重渲染
+    renderCurrentView();
+    showSnackbar('🔄 配置已更新');
+  }
+}
+
+// ── 练习中时的提示条，点击后手动刷新 ──
+function showConfigUpdateBanner() {
+  if (configUpdateBanner) return;
+  configUpdateBanner = document.createElement('div');
+  configUpdateBanner.id = 'configUpdateBanner';
+  configUpdateBanner.style.cssText =
+    'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);' +
+    'background:linear-gradient(135deg,#f5b301,#e6a000);color:#fff;' +
+    'padding:12px 22px;border-radius:40px;font-weight:700;font-size:.95rem;' +
+    'box-shadow:0 8px 20px rgba(230,160,0,.4);z-index:1100;cursor:pointer;' +
+    'display:flex;align-items:center;gap:8px;font-family:inherit;';
+  configUpdateBanner.innerHTML = '<i class="fas fa-sync-alt"></i> 有新配置，点击刷新';
+  configUpdateBanner.onclick = function () {
+    configUpdateBanner.remove();
+    configUpdateBanner = null;
+    renderCurrentView();
+    showSnackbar('🔄 配置已更新');
+  };
+  document.body.appendChild(configUpdateBanner);
+}
+
+// ── 带节流的主动检查（用于定时轮询和切回标签页） ──
+async function checkConfigUpdate() {
+  // 30 秒内已经查过就跳过，避免切换标签页时重复请求
+  if (Date.now() - lastConfigFetchTime < 30000) return;
+  const result = await loadConfigFromCloud(false);
+  if (result.ok && result.changed) handleConfigUpdate();
 }
 function loadConfigFromStorage() {
   const stored = localStorage.getItem(LS_KEY);
@@ -350,6 +406,22 @@ function goBack() {
   else if (currentView === 'myRecordingDetail') setView('myRecordings');
   else if (currentView === 'myRecordings') setView('home');
   else if (currentView !== 'home') setView('home');
+}
+function setView(view, partId) {
+  currentView = view;
+  currentPartId = partId === undefined ? currentPartId : partId;
+  if (view !== 'listenReadPractice' && view !== 'roleplayPractice') {
+    if (lr.recorder && lr.recorder.state === 'recording') { try { lr.recorder.stop(); } catch (e) {} }
+    stopMic();
+    stopPlayback();
+    rpCleanup();
+  }
+  // ⬇️ 新增：离开练习页时移除提示条（因为重渲染本身就会用新配置）
+  if (view !== 'listenReadPractice' && view !== 'roleplayPractice' && configUpdateBanner) {
+    configUpdateBanner.remove();
+    configUpdateBanner = null;
+  }
+  renderCurrentView();
 }
 function renderCurrentView() {
   if (currentView === 'home') renderHomeView();
@@ -1556,11 +1628,46 @@ function rpShowResult(stars, correct, total, retryTotal, maxStars) {
    Startup
    ============================================================ */
 backButton.onclick = goBack;
-cloudRefreshBtn.onclick = () => loadConfigFromCloud(true);
+
+cloudRefreshBtn.onclick = async function () {
+  const result = await loadConfigFromCloud(false);
+  if (!result.ok) {
+    showSnackbar('⚠️ Cloud failed, using local cache', true);
+    return;
+  }
+  if (result.changed) {
+    if (currentView === 'listenReadPractice' || currentView === 'roleplayPractice') {
+      showConfigUpdateBanner();
+    } else {
+      renderCurrentView();
+    }
+    showSnackbar('✅ 已同步最新配置');
+  } else {
+    showSnackbar('✓ 已是最新配置');
+  }
+};
 
 loadConfigFromStorage();
 renderCurrentView();
-loadConfigFromCloud(false).then(ok => { if (ok) renderCurrentView(); });
+
+// 启动时拉一次云端
+loadConfigFromCloud(false).then(function (result) {
+  if (!result.ok || !result.changed) return;
+  // 只要不在练习中，就重渲染为新配置
+  if (currentView !== 'listenReadPractice' && currentView !== 'roleplayPractice') {
+    renderCurrentView();
+  }
+});
+
+// 用户切回标签页时检查（30 秒节流）
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'visible') checkConfigUpdate();
+});
+
+// 定时轮询（页面可见时每 2 分钟一次）
+setInterval(function () {
+  if (document.visibilityState === 'visible') checkConfigUpdate();
+}, 120000);
 </script>
 </body>
 </html>
