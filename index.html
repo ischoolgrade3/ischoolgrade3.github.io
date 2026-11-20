@@ -161,11 +161,7 @@
 <script>
 "use strict";
 
-const SUPABASE_ORIGIN = 'https://dwagktwarlzkusawrtqq.supabase.co';
-// 手机/受限网络直连 *.supabase.co 会 Failed to fetch：
-// 在 Cloudflare Pages 上改走同域 /api 代理（functions/api/[[path]].js），其他环境仍直连。
-const USE_PROXY = /\.pages\.dev$/i.test(location.hostname);
-const SUPABASE_URL = USE_PROXY ? '/api' : SUPABASE_ORIGIN;
+const SUPABASE_URL = 'https://dwagktwarlzkusawrtqq.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3YWdrdHdhcmx6a3VzYXdydHFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MzMwODQsImV4cCI6MjEwNzEwOTA4NH0.5iMbu7R3-LGHjZMFAuRH93sepxJr7bjrWexj3Invlmk';
 const LS_KEY = 'english_integrated_config';
 const BUCKET = 'site-assets';
@@ -227,7 +223,7 @@ async function uploadToStorage(blob, path, contentType) {
       body: blob
     });
     if (!res.ok) return null;
-    return `${SUPABASE_ORIGIN}/storage/v1/object/public/${BUCKET}/${encodePath(path)}`;
+    return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${encodePath(path)}`;
   } catch (e) { console.error(e); return null; }
 }
 
@@ -288,12 +284,6 @@ function normalizeConfig(cfg) {
     if (typeof cfg[f] !== 'string') cfg[f] = '';
   });
   if (!cfg.settingPassword) cfg.settingPassword = '0303';
-
-  // 走代理时，把配置里写死的 supabase 绝对地址改写成同域 /api 地址
-  if (USE_PROXY) {
-    cfg = JSON.parse(JSON.stringify(cfg).split(SUPABASE_ORIGIN).join(SUPABASE_URL));
-  }
-
   return cfg;
 }
 
@@ -373,6 +363,118 @@ async function checkConfigUpdate() {
   const result = await loadConfigFromCloud(false);
   if (result.ok && result.changed) handleConfigUpdate();
 }
+/* ==== PAGE-UPDATE-ENGINE-START ==== */
+/* ★ 页面更新：手机每次打开都拿到最新 index.html
+   GitHub Pages 给 HTML 的响应头固定是 Cache-Control: max-age=600，改不了，
+   所以用"自己检查自己"绕过浏览器这 10 分钟缓存：
+   ① 打开时：no-store 取一份 index.html 的 HEAD，比较 Last-Modified；
+      服务器上的比当前这份新 → 换成带时间戳的地址重载（地址变 = 缓存未命中）。
+   ② 停留时：每 45 秒用 If-None-Match 发条件请求，没变就是 304，几乎不耗流量；
+      变了 → 空闲就自动刷新，练习中只弹提示条，不打断学生。 */
+const PAGE_UPDATE_GUARD_KEY = 'page_update_guard';
+let pageEtag = null;
+let pageUpdating = false;
+let pageBannerEl = null;
+
+function parseStamp(s) {
+  const t = Date.parse(s || '');
+  return isNaN(t) ? 0 : t;
+}
+
+function hardReload() {
+  location.replace(location.pathname + '?u=' + Date.now());
+}
+
+function canAutoReload() {
+  try {
+    const now = Date.now();
+    const list = (JSON.parse(sessionStorage.getItem(PAGE_UPDATE_GUARD_KEY) || '[]') || [])
+      .filter(function (t) { return now - t < 10 * 60 * 1000; });
+    if (list.length >= 3) return false;
+    list.push(now);
+    sessionStorage.setItem(PAGE_UPDATE_GUARD_KEY, JSON.stringify(list));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function showPageUpdateBanner() {
+  if (pageBannerEl) return;
+  pageBannerEl = document.createElement('div');
+  pageBannerEl.id = 'pageUpdateBanner';
+  pageBannerEl.style.cssText =
+    'position:fixed;top:10px;left:50%;transform:translateX(-50%);' +
+    'background:linear-gradient(135deg,#2a5298,#1e3c72);color:#fff;' +
+    'padding:11px 22px;border-radius:40px;font-weight:700;font-size:.95rem;' +
+    'box-shadow:0 8px 20px rgba(30,60,114,.45);z-index:1200;cursor:pointer;' +
+    'display:flex;align-items:center;gap:8px;font-family:inherit;';
+  pageBannerEl.innerHTML = '<i class="fas fa-sync-alt"></i> 页面有新版本，点击刷新';
+  pageBannerEl.onclick = hardReload;
+  document.body.appendChild(pageBannerEl);
+}
+
+async function probePage(conditional) {
+  const headers = {};
+  if (conditional && pageEtag) headers['If-None-Match'] = pageEtag;
+  const opts = { method: 'HEAD', cache: 'no-store', headers: headers };
+  let res = await fetch('index.html?_u=' + Date.now(), opts);
+  if (res.status === 405 || res.status === 501) {
+    res = await fetch('index.html?_u=' + Date.now(), { method: 'GET', cache: 'no-store', headers: headers });
+  }
+  return res;
+}
+
+async function checkPageUpdate(opts) {
+  opts = opts || {};
+  if (pageUpdating) return;
+  pageUpdating = true;
+  try {
+    const res = await probePage(!!pageEtag);
+    if (res.status === 304) return;
+    if (!res.ok) return;
+
+    const etag = res.headers.get('ETag') || '';
+    const serverModified = parseStamp(res.headers.get('Last-Modified'));
+    const pageModified = parseStamp(document.lastModified);
+
+    let isNew = false;
+    if (pageEtag && etag && etag !== pageEtag) {
+      isNew = true;
+    } else if (!pageEtag && serverModified && pageModified && serverModified > pageModified + 2000) {
+      isNew = true;   // 当前跑着的这份比服务器旧（浏览器缓存了旧 HTML）
+    }
+    if (!pageEtag) pageEtag = etag;
+    if (!isNew) return;
+
+    pageEtag = etag || pageEtag;
+
+    const busy = currentView === 'listenReadPractice' || currentView === 'roleplayPractice' ||
+                 (lr.recorder && lr.recorder.state === 'recording') ||
+                 (rp.recorder && rp.recorder.state === 'recording');
+    if (busy || opts.bannerOnly || !canAutoReload()) {
+      showPageUpdateBanner();
+      return;
+    }
+    showSnackbar('🔄 发现新版本，正在刷新…');
+    setTimeout(hardReload, 400);
+  } catch (e) {
+    console.warn('page update check failed', e);
+  } finally {
+    pageUpdating = false;
+  }
+}
+
+function initPageUpdate() {
+  checkPageUpdate({});                      // 打开就查一次：缓存里的旧页面会立刻自愈
+  setInterval(function () {
+    if (document.visibilityState === 'visible') checkPageUpdate({});
+  }, 45000);
+  window.addEventListener('pageshow', function (e) {
+    if (e.persisted) checkPageUpdate({});
+  });
+}
+/* ==== PAGE-UPDATE-ENGINE-END ==== */
 function loadConfigFromStorage() {
   const stored = localStorage.getItem(LS_KEY);
   if (stored) {
@@ -1664,6 +1766,7 @@ cloudRefreshBtn.onclick = async function () {
  
 loadConfigFromStorage();
 renderCurrentView();
+initPageUpdate();
 
 // 启动时拉一次云端
 loadConfigFromCloud(false).then(function (result) {
@@ -1676,7 +1779,7 @@ loadConfigFromCloud(false).then(function (result) {
 
 // 用户切回标签页时检查（30 秒节流）
 document.addEventListener('visibilitychange', function () {
-  if (document.visibilityState === 'visible') checkConfigUpdate();
+  if (document.visibilityState === 'visible') { checkConfigUpdate(); checkPageUpdate({}); }
 });
 
 // 定时轮询（页面可见时每 2 分钟一次）
