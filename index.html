@@ -293,13 +293,15 @@ let configUpdateBanner = null;
 async function loadConfigFromCloud(showSuccess) {
   lastConfigFetchTime = Date.now();
   try {
-    // ⬇️ 加了时间戳参数，双保险防止中间代理缓存
     const res = await sbFetch('/rest/v1/config?id=eq.1&select=data&_=' + Date.now(), {
       headers: { 'Accept': 'application/json' }
     });
-    if (!res.ok) throw new Error('http ' + res.status);
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new Error('HTTP ' + res.status + ' ' + errText.slice(0, 100));
+    }
     const rows = await res.json();
-    if (!rows.length || !rows[0].data) throw new Error('empty');
+    if (!rows.length || !rows[0].data) throw new Error('empty data');
 
     const oldConfigJson = JSON.stringify(config);
     config = normalizeConfig(Object.assign({}, DEFAULT_CONFIG, rows[0].data));
@@ -308,12 +310,15 @@ async function loadConfigFromCloud(showSuccess) {
 
     localStorage.setItem(LS_KEY, JSON.stringify(config));
     if (showSuccess) showSnackbar('✅ Cloud config synced');
-
     return { ok: true, changed: configChanged };
   } catch (err) {
-    console.warn('cloud load failed', err);
-    if (showSuccess) showSnackbar('⚠️ Cloud failed, using local cache', true);
-    return { ok: false, changed: false };
+    const msg = String((err && err.message) || err || 'unknown');
+    console.error('cloud load failed:', err);
+    if (showSuccess) {
+      // 手机上看到的不再是笼统的"失败"，而是具体原因
+      showSnackbar('❌ ' + msg, true);
+    }
+    return { ok: false, changed: false, error: msg };
   }
 }
 
@@ -1632,7 +1637,7 @@ backButton.onclick = goBack;
 cloudRefreshBtn.onclick = async function () {
   const result = await loadConfigFromCloud(false);
   if (!result.ok) {
-    showSnackbar('⚠️ Cloud failed, using local cache', true);
+    showSnackbar('❌ ' + (result.error || 'Cloud failed'), true);
     return;
   }
   if (result.changed) {
@@ -1646,7 +1651,7 @@ cloudRefreshBtn.onclick = async function () {
     showSnackbar('✓ 已是最新配置');
   }
 };
-
+ 
 loadConfigFromStorage();
 renderCurrentView();
 
