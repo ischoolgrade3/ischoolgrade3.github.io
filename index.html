@@ -13,6 +13,21 @@
   .nav-header h1 { font-size:1.8rem; font-weight:600; background:linear-gradient(135deg,#1e3c72,#2a5298); -webkit-background-clip:text; background-clip:text; color:transparent; flex:1; }
   .back-btn, .cloud-refresh-btn { background:white; border:none; width:44px; height:44px; border-radius:30px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 8px rgba(0,0,0,.05); color:#1e3c72; font-size:1.4rem; cursor:pointer; transition:.2s; border:1px solid rgba(255,255,255,.8); }
   .back-btn:hover, .cloud-refresh-btn:hover { background:#2a5298; color:white; }
+
+  /* ---------- 年级选择 ---------- */
+  .grade-chip-btn { background:white; border:1px solid rgba(255,255,255,.8); height:44px; padding:0 16px; border-radius:22px; display:flex; align-items:center; gap:7px; font-weight:800; color:#1e3c72; font-size:.95rem; cursor:pointer; box-shadow:0 4px 8px rgba(0,0,0,.05); font-family:inherit; white-space:nowrap; }
+  .grade-chip-btn:hover { background:#2a5298; color:#fff; }
+  .grade-screen { width:100%; min-height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:18px 8px; }
+  .grade-screen h2 { font-size:2rem; color:#1e3c72; text-align:center; }
+  .grade-screen p.sub { color:#6b7c93; font-size:1rem; text-align:center; margin-bottom:6px; }
+  .grade-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:16px; width:100%; max-width:600px; }
+  .grade-card { background:#fff; border:2px solid #eef4ff; border-radius:26px; padding:24px 14px; display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer; box-shadow:0 8px 18px rgba(0,20,40,.06); transition:.15s; font-family:inherit; }
+  .grade-card:hover { transform:translateY(-4px); border-color:#2a5298; box-shadow:0 16px 26px -8px #1e3c7240; }
+  .grade-card:active { transform:scale(.97); }
+  .grade-card.current { border-color:#f5b301; box-shadow:0 10px 24px rgba(245,179,1,.28); }
+  .grade-card .g-emoji { font-size:2.6rem; line-height:1; }
+  .grade-card .g-name { font-size:1.4rem; font-weight:800; color:#1e3c72; text-align:center; }
+  .grade-card .g-sub { font-size:.82rem; color:#91a3bb; }
   .view-container { flex:1; padding:16px; overflow-y:auto; background-size:cover; background-position:center; background-repeat:no-repeat; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; position:relative; }
 
   .home-grid { display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:16px; width:100%; height:100%; flex:1; }
@@ -151,7 +166,8 @@
 <div id="app">
   <div class="nav-header">
     <button class="back-btn" id="backButton"><i class="fas fa-arrow-left"></i></button>
-    <h1>📘 AI Time Grade 3</h1>
+    <h1 id="appTitle">📘 AI Time</h1>
+    <button class="grade-chip-btn" id="gradeChipBtn" title="切换年级"><i class="fas fa-graduation-cap"></i><span id="gradeChipText">--</span></button>
     <button class="cloud-refresh-btn" id="cloudRefreshBtn" title="Sync cloud config"><i class="fas fa-cloud-download-alt"></i></button>
   </div>
   <div id="viewContainer" class="view-container"></div>
@@ -161,10 +177,27 @@
 <script>
 "use strict";
 
-const SUPABASE_URL = 'https://dwagktwarlzkusawrtqq.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3YWdrdHdhcmx6a3VzYXdydHFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MzMwODQsImV4cCI6MjEwNzEwOTA4NH0.5iMbu7R3-LGHjZMFAuRH93sepxJr7bjrWexj3Invlmk';
-const LS_KEY = 'english_integrated_config';
+/* ============================================================
+   多年级：中枢库存"年级名单"，每个年级用自己的 Supabase 存内容
+   ============================================================ */
+const HUB_URL = 'https://dwagktwarlzkusawrtqq.supabase.co';
+const HUB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3YWdrdHdhcmx6a3VzYXdydHFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MzMwODQsImV4cCI6MjEwNzEwOTA4NH0.5iMbu7R3-LGHJZMFAuRH93sepxJr7bjrWexj3Invlmk';
+
+// 当前年级的库 —— 选完年级后会被替换
+let SUPABASE_URL = HUB_URL;
+let SUPABASE_KEY = HUB_KEY;
+let currentGrade = null;
+
 const BUCKET = 'site-assets';
+const LS_KEY = 'english_integrated_config';      // 旧版单年级缓存，仅用于迁移
+const GRADES_CACHE_KEY = 'aitime_grades_cache';  // 年级名单本地缓存
+const LAST_GRADE_KEY = 'aitime_last_grade';      // 上次选的年级
+function gradeLsKey(id) { return 'aitime_config__' + id; }
+
+// 名单表还没建好 / 断网时的兜底：至少能进三年级
+const DEFAULT_GRADES = [
+  { id: 'grade3', name: 'Grade 3', supabase_url: HUB_URL, supabase_key: HUB_KEY, sort: 1, emoji: '📘' }
+];
 
 const DEFAULT_CONFIG = {
   settingPassword: '0303',
@@ -287,6 +320,157 @@ function normalizeConfig(cfg) {
   return cfg;
 }
 
+/* ============================================================
+   年级引擎：拉名单 → 选年级 → 切到该年级的库 → 之后一切照旧
+   ============================================================ */
+
+function gradesCacheRead() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(GRADES_CACHE_KEY) || 'null');
+    return Array.isArray(raw) ? raw : [];
+  } catch (e) { return []; }
+}
+
+function normalizeGrade(g) {
+  if (!g || !g.id || !g.supabase_url || !g.supabase_key) return null;
+  return {
+    id: String(g.id),
+    name: String(g.name || g.id),
+    supabase_url: String(g.supabase_url).replace(/\/+$/, ''),
+    supabase_key: String(g.supabase_key),
+    sort: Number(g.sort) || 100,
+    emoji: g.emoji || '📘'
+  };
+}
+
+async function fetchGradesFromHub() {
+  const res = await fetch(HUB_URL + '/rest/v1/grades?select=id,name,supabase_url,supabase_key,sort,emoji&order=sort.asc,name.asc', {
+    cache: 'no-store',
+    headers: { apikey: HUB_KEY, Authorization: 'Bearer ' + HUB_KEY, Accept: 'application/json' }
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const rows = await res.json();
+  return (Array.isArray(rows) ? rows : []).map(normalizeGrade).filter(Boolean);
+}
+
+async function loadGrades() {
+  try {
+    const list = await fetchGradesFromHub();
+    if (list.length) {
+      try { localStorage.setItem(GRADES_CACHE_KEY, JSON.stringify(list)); } catch (e) {}
+      return list;
+    }
+  } catch (e) {
+    console.warn('[grades] 年级名单拉取失败，用本地缓存兜底', e);
+  }
+  const cached = gradesCacheRead();
+  if (cached.length) return cached;
+  return DEFAULT_GRADES.slice();
+}
+
+function isPracticeView() {
+  return currentView === 'listenReadPractice' || currentView === 'roleplayPractice';
+}
+
+function updateHeader() {
+  const chip = document.getElementById('gradeChipText');
+  const chipBtn = document.getElementById('gradeChipBtn');
+  const title = document.getElementById('appTitle');
+  const onPicker = currentView === 'gradePicker';
+  if (chipBtn) chipBtn.style.display = onPicker ? 'none' : 'flex';
+  if (backButton) backButton.style.visibility = onPicker ? 'hidden' : 'visible';
+  if (cloudRefreshBtn) cloudRefreshBtn.style.display = onPicker ? 'none' : 'flex';
+  if (title) title.textContent = currentGrade && currentGrade.name ? ('📘 ' + currentGrade.name) : '📘 AI Time';
+  if (chip) chip.textContent = currentGrade ? (currentGrade.name || '') : '';
+}
+
+function lastGradeId() {
+  try { return localStorage.getItem(LAST_GRADE_KEY) || ''; } catch (e) { return ''; }
+}
+
+function renderGradePicker(grades) {
+  currentView = 'gradePicker';
+  updateHeader();
+  const list = (grades && grades.length) ? grades : DEFAULT_GRADES;
+  const lastId = lastGradeId();
+  const cards = list.map(function (g) {
+    const isLast = g.id === lastId;
+    return '<button class="grade-card' + (isLast ? ' current' : '') + '" data-grade-id="' + escapeHtml(g.id) + '">'
+      + '<span class="g-emoji">' + escapeHtml(g.emoji || '📘') + '</span>'
+      + '<span class="g-name">' + escapeHtml(g.name) + '</span>'
+      + '<span class="g-sub">' + (isLast ? '上次使用' : '点击进入') + '</span>'
+      + '</button>';
+  }).join('');
+  applyBackground('', document.body);
+  viewContainer.innerHTML = '<div class="grade-screen">'
+    + '<h2>选择你的年级</h2>'
+    + '<p class="sub">每个年级的内容是不同的，选错了会看到别的年级的题</p>'
+    + '<div class="grade-grid">' + cards + '</div>'
+    + '</div>';
+  viewContainer.querySelectorAll('.grade-card').forEach(function (el) {
+    el.addEventListener('click', function () {
+      const g = list.find(function (x) { return x.id === el.dataset.gradeId; });
+      if (g) enterGrade(g);
+    });
+  });
+}
+
+function loadConfigForGrade(gradeId) {
+  let raw = null;
+  try { raw = localStorage.getItem(gradeLsKey(gradeId)); } catch (e) {}
+  // 老版本把配置存在 english_integrated_config：只给三年级迁移一次
+  if (!raw && gradeId === DEFAULT_GRADES[0].id) {
+    try {
+      const legacy = localStorage.getItem(LS_KEY);
+      if (legacy) {
+        raw = legacy;
+        try { localStorage.setItem(gradeLsKey(gradeId), legacy); } catch (e2) {}
+      }
+    } catch (e) {}
+  }
+  if (raw) {
+    try { return normalizeConfig(Object.assign({}, DEFAULT_CONFIG, JSON.parse(raw))); } catch (e) {}
+  }
+  return normalizeConfig(JSON.parse(JSON.stringify(DEFAULT_CONFIG)));
+}
+
+function saveConfigForCurrentGrade() {
+  if (!currentGrade) return;
+  try { localStorage.setItem(gradeLsKey(currentGrade.id), JSON.stringify(config)); } catch (e) {}
+}
+
+async function enterGrade(g) {
+  currentGrade = g;
+  SUPABASE_URL = String(g.supabase_url || HUB_URL).replace(/\/+$/, '');
+  SUPABASE_KEY = g.supabase_key || HUB_KEY;
+  try { localStorage.setItem(LAST_GRADE_KEY, g.id); } catch (e) {}
+
+  config = loadConfigForGrade(g.id);
+  currentView = 'home';
+  updateHeader();
+  renderCurrentView();
+  showSnackbar('⏳ 正在加载 ' + (g.name || '') + ' …');
+
+  const result = await loadConfigFromCloud(false);
+  if (!result.ok) {
+    showSnackbar('⚠️ 云端没连上，先用本地缓存', true);
+    return;
+  }
+  if (result.changed && !isPracticeView()) renderCurrentView();
+  showSnackbar('✅ ' + (g.name || '') + ' 已就绪');
+}
+
+function backToGradePicker() {
+  if (isPracticeView()) { showSnackbar('先退出练习再切换年级', true); return; }
+  rpCleanup();
+  try { if (lr.recorder && lr.recorder.state === 'recording') lr.recorder.stop(); } catch (e) {}
+  saveConfigForCurrentGrade();
+  currentGrade = null;
+  SUPABASE_URL = HUB_URL;
+  SUPABASE_KEY = HUB_KEY;
+  loadGrades().then(renderGradePicker);
+}
+
 let lastConfigFetchTime = 0;
 let configUpdateBanner = null;
 
@@ -308,7 +492,7 @@ async function loadConfigFromCloud(showSuccess) {
     const newConfigJson = JSON.stringify(config);
     const configChanged = newConfigJson !== oldConfigJson;
 
-    localStorage.setItem(LS_KEY, JSON.stringify(config));
+    saveConfigForCurrentGrade();
     if (showSuccess) showSnackbar('✅ Cloud config synced');
     return { ok: true, changed: configChanged };
   } catch (err) {
@@ -358,6 +542,7 @@ function showConfigUpdateBanner() {
 
 // ── 带节流的主动检查（用于定时轮询和切回标签页） ──
 async function checkConfigUpdate() {
+  if (!currentGrade) return;
   // 30 秒内已经查过就跳过，避免切换标签页时重复请求
   if (Date.now() - lastConfigFetchTime < 30000) return;
   const result = await loadConfigFromCloud(false);
@@ -541,6 +726,8 @@ function setView(view, partId) {
   renderCurrentView();
 }
 function renderCurrentView() {
+  updateHeader();
+  if (currentView === 'gradePicker') return;
   if (currentView === 'home') renderHomeView();
   else if (currentView === 'aitalk') renderAiTalkView();
   else if (currentView === 'roleplayParts') renderRolePlayPartsView();
@@ -1145,8 +1332,7 @@ window.addEventListener('resize', () => {
 /* ============================================================
    Role Play · Tencent Cloud Powered
    ============================================================ */
-const RP_FN_TTS = SUPABASE_URL + '/functions/v1/tencent-tts';
-const RP_FN_ASR = SUPABASE_URL + '/functions/v1/tencent-asr';
+function rpFnUrl(name) { return SUPABASE_URL + '/functions/v1/' + name; }
 // 🔧 Role Play 是否保存练习记录到 Supabase
 // false = 纯前端实时分析，不写任何数据库/Storage（推荐，零占用）
 // true  = 保存 attempt / answers / 录音文件
@@ -1395,7 +1581,7 @@ async function rpAdvance() {
 function rpSleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
 async function rpPlayTts(text) {
-  const res = await fetch(RP_FN_TTS, {
+  const res = await fetch(rpFnUrl('tencent-tts'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -1556,7 +1742,7 @@ function rpBlobToBase64(blob) {
 
 async function rpFetchAsr(wavBlob) {
   const base64 = await rpBlobToBase64(wavBlob);
-  const res = await fetch(RP_FN_ASR, {
+  const res = await fetch(rpFnUrl('tencent-asr'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -1745,8 +1931,13 @@ function rpShowResult(stars, correct, total, retryTotal, maxStars) {
    Startup
    ============================================================ */
 backButton.onclick = goBack;
+document.getElementById('gradeChipBtn').onclick = function () {
+  if (!currentGrade) return;
+  backToGradePicker();
+};
 
 cloudRefreshBtn.onclick = async function () {
+  if (!currentGrade) return;
   const result = await loadConfigFromCloud(false);
   if (!result.ok) {
     showSnackbar('❌ ' + (result.error || 'Cloud failed'), true);
@@ -1764,18 +1955,15 @@ cloudRefreshBtn.onclick = async function () {
   }
 };
  
-loadConfigFromStorage();
-renderCurrentView();
 initPageUpdate();
+startGradeBoot();
 
-// 启动时拉一次云端
-loadConfigFromCloud(false).then(function (result) {
-  if (!result.ok || !result.changed) return;
-  // 只要不在练习中，就重渲染为新配置
-  if (currentView !== 'listenReadPractice' && currentView !== 'roleplayPractice') {
-    renderCurrentView();
-  }
-});
+async function startGradeBoot() {
+  const grades = await loadGrades();
+  renderGradePicker(grades);
+}
+
+// 云端配置在 enterGrade() 里按所选年级拉取
 
 // 用户切回标签页时检查（30 秒节流）
 document.addEventListener('visibilitychange', function () {
