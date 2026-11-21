@@ -3,6 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1E3C72">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-180.png">
+<link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="AI Time">
+<meta name="format-detection" content="telephone=no">
+
 <title>AI Time · Grade 3</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <style>
@@ -2023,6 +2033,44 @@ document.addEventListener('visibilitychange', function () {
 setInterval(function () {
   if (document.visibilityState === 'visible') checkConfigUpdate();
 }, 120000);
+</script>
+
+<script>
+/* ---------- iOS：引导"添加到主屏幕"（只提示一次，7 天内不再弹） ---------- */
+(function () {
+  var standalone = window.navigator.standalone === true ||
+    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  if (standalone) return;
+
+  var ua = navigator.userAgent || '';
+  var isIOS = /iPad|iPhone|iPod/.test(ua) ||
+              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (!isIOS) return;
+
+  var KEY = 'aitime_ios_install_dismissed';
+  try { if (Date.now() - Number(localStorage.getItem(KEY) || 0) < 7 * 864e5) return; } catch (e) {}
+
+  setTimeout(function () {
+    var box = document.createElement('div');
+    box.id = 'iosInstallHint';
+    box.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:1400;'
+      + 'background:#fff;border:1px solid #e6eef8;border-radius:18px;'
+      + 'box-shadow:0 14px 34px rgba(0,20,40,.26);padding:14px 16px;'
+      + 'display:flex;align-items:center;gap:12px;font-family:inherit;';
+    box.innerHTML = '<span style="font-size:24px">📲</span>'
+      + '<div style="flex:1;font-size:.92rem;line-height:1.5;color:#1e2f4b">'
+      + '想要桌面图标？点 Safari 底部的 <b>分享</b> 按钮 ⬆️，选 <b>「添加到主屏幕」</b>'
+      + '</div>'
+      + '<button id="iosHintClose" style="border:none;background:#eef4ff;color:#2a5298;'
+      + 'border-radius:12px;padding:8px 14px;font-weight:700;font-family:inherit;font-size:.9rem;'
+      + 'white-space:nowrap">知道了</button>';
+    document.body.appendChild(box);
+    document.getElementById('iosHintClose').onclick = function () {
+      try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {}
+      box.remove();
+    };
+  }, 2200);
+})();
 </script>
 </body>
 </html>
