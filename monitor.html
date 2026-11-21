@@ -196,14 +196,49 @@
   .pwd-modal-card input { width:100%; padding:12px 16px; border-radius:12px; border:1.5px solid #dbe4f0; font-size:14px; margin-bottom:12px; outline:none; font-family:inherit; }
   .pwd-modal-card input:focus { border-color:#2a5298; }
   .pwd-modal-card .row { display:flex; gap:10px; justify-content:flex-end; margin-top:8px; }
+
+  /* ---------- 年级选择（后台前置筛选） ---------- */
+  .grade-row { display:flex; align-items:center; gap:10px; background:#f7fafe; border:1.5px solid #e1ebf6; border-radius:14px; padding:10px 12px; }
+  .grade-row:hover { border-color:#2a5298; background:#f0f6ff; }
+  .grade-row .g-emoji { font-size:22px; flex-shrink:0; }
+  .grade-row .g-main { flex:1; min-width:0; cursor:pointer; text-align:left; border:none; background:transparent; font-family:inherit; padding:2px 0; }
+  .grade-row .g-name { font-weight:700; color:#1e3c72; font-size:15px; }
+  .grade-row .g-host { font-size:11.5px; color:#91a3bb; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .grade-mini { border:none; background:#eef4ff; color:#2a5298; border-radius:10px; padding:7px 11px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; flex-shrink:0; }
+  .grade-mini:hover { background:#dce9ff; }
+  .grade-mini.danger { background:#fff0f0; color:#c0392b; }
+  .grade-mini.danger:hover { background:#ffe4e0; }
+  .grade-empty { color:#8fa0b6; font-size:13px; text-align:center; padding:18px 10px; line-height:1.8; }
+  .grade-modal-overlay { position:fixed; inset:0; background:rgba(10,30,50,.55); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; z-index:300; padding:20px; }
+  .grade-modal { background:#fff; border-radius:20px; padding:24px; width:100%; max-width:470px; max-height:92vh; overflow:auto; box-shadow:0 30px 60px rgba(0,0,0,.3); }
+  .grade-modal h2 { margin:0 0 6px; font-size:18px; color:#1e3c72; }
+  .grade-modal p.tip { margin:0 0 8px; font-size:12.5px; color:#8fa0b6; line-height:1.7; }
+  .grade-modal label { display:block; font-size:12.5px; font-weight:600; color:#3c4f68; margin:13px 0 6px; }
+  .grade-modal input { width:100%; padding:11px 14px; border-radius:12px; border:1.5px solid #dbe4f0; font-size:13.5px; outline:none; font-family:inherit; background:#fafcff; color:#1e2f4b; }
+  .grade-modal input:focus { border-color:#2a5298; background:#fff; }
+  .grade-modal .row { display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
+  .grade-modal .err { color:#d33; font-size:12.5px; min-height:16px; margin-top:10px; line-height:1.6; }
 </style>
 </head>
 <body>
 
-<div id="loginOverlay" class="overlay">
+<div id="gradeOverlay" class="overlay">
+  <div class="login-card" style="max-width:560px;">
+    <h2>🎓 选择年级</h2>
+    <p class="sub">每个年级对应一个独立的 Supabase 库，密码也各自独立</p>
+    <div id="gradeList" style="display:flex;flex-direction:column;gap:10px;margin:16px 0;max-height:44vh;overflow:auto;"></div>
+    <div class="row" style="justify-content:center;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-primary" id="addGradeBtn">＋ 新增年级</button>
+      <button class="btn btn-outline" id="gradeRefreshBtn">刷新列表</button>
+    </div>
+    <p class="login-err" id="gradeErr"></p>
+  </div>
+</div>
+
+<div id="loginOverlay" class="overlay hidden">
   <div class="login-card">
-    <h2>🔐 AI Time Admin</h2>
-    <p class="sub">Please enter admin password</p>
+    <h2 id="loginTitle">🔐 AI Time Admin</h2>
+    <p class="sub">Please enter admin password for <b id="loginGradeName">this grade</b></p>
     <input type="password" id="loginPwd" placeholder="Admin Password" autocomplete="current-password">
     <div class="row" style="justify-content:center; gap:10px;">
       <button class="btn btn-primary" id="loginBtn" style="padding:12px 30px;">Enter</button>
@@ -215,8 +250,9 @@
 
 <div id="app" class="hidden">
   <div class="topbar">
-    <h1>🛠 AI Time Admin</h1>
+    <h1 id="appTitle">🛠 AI Time Admin</h1>
     <div class="topbar-right">
+      <button class="btn btn-outline" id="switchGradeBtn"><i class="fas fa-exchange-alt"></i> 切换年级</button>
       <span class="badge" id="statusBadge">☁️ Cloud</span>
       <button class="btn btn-outline" id="pullBtn"><i class="fas fa-cloud-download-alt"></i> Grab Cloud Config</button>
       <button class="btn btn-primary" id="publishBtn"><i class="fas fa-cloud-upload-alt"></i> Publish On Cloud</button>
@@ -249,10 +285,19 @@
 <script>
 "use strict";
 
-const SUPABASE_URL = 'https://dwagktwarlzkusawrtqq.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3YWdrdHdhcmx6a3VzYXdydHFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MzMwODQsImV4cCI6MjEwNzEwOTA4NH0.5iMbu7R3-LGHjZMFAuRH93sepxJr7bjrWexj3Invlmk';
+/* ============================================================
+   多年级：中枢库存"年级名单"，每个年级用自己的 Supabase 库
+   ============================================================ */
+const HUB_URL = 'https://dwagktwarlzkusawrtqq.supabase.co';
+const HUB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3YWdrdHdhcmx6a3VzYXdydHFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MzMwODQsImV4cCI6MjEwNzEwOTA4NH0.5iMbu7R3-LGHJZMFAuRH93sepxJr7bjrWexj3Invlmk';
+
+// 当前正在管理的年级 —— 选完年级后会被替换
+let SUPABASE_URL = HUB_URL;
+let SUPABASE_KEY = HUB_KEY;
+let currentGrade = null;
+
 const BUCKET = 'site-assets';
-const LS_KEY = 'english_integrated_config';
+let LS_KEY = 'english_integrated_config';
 
 const DEFAULT_CONFIG = {
   aiTalkButtons: [
@@ -496,12 +541,265 @@ function showLogin() {
 }
 function enterApp() {
   loggedIn = true;
+  const t = document.getElementById('appTitle');
+  if (t && currentGrade) t.textContent = '🛠 ' + currentGrade.name + ' Admin';
   document.getElementById('loginOverlay').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
   document.getElementById('searchFab').classList.remove('hidden');
   updateStatusBadge();
   renderSettings();
   renderRecordings();
+}
+
+/* ============================================================
+   年级名单：存在中枢库（现在就是三年级那个项目）的 grades 表
+   ============================================================ */
+const GRADES_CACHE_KEY = 'aitime_admin_grades';
+const DEFAULT_GRADES = [
+  { id: 'grade3', name: 'Grade 3', supabase_url: HUB_URL, supabase_key: HUB_KEY, sort: 1, emoji: '📘' }
+];
+
+function gradeHost(u) {
+  try { return new URL(u).host; } catch (e) { return String(u || ''); }
+}
+
+function normalizeGrade(g) {
+  if (!g || !g.id || !g.supabase_url || !g.supabase_key) return null;
+  return {
+    id: String(g.id),
+    name: String(g.name || g.id),
+    supabase_url: String(g.supabase_url).replace(/\/+$/, ''),
+    supabase_key: String(g.supabase_key),
+    sort: Number(g.sort) || 100,
+    emoji: g.emoji || '📘'
+  };
+}
+
+async function hubFetch(path, options) {
+  options = options || {};
+  const headers = Object.assign({
+    apikey: HUB_KEY,
+    Authorization: 'Bearer ' + HUB_KEY,
+    Accept: 'application/json'
+  }, options.headers || {});
+  return fetch(HUB_URL + path, Object.assign({ cache: 'no-store' }, options, { headers }));
+}
+
+async function fetchGradesFromHub() {
+  const res = await hubFetch('/rest/v1/grades?select=id,name,supabase_url,supabase_key,sort,emoji&order=sort.asc,name.asc');
+  if (!res.ok) {
+    const t = await res.text().catch(() => '');
+    const e = new Error('HTTP ' + res.status + ' ' + t.slice(0, 120));
+    e.status = res.status;
+    throw e;
+  }
+  const rows = await res.json();
+  return (Array.isArray(rows) ? rows : []).map(normalizeGrade).filter(Boolean);
+}
+
+async function loadGradeList(force) {
+  if (!force) {
+    try {
+      const cached = JSON.parse(localStorage.getItem(GRADES_CACHE_KEY) || 'null');
+      if (Array.isArray(cached) && cached.length) return cached;
+    } catch (e) {}
+  }
+  try {
+    const list = await fetchGradesFromHub();
+    localStorage.setItem(GRADES_CACHE_KEY, JSON.stringify(list));
+    return list;
+  } catch (e) {
+    console.warn('[grades] 名单表读不到', e);
+    try {
+      const cached = JSON.parse(localStorage.getItem(GRADES_CACHE_KEY) || 'null');
+      if (Array.isArray(cached) && cached.length) return cached;
+    } catch (e2) {}
+    if (e.status === 404) {
+      const err = new Error('中枢库里还没有 grades 表。先在 Supabase 执行 supabase-multigrade.sql，人数才会出现。');
+      err.missingTable = true;
+      throw err;
+    }
+    throw e;
+  }
+}
+
+function renderGradeGate(list, errMsg) {
+  const box = document.getElementById('gradeList');
+  const errEl = document.getElementById('gradeErr');
+  if (errEl) errEl.textContent = errMsg || '';
+  if (!box) return;
+  if (!list) { box.innerHTML = '<div class="grade-empty">正在读取年级名单…</div>'; return; }
+  if (!list.length) {
+    box.innerHTML = '<div class="grade-empty">还没有任何年级。<br>点下面「＋ 新增年级」，填那个年级 Supabase 项目的地址和 anon key。</div>';
+    return;
+  }
+  box.innerHTML = list.map(function (g) {
+    return '<div class="grade-row" data-gid="' + esc(g.id) + '">'
+      + '<span class="g-emoji">' + esc(g.emoji || '📘') + '</span>'
+      + '<button class="g-main" data-act="open">'
+      +   '<div class="g-name">' + esc(g.name) + '</div>'
+      +   '<div class="g-host">' + esc(gradeHost(g.supabase_url)) + '</div>'
+      + '</button>'
+      + '<button class="grade-mini" data-act="edit">编辑</button>'
+      + '<button class="grade-mini danger" data-act="del">删</button>'
+      + '</div>';
+  }).join('');
+
+  box.querySelectorAll('.grade-row').forEach(function (row) {
+    const g = list.find(function (x) { return x.id === row.dataset.gid; });
+    if (!g) return;
+    row.querySelector('[data-act="open"]').onclick = function () { chooseGrade(g); };
+    row.querySelector('[data-act="edit"]').onclick = function () { openGradeModal(g); };
+    row.querySelector('[data-act="del"]').onclick = function () { deleteGradeEntry(g); };
+  });
+}
+
+async function chooseGrade(g) {
+  currentGrade = g;
+  SUPABASE_URL = String(g.supabase_url).replace(/\/+$/, '');
+  SUPABASE_KEY = g.supabase_key;
+  LS_KEY = 'aitime_config__' + g.id;
+
+  document.getElementById('gradeOverlay').classList.add('hidden');
+  document.getElementById('gradeErr').textContent = '';
+  const title = document.getElementById('loginTitle');
+  const nameEl = document.getElementById('loginGradeName');
+  if (title) title.textContent = '🔐 ' + g.name + ' Admin';
+  if (nameEl) nameEl.textContent = g.name;
+  document.getElementById('loginErr').textContent = '';
+  document.getElementById('loginPwd').value = '';
+
+  loadConfigFromStorage();
+  showLogin();
+  const ok = await loadConfigFromCloud(false);
+  if (ok) updateStatusBadge();
+  setTimeout(function () { document.getElementById('loginPwd').focus(); }, 60);
+}
+
+function backToGradeGate() {
+  loggedIn = false;
+  currentGrade = null;
+  SUPABASE_URL = HUB_URL;
+  SUPABASE_KEY = HUB_KEY;
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('searchFab').classList.add('hidden');
+  document.getElementById('loginOverlay').classList.add('hidden');
+  document.getElementById('gradeOverlay').classList.remove('hidden');
+  refreshGradeGate();
+}
+
+async function refreshGradeGate() {
+  renderGradeGate(null);
+  try {
+    renderGradeGate(await loadGradeList(true));
+  } catch (e) {
+    // 名单表还没建好时，至少让人能先进三年级
+    renderGradeGate(DEFAULT_GRADES, e.missingTable ? e.message : ('读取名单失败：' + e.message));
+  }
+}
+
+/* ---------- 新增 / 编辑年级 ---------- */
+async function testGradeProject(url, key) {
+  const clean = String(url).replace(/\/+$/, '');
+  const h = { apikey: key, Authorization: 'Bearer ' + key, Accept: 'application/json' };
+  let res;
+  try {
+    res = await fetch(clean + '/rest/v1/config?id=eq.1&select=id', { headers: h });
+  } catch (e) {
+    throw new Error('连不上这个地址（网络错误），检查 URL 是否写对');
+  }
+  if (!res.ok) throw new Error('这个库拒绝访问（HTTP ' + res.status + '），URL 和 anon key 对不上');
+  const rows = await res.json().catch(function () { return null; });
+  if (!Array.isArray(rows) || !rows.length) throw new Error('库能连上，但 config 表里没有 id=1 这一行');
+  const rpc = await fetch(clean + '/rest/v1/rpc/verify_admin_password', {
+    method: 'POST',
+    headers: { apikey: key, Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pwd: '__probe__' })
+  });
+  if (rpc.status === 404) throw new Error('这个库还没有密码校验函数，请先执行 supabase-multigrade.sql');
+  return true;
+}
+
+function openGradeModal(existing) {
+  const isEdit = !!existing;
+  const overlay = document.createElement('div');
+  overlay.className = 'grade-modal-overlay';
+  overlay.innerHTML = ''
+    + '<div class="grade-modal">'
+    + '<h2>' + (isEdit ? '编辑年级' : '新增年级') + '</h2>'
+    + '<p class="tip">填入这个年级自己的 Supabase 项目地址和 anon public key。保存前会先测一次：能不能读到它的 config 表、有没有密码校验函数。</p>'
+    + '<label>年级名称</label>'
+    + '<input id="gmName" placeholder="Grade 4" value="' + esc(existing ? existing.name : '') + '">'
+    + '<label>图标（一个 emoji，可留空）</label>'
+    + '<input id="gmEmoji" placeholder="📗" maxlength="4" value="' + esc(existing ? (existing.emoji || '') : '') + '">'
+    + '<label>Supabase Project URL</label>'
+    + '<input id="gmUrl" placeholder="https://abcdefgh.supabase.co" value="' + esc(existing ? existing.supabase_url : '') + '">'
+    + '<label>anon public key</label>'
+    + '<input id="gmKey" placeholder="eyJhbGciOiJIUzI1NiIs…" value="' + esc(existing ? existing.supabase_key : '') + '">'
+    + '<div class="err" id="gmErr"></div>'
+    + '<div class="row">'
+    +   '<button class="btn btn-outline" id="gmCancel">取消</button>'
+    +   '<button class="btn btn-primary" id="gmSave">测试并保存</button>'
+    + '</div>'
+    + '</div>';
+  document.body.appendChild(overlay);
+
+  const errEl = overlay.querySelector('#gmErr');
+  const saveBtn = overlay.querySelector('#gmSave');
+  const close = function () { overlay.remove(); };
+
+  overlay.querySelector('#gmCancel').onclick = close;
+  overlay.addEventListener('mousedown', function (e) { if (e.target === overlay) close(); });
+
+  saveBtn.onclick = async function () {
+    const name = overlay.querySelector('#gmName').value.trim();
+    const emoji = overlay.querySelector('#gmEmoji').value.trim();
+    const url = overlay.querySelector('#gmUrl').value.trim();
+    const key = overlay.querySelector('#gmKey').value.trim();
+    if (!name || !url || !key) { errEl.textContent = '名称、URL、key 三项都要填'; return; }
+    if (!/^https?:\/\//i.test(url)) { errEl.textContent = 'URL 要以 https:// 开头'; return; }
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = '测试中…';
+    errEl.textContent = '';
+    try {
+      await testGradeProject(url, key);
+      const item = {
+        id: isEdit ? existing.id : ('g' + Date.now().toString(36)),
+        name: name,
+        emoji: emoji || '📘',
+        supabase_url: String(url).replace(/\/+$/, ''),
+        supabase_key: key,
+        sort: isEdit ? (existing.sort || 100) : 100
+      };
+      const res = await hubFetch('/rest/v1/grades', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates,return=representation' },
+        body: JSON.stringify([item])
+      });
+      if (!res.ok) throw new Error('写名单失败 HTTP ' + res.status + '：' + (await res.text()).slice(0, 120));
+      close();
+      toast('✅ 已保存：' + name);
+      refreshGradeGate();
+    } catch (e) {
+      errEl.textContent = '❌ ' + (e.message || e);
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = '测试并保存';
+    }
+  };
+}
+
+async function deleteGradeEntry(g) {
+  if (!confirm('把「' + g.name + '」从名单里移除？\n只删名单，不会动那个 Supabase 库里的任何数据。')) return;
+  try {
+    const res = await hubFetch('/rest/v1/grades?id=eq.' + encodeURIComponent(g.id), { method: 'DELETE' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    toast('🗑 已移除');
+    refreshGradeGate();
+  } catch (e) {
+    toast('删除失败：' + (e.message || e), true);
+  }
 }
 
 /* ---------- 登录：RPC 校验（密码不存前端） ---------- */
@@ -1874,12 +2172,20 @@ document.addEventListener('keydown', e => {
 });
 
 /* init */
+document.getElementById('addGradeBtn').onclick = function () { openGradeModal(null); };
+document.getElementById('gradeRefreshBtn').onclick = refreshGradeGate;
+document.getElementById('switchGradeBtn').onclick = function () {
+  if (loggedIn && !confirm('切换年级会退出当前后台（未发布的修改会丢失），确定吗？')) return;
+  backToGradeGate();
+};
+
 (async function init() {
-  loadConfigFromStorage();
-  showLogin();
-  const ok = await loadConfigFromCloud(false);
-  if (ok) updateStatusBadge();
-  document.getElementById('loginPwd').focus();
+  renderGradeGate(null);
+  try {
+    renderGradeGate(await loadGradeList());
+  } catch (e) {
+    renderGradeGate(DEFAULT_GRADES, e.missingTable ? e.message : ('读取年级名单失败：' + e.message));
+  }
 })();
 </script>
 </body>
