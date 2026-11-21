@@ -181,7 +181,7 @@
    多年级：中枢库存"年级名单"，每个年级用自己的 Supabase 存内容
    ============================================================ */
 const HUB_URL = 'https://dwagktwarlzkusawrtqq.supabase.co';
-const HUB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3YWdrdHdhcmx6a3VzYXdydHFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MzMwODQsImV4cCI6MjEwNzEwOTA4NH0.5iMbu7R3-LGHJZMFAuRH93sepxJr7bjrWexj3Invlmk';
+const HUB_KEY = 'sb_publishable_8kvigDovMIfwLtt84_E7Eg_QpYlrveJ';
 
 // 当前年级的库 —— 选完年级后会被替换
 let SUPABASE_URL = HUB_URL;
@@ -193,6 +193,37 @@ const LS_KEY = 'english_integrated_config';      // 旧版单年级缓存，仅�
 const GRADES_CACHE_KEY = 'aitime_grades_cache';  // 年级名单本地缓存
 const LAST_GRADE_KEY = 'aitime_last_grade';      // 上次选的年级
 function gradeLsKey(id) { return 'aitime_config__' + id; }
+
+/* 兼容两种 key：
+   老格式 anon JWT（eyJ...，需要 apikey + Authorization: Bearer）
+   新格式 publishable（sb_publishable_...，只需 apikey，带 Bearer 反而可能被拒） */
+function authHeaders(key) {
+  const k = String(key == null ? '' : key).trim();
+  const h = { apikey: k };
+  if (k.indexOf('sb_') !== 0) h.Authorization = 'Bearer ' + k;
+  return h;
+}
+
+/* 兜底：万一某处还是带了 Authorization: Bearer <sb_publishable_...>，
+   在发出去之前把 Authorization 去掉（新格式 key 不是 JWT，带 Bearer 会被判 401） */
+(function () {
+  const rawFetch = window.fetch.bind(window);
+  window.fetch = function (input, init) {
+    try {
+      if (init && init.headers && typeof init.headers === 'object' && !(init.headers instanceof Headers)) {
+        const h = init.headers;
+        const k = h.apikey || h['apikey'];
+        if (typeof k === 'string' && k.indexOf('sb_') === 0 && (h.Authorization || h.authorization)) {
+          const copy = Object.assign({}, h);
+          delete copy.Authorization;
+          delete copy.authorization;
+          init = Object.assign({}, init, { headers: copy });
+        }
+      }
+    } catch (e) { /* 忽略，按原样发 */ }
+    return rawFetch(input, init);
+  };
+})();
 
 // 名单表还没建好 / 断网时的兜底：至少能进三年级
 const DEFAULT_GRADES = [
@@ -441,8 +472,11 @@ function saveConfigForCurrentGrade() {
 
 async function enterGrade(g) {
   currentGrade = g;
-  SUPABASE_URL = String(g.supabase_url || HUB_URL).replace(/\/+$/, '');
-  SUPABASE_KEY = g.supabase_key || HUB_KEY;
+  const gradeUrl = String(g.supabase_url || HUB_URL).replace(/\/+$/, '');
+  SUPABASE_URL = gradeUrl;
+  // 中枢库自己（三年级）永远用代码里那份 HUB_KEY：
+  // 后台换过 key 时，名单表里那行可能还是旧的，这样就不会把自己锁死
+  SUPABASE_KEY = (gradeUrl === HUB_URL) ? HUB_KEY : (g.supabase_key || HUB_KEY);
   try { localStorage.setItem(LAST_GRADE_KEY, g.id); } catch (e) {}
 
   config = loadConfigForGrade(g.id);
@@ -451,13 +485,28 @@ async function enterGrade(g) {
   renderCurrentView();
   showSnackbar('⏳ 正在加载 ' + (g.name || '') + ' …');
 
-  const result = await loadConfigFromCloud(false);
+  const result = await loadConfigWithRetry();
   if (!result.ok) {
-    showSnackbar('⚠️ 云端没连上，先用本地缓存', true);
+    const m = String(result.error || '');
+    if (/401/.test(m)) {
+      showSnackbar('❌ 这个年级的 anon key 失效了(401)，请到后台更新', true);
+    } else {
+      showSnackbar('⚠️ 云端没连上，先用本地缓存', true);
+    }
     return;
   }
   if (result.changed && !isPracticeView()) renderCurrentView();
   showSnackbar('✅ ' + (g.name || '') + ' 已就绪');
+}
+
+// 刚打开时网络/项目刚从暂停里恢复，第一次请求经常失败，重试两次就好了
+async function loadConfigWithRetry() {
+  let result = await loadConfigFromCloud(false);
+  for (let i = 0; i < 2 && !result.ok; i++) {
+    await new Promise(function (r) { setTimeout(r, 900 * (i + 1)); });
+    result = await loadConfigFromCloud(false);
+  }
+  return result;
 }
 
 function backToGradePicker() {
