@@ -289,7 +289,7 @@
    多年级：中枢库存"年级名单"，每个年级用自己的 Supabase 库
    ============================================================ */
 const HUB_URL = 'https://dwagktwarlzkusawrtqq.supabase.co';
-const HUB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3YWdrdHdhcmx6a3VzYXdydHFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MzMwODQsImV4cCI6MjEwNzEwOTA4NH0.5iMbu7R3-LGHJZMFAuRH93sepxJr7bjrWexj3Invlmk';
+const HUB_KEY = 'sb_publishable_8kvigDovMIfwLtt84_E7Eg_QpYlrveJ';
 
 // 当前正在管理的年级 —— 选完年级后会被替换
 let SUPABASE_URL = HUB_URL;
@@ -298,6 +298,44 @@ let currentGrade = null;
 
 const BUCKET = 'site-assets';
 let LS_KEY = 'english_integrated_config';
+
+/* 兼容两种 key：
+   老格式 anon JWT（eyJ...，需要 apikey + Authorization: Bearer）
+   新格式 publishable（sb_publishable_...，只需 apikey，带 Bearer 反而可能被拒） */
+function authHeaders(key) {
+  const k = String(key == null ? '' : key).trim();
+  const h = { apikey: k };
+  if (k.indexOf('sb_') !== 0) h.Authorization = 'Bearer ' + k;
+  return h;
+}
+
+/* 粗略校验 key 是否完整 */
+function keyLooksValid(key) {
+  const k = String(key == null ? '' : key).trim();
+  if (/^sb_(publishable|secret)_/.test(k)) return true;
+  return /^eyJ[\w-]+\.[\w-]+\.[\w-]+$/.test(k);
+}
+
+/* 兜底：万一某处还是带了 Authorization: Bearer <sb_publishable_...>，
+   在发出去之前把 Authorization 去掉（新格式 key 不是 JWT，带 Bearer 会被判 401） */
+(function () {
+  const rawFetch = window.fetch.bind(window);
+  window.fetch = function (input, init) {
+    try {
+      if (init && init.headers && typeof init.headers === 'object' && !(init.headers instanceof Headers)) {
+        const h = init.headers;
+        const k = h.apikey || h['apikey'];
+        if (typeof k === 'string' && k.indexOf('sb_') === 0 && (h.Authorization || h.authorization)) {
+          const copy = Object.assign({}, h);
+          delete copy.Authorization;
+          delete copy.authorization;
+          init = Object.assign({}, init, { headers: copy });
+        }
+      }
+    } catch (e) { /* 忽略，按原样发 */ }
+    return rawFetch(input, init);
+  };
+})();
 
 const DEFAULT_CONFIG = {
   aiTalkButtons: [
@@ -656,8 +694,9 @@ function renderGradeGate(list, errMsg) {
 
 async function chooseGrade(g) {
   currentGrade = g;
-  SUPABASE_URL = String(g.supabase_url).replace(/\/+$/, '');
-  SUPABASE_KEY = g.supabase_key;
+  const gradeUrl = String(g.supabase_url).replace(/\/+$/, '');
+  SUPABASE_URL = gradeUrl;
+  SUPABASE_KEY = (gradeUrl === HUB_URL) ? HUB_KEY : g.supabase_key;
   LS_KEY = 'aitime_config__' + g.id;
 
   document.getElementById('gradeOverlay').classList.add('hidden');
@@ -700,23 +739,36 @@ async function refreshGradeGate() {
 
 /* ---------- 新增 / 编辑年级 ---------- */
 async function testGradeProject(url, key) {
-  const clean = String(url).replace(/\/+$/, '');
-  const h = { apikey: key, Authorization: 'Bearer ' + key, Accept: 'application/json' };
+  const clean = String(url).trim().replace(/\/+$/, '');
+  const k = String(key == null ? '' : key).trim();
+
+  if (!keyLooksValid(k)) {
+    throw new Error('这串 key 不完整。老的 anon key 是 JWT，应该有三段（两个点），形如 eyJhbGci....eyJpc3Mi....签名；'
+      + '新的 key 以 sb_publishable_ 开头。请回 Supabase 后台点复制按钮整串复制，别手选。');
+  }
+
+  const h = Object.assign(authHeaders(k), { Accept: 'application/json' });
   let res;
   try {
     res = await fetch(clean + '/rest/v1/config?id=eq.1&select=id', { headers: h });
   } catch (e) {
-    throw new Error('连不上这个地址（网络错误），检查 URL 是否写对');
+    throw new Error('连不上这个地址（网络错误），检查 URL 是否写对、能不能打开');
   }
-  if (!res.ok) throw new Error('这个库拒绝访问（HTTP ' + res.status + '），URL 和 anon key 对不上');
+  if (res.status === 401 || res.status === 403) {
+    throw new Error('这个库说 key 无效（HTTP ' + res.status + '）。常见原因：key 复制少了一段、或者这把 key 已经在后台被停用/轮换，去 Project Settings → API Keys 重新复制当前的 key');
+  }
+  if (!res.ok) throw new Error('这个库拒绝访问（HTTP ' + res.status + '），URL 和 key 对不上');
+
   const rows = await res.json().catch(function () { return null; });
-  if (!Array.isArray(rows) || !rows.length) throw new Error('库能连上，但 config 表里没有 id=1 这一行');
+  if (!Array.isArray(rows) || !rows.length) throw new Error('库能连上，但 config 表里没有 id=1 这一行（第 2 步建库 SQL 没跑完）');
+
   const rpc = await fetch(clean + '/rest/v1/rpc/verify_admin_password', {
     method: 'POST',
-    headers: { apikey: key, Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' },
+    headers: Object.assign(authHeaders(k), { 'Content-Type': 'application/json' }),
     body: JSON.stringify({ pwd: '__probe__' })
   });
-  if (rpc.status === 404) throw new Error('这个库还没有密码校验函数，请先执行 supabase-multigrade.sql');
+  if (rpc.status === 404) throw new Error('这个库里没有 verify_admin_password 函数，请先执行 supabase-multigrade.sql');
+  if (rpc.status === 401 || rpc.status === 403) throw new Error('密码校验函数拒绝了这把 key（HTTP ' + rpc.status + '）');
   return true;
 }
 
