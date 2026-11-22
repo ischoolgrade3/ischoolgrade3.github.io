@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-title" content="AI Time">
 <meta name="format-detection" content="telephone=no">
 
-<title>iSchool AI Class</title>
+<title>AI Time · Grade 3</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; font-family:'Comic Sans MS','Chalkboard SE','Comic Neue',cursive,sans-serif; }
@@ -90,6 +90,23 @@
   .lr-finish { display:none; align-items:center; gap:10px; border:none; border-radius:60px; padding:0 30px; height:66px; font-size:1.35rem; font-weight:800; color:#fff; cursor:pointer; background:linear-gradient(145deg,#cbd5e1,#94a3b8); box-shadow:0 8px 18px rgba(0,0,0,.12); transition:.2s; }
   .lr-finish.ready { background:linear-gradient(145deg,#34d399,#16a34a); box-shadow:0 12px 26px rgba(22,163,74,.45); }
   .lr-finish.ready:hover { transform:translateY(-3px) scale(1.03); }
+
+  /* 同一句错 3 次 → 浮出「跳过」按钮 */
+  .lr-skip { display:none; position:absolute; left:50%; bottom:112px; transform:translateX(-50%); z-index:6;
+    align-items:center; gap:8px; border:none; border-radius:60px; padding:13px 26px;
+    font-size:1.05rem; font-weight:800; color:#8a6300; cursor:pointer; font-family:inherit;
+    background:linear-gradient(145deg,#ffe9a8,#f5b301); box-shadow:0 10px 22px rgba(245,179,1,.35);
+    animation:skipPop .3s ease; }
+  .lr-skip:hover { transform:translateX(-50%) translateY(-2px); }
+  @keyframes skipPop { from { opacity:0; transform:translateX(-50%) scale(.85); } to { opacity:1; transform:translateX(-50%) scale(1); } }
+  .lr-check.skip { background:linear-gradient(145deg,#fbbf24,#f59e0b); box-shadow:0 10px 24px rgba(245,158,11,.45); }
+
+  /* Role Play：同一句错 3 次，提示灯开始闪黄光 */
+  @keyframes hintFlash {
+    0%, 100% { background:#fff; color:#1e3c72; box-shadow:0 6px 16px rgba(0,0,0,.1), 0 0 0 0 rgba(245,179,1,.65); }
+    50%      { background:#fff8e1; color:#c58b00; box-shadow:0 6px 16px rgba(0,0,0,.1), 0 0 0 14px rgba(245,179,1,0); }
+  }
+  .rp-btn-round.hint-flash { border:2px solid #f5b301; animation:hintFlash 1.1s ease-in-out infinite; }
   @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(239,68,68,.55);} 70%{box-shadow:0 0 0 26px rgba(239,68,68,0);} 100%{box-shadow:0 0 0 0 rgba(239,68,68,0);} }
 
   /* modal */
@@ -442,20 +459,44 @@ function rpVoiceHint(e) {
   return m.slice(0, 50) || '未知错误';
 }
 
-// 各年级部署时函数名容易抄错（tencent / tecent），两种都试一遍
+// 各年级部署时函数名容易抄错（tencent / tecent），两种都试一遍。
+// 注意：函数不存在时，浏览器**预检就会失败** → fetch 直接抛 TypeError，
+// 而不是返回一个 404 响应，所以这里必须 try/catch 里继续试，不能只看 status。
 const VOICE_FN_ALIASES = {
   tts: ['tencent-tts', 'tecent-tts'],
   asr: ['tencent-asr', 'tecent-asr']
 };
+
+function voiceFnCacheKey(kind) {
+  return 'aitime_voicefn_' + kind + '_' + (currentGrade ? currentGrade.id : 'none');
+}
+
+function voiceFnOrder(kind) {
+  const names = (VOICE_FN_ALIASES[kind] || []).slice();
+  try {
+    const hit = localStorage.getItem(voiceFnCacheKey(kind));
+    const i = names.indexOf(hit);
+    if (i > 0) { names.splice(i, 1); names.unshift(hit); }   // 上次成功的放最前面
+  } catch (e) {}
+  return names;
+}
+
 async function fetchVoiceFn(kind, init) {
-  const names = VOICE_FN_ALIASES[kind] || [];
-  let last = null;
+  const names = voiceFnOrder(kind);
+  let lastErr = null;
   for (let i = 0; i < names.length; i++) {
-    const res = await fetch(rpFnUrl(names[i]), init);
-    last = res;
-    if (res.status !== 404) return res;   // 404 = 这个名字不存在，换下一个
+    try {
+      const res = await fetch(rpFnUrl(names[i]), init);
+      if (res.status !== 404) {
+        try { localStorage.setItem(voiceFnCacheKey(kind), names[i]); } catch (e) {}
+        return res;
+      }
+      lastErr = new Error('HTTP 404');
+    } catch (e) {
+      lastErr = e;   // 预检失败 / 网络错误：换下一个名字继续试
+    }
   }
-  return last;
+  throw lastErr || new Error('HTTP 404');
 }
 
 function updateHeader() {
@@ -949,7 +990,7 @@ function renderPartDetailView() {
 /* ============================================================
    Listen & Read
    ============================================================ */
-const lr = { partId:null, items:[], index:0, campus:'', level:'', studentName:'', done:{}, recorder:null, chunks:[] };
+const lr = { partId:null, items:[], index:0, campus:'', level:'', studentName:'', done:{}, fails:{}, recorder:null, chunks:[] };
 let lrStream = null;
 let lrAudio = null;
 let lrEls = {};
@@ -987,7 +1028,7 @@ function renderListenReadPartsView() {
           lr.campus = info.campus;
           lr.level = info.level;
           lr.studentName = info.name;
-          lr.done = {};
+          lr.done = {}; lr.fails = {};
           setView('listenReadPractice');
         });
       });
@@ -1187,6 +1228,7 @@ function renderListenReadPractice() {
       <div class="lr-progress" id="lrProgress">1 / 1</div>
       <div class="lr-check" id="lrCheck"><i class="fas fa-check"></i></div>
       <div class="lr-text-wrap" id="lrTextWrap"><div class="lr-text" id="lrText"></div></div>
+      <button class="lr-skip" id="lrSkip"><i class="fas fa-forward"></i> 跳过这句</button>
       <div class="lr-bottom">
         <button class="lr-nav" id="lrPrev"><i class="fas fa-arrow-left"></i></button>
         <button class="lr-rec" id="lrRec"><i class="fas fa-microphone"></i></button>
@@ -1203,7 +1245,8 @@ function renderListenReadPractice() {
     prev: document.getElementById('lrPrev'),
     next: document.getElementById('lrNext'),
     rec: document.getElementById('lrRec'),
-    finish: document.getElementById('lrFinish')
+    finish: document.getElementById('lrFinish'),
+    skip: document.getElementById('lrSkip')
   };
 
   document.getElementById('lrSlowBtn').onclick = () => playCurrent(true);
@@ -1211,6 +1254,16 @@ function renderListenReadPractice() {
   lrEls.prev.onclick = () => { if (lr.index > 0) { lr.index--; updateLrItem(); } };
   lrEls.next.onclick = () => { if (lr.index < lr.items.length - 1) { lr.index++; updateLrItem(); } };
   lrEls.rec.onclick = toggleRecording;
+  // 错够 3 次才出现的「跳过」
+  lrEls.skip.onclick = () => {
+    const item = lr.items[lr.index];
+    if (!item) return;
+    lr.done[item.id] = 'skip';
+    lr.fails[item.id] = 0;
+    showSnackbar('⏭ 已跳过：' + (item.text || '').slice(0, 12));
+    if (lr.index < lr.items.length - 1) lr.index++;
+    updateLrItem();
+  };
 
   lrEls.finish.onclick = () => {
     const total = lr.items.length;
@@ -1220,7 +1273,7 @@ function renderListenReadPractice() {
     }
     stopMic();
     stopPlayback();
-    lr.done = {};
+    lr.done = {}; lr.fails = {};
     lr.index = 0;
     showSnackbar('🎉 Finished!');
     setView('listenReadParts');
@@ -1255,6 +1308,12 @@ function updateLrItem() {
   els.prev.disabled = (lr.index === 0);
 
   els.check.classList.toggle('show', !!lr.done[item.id]);
+  els.check.classList.toggle('skip', lr.done[item.id] === 'skip');
+  // 同一句错满 3 次 → 显示跳过按钮（过了的句子不显示）
+  if (els.skip) {
+    const fails = (lr.fails && lr.fails[item.id]) || 0;
+    els.skip.style.display = (!lr.done[item.id] && fails >= 3) ? 'flex' : 'none';
+  }
 
   const allDone = lr.items.every(it => lr.done[it.id]);
   els.finish.disabled = false;
@@ -1387,7 +1446,14 @@ async function handleRecordingDone(blob) {
 
   if (!matched) {
     // 不通过：不上传、不写库、不打勾，停在原地
-    showSnackbar('Your pronunciation doesn\'t match. Please try again.', true);
+    lr.fails[item.id] = (lr.fails[item.id] || 0) + 1;
+    const left = 3 - lr.fails[item.id];
+    if (left > 0) {
+      showSnackbar('❌ 再试一次（还能试 ' + left + ' 次）', true);
+    } else {
+      showSnackbar('💡 这句试了 3 次，可以点「跳过这句」', true);
+    }
+    updateLrItem();
     return;
   }
 
@@ -1625,7 +1691,8 @@ function rpUpdateUi() {
   if (currentTurn.role === rp.studentRole) {
     const hintBtn = rp.usedHint
       ? ''
-      : '<button class="rp-btn-round" id="rpHintBtn" title="提示"><i class="fas fa-lightbulb"></i></button>';
+      : '<button class="rp-btn-round' + (rp.retryCount >= 3 ? ' hint-flash' : '') + '" id="rpHintBtn" title="提示">'
+        + '<i class="fas fa-lightbulb"></i></button>';
     let hintHtml = '';
     if (rp.usedHint) {
       const answers = rpGetAcceptedAnswers(currentTurn);
@@ -1801,7 +1868,11 @@ async function rpProcessRecording(webmBlob) {
     rpSaveAnswer(rp.turnIndex, transcript, sim, false).catch(function (e) { console.warn(e); });
     rp.isProcessing = false;
     rpUpdateUi();
-    showSnackbar('你的回答不对哦，请重新回答', true);
+    if (rp.retryCount >= 3 && !rp.usedHint) {
+      showSnackbar('💡 已经试了 3 次，点闪的小灯泡看提示', true);
+    } else {
+      showSnackbar('你的回答不对哦，请重新回答', true);
+    }
   }
 }
 
