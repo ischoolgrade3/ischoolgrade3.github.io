@@ -225,7 +225,7 @@
 <div id="gradeOverlay" class="overlay">
   <div class="login-card" style="max-width:560px;">
     <h2>🎓 选择年级</h2>
-    <p class="sub">每个年级对应一个独立的 Supabase 库，密码也各自独立</p>
+    <p class="sub"></p>
     <div id="gradeList" style="display:flex;flex-direction:column;gap:10px;margin:16px 0;max-height:44vh;overflow:auto;"></div>
     <div class="row" style="justify-content:center;gap:10px;flex-wrap:wrap;">
       <button class="btn btn-primary" id="addGradeBtn">＋ 新增年级</button>
@@ -779,12 +779,12 @@ function openGradeModal(existing) {
   overlay.innerHTML = ''
     + '<div class="grade-modal">'
     + '<h2>' + (isEdit ? '编辑年级' : '新增年级') + '</h2>'
-    + '<p class="tip">填入这个年级自己的 Supabase 项目地址和 anon public key。保存前会先测一次：能不能读到它的 config 表、有没有密码校验函数。</p>'
+    + '<p class="tip">填入这个年级自己的项目地址和 anon public key。保存前会先测一次：能不能读到它的 config 表、有没有密码校验函数。</p>'
     + '<label>年级名称</label>'
     + '<input id="gmName" placeholder="Grade 4" value="' + esc(existing ? existing.name : '') + '">'
     + '<label>图标（一个 emoji，可留空）</label>'
     + '<input id="gmEmoji" placeholder="📗" maxlength="4" value="' + esc(existing ? (existing.emoji || '') : '') + '">'
-    + '<label>Supabase Project URL</label>'
+    + '<label>Project URL</label>'
     + '<input id="gmUrl" placeholder="https://abcdefgh.supabase.co" value="' + esc(existing ? existing.supabase_url : '') + '">'
     + '<label>anon public key</label>'
     + '<input id="gmKey" placeholder="eyJhbGciOiJIUzI1NiIs…" value="' + esc(existing ? existing.supabase_key : '') + '">'
