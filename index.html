@@ -215,12 +215,16 @@ function authHeaders(key) {
 }
 
 /* 兜底：万一某处还是带了 Authorization: Bearer <sb_publishable_...>，
-   在发出去之前把 Authorization 去掉（新格式 key 不是 JWT，带 Bearer 会被判 401） */
+   在发出去之前把 Authorization 去掉（新格式 key 不是 JWT，带 Bearer 会被判 401）
+   顺便给所有 Supabase 请求加超时：手机网络差的时候，不设超时会一直吊着，
+   表现就是"转圈半天然后失败"，加了超时至少能快速失败再重试。 */
+const NET_TIMEOUT_MS = 12000;
 (function () {
   const rawFetch = window.fetch.bind(window);
   window.fetch = function (input, init) {
+    init = init || {};
     try {
-      if (init && init.headers && typeof init.headers === 'object' && !(init.headers instanceof Headers)) {
+      if (init.headers && typeof init.headers === 'object' && !(init.headers instanceof Headers)) {
         const h = init.headers;
         const k = h.apikey || h['apikey'];
         if (typeof k === 'string' && k.indexOf('sb_') === 0 && (h.Authorization || h.authorization)) {
@@ -231,6 +235,19 @@ function authHeaders(key) {
         }
       }
     } catch (e) { /* 忽略，按原样发 */ }
+
+    const url = typeof input === 'string' ? input : (input && input.url) || '';
+    const isSupabase = url.indexOf('.supabase.co') >= 0;
+    if (isSupabase && !init.signal) {
+      init = Object.assign({}, init);
+      if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
+        init.signal = AbortSignal.timeout(NET_TIMEOUT_MS);
+      } else {
+        const ctl = new AbortController();
+        setTimeout(function () { try { ctl.abort(); } catch (e) {} }, NET_TIMEOUT_MS);
+        init.signal = ctl.signal;
+      }
+    }
     return rawFetch(input, init);
   };
 })();
@@ -413,6 +430,34 @@ function isPracticeView() {
   return currentView === 'listenReadPractice' || currentView === 'roleplayPractice';
 }
 
+// 「Failed to fetch」这种原始错误对学生没意义，翻成人话
+function rpVoiceHint(e) {
+  var m = String((e && e.message) || e || '');
+  if (/Failed to fetch|NetworkError|Load failed|abort|超时/i.test(m)) {
+    return '连不上语音服务（这个年级可能没部署函数）';
+  }
+  if (/HTTP 404/.test(m)) return '这个年级没有部署语音函数';
+  if (/HTTP 5\d\d/.test(m)) return '腾讯云那边出错（密钥失效或额度用完）';
+  if (/HTTP 4\d\d/.test(m)) return '语音服务鉴权失败';
+  return m.slice(0, 50) || '未知错误';
+}
+
+// 各年级部署时函数名容易抄错（tencent / tecent），两种都试一遍
+const VOICE_FN_ALIASES = {
+  tts: ['tencent-tts', 'tecent-tts'],
+  asr: ['tencent-asr', 'tecent-asr']
+};
+async function fetchVoiceFn(kind, init) {
+  const names = VOICE_FN_ALIASES[kind] || [];
+  let last = null;
+  for (let i = 0; i < names.length; i++) {
+    const res = await fetch(rpFnUrl(names[i]), init);
+    last = res;
+    if (res.status !== 404) return res;   // 404 = 这个名字不存在，换下一个
+  }
+  return last;
+}
+
 function updateHeader() {
   const chip = document.getElementById('gradeChipText');
   const chipBtn = document.getElementById('gradeChipBtn');
@@ -500,8 +545,10 @@ async function enterGrade(g) {
     const m = String(result.error || '');
     if (/401/.test(m)) {
       showSnackbar('❌ 这个年级的 anon key 失效了(401)，请到后台更新', true);
+    } else if (/abort|timeout|time out/i.test(m)) {
+      showSnackbar('⚠️ 网络超时（已重试3次），先用本地缓存', true);
     } else {
-      showSnackbar('⚠️ 云端没连上，先用本地缓存', true);
+      showSnackbar('⚠️ 云端没连上（已重试3次），先用本地缓存', true);
     }
     return;
   }
@@ -509,11 +556,13 @@ async function enterGrade(g) {
   showSnackbar('✅ ' + (g.name || '') + ' 已就绪');
 }
 
-// 刚打开时网络/项目刚从暂停里恢复，第一次请求经常失败，重试两次就好了
+// 手机网络经常"半通不通"：一次失败不代表没网，重试 3 次（0.8s / 1.6s / 3.2s）
 async function loadConfigWithRetry() {
+  const delays = [800, 1600, 3200];
   let result = await loadConfigFromCloud(false);
-  for (let i = 0; i < 2 && !result.ok; i++) {
-    await new Promise(function (r) { setTimeout(r, 900 * (i + 1)); });
+  for (let i = 0; i < delays.length && !result.ok; i++) {
+    if (/401/.test(String(result.error || ''))) break;   // 钥匙错，重试没意义
+    await new Promise(function (r) { setTimeout(r, delays[i]); });
     result = await loadConfigFromCloud(false);
   }
   return result;
@@ -1627,7 +1676,7 @@ async function rpAdvance() {
     await rpPlayTts(turn.text);
   } catch (e) {
     console.warn('TTS failed', e);
-    showSnackbar('AI 语音播放失败，将直接跳到下一轮', true);
+    showSnackbar('🔇 AI 朗读失败：' + rpVoiceHint(e), true);
     await rpSleep(800);
   } finally {
     rp.isAiSpeaking = false;
@@ -1640,7 +1689,7 @@ async function rpAdvance() {
 function rpSleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
 async function rpPlayTts(text) {
-  const res = await fetch(rpFnUrl('tencent-tts'), {
+  const res = await fetchVoiceFn('tts', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -1729,7 +1778,7 @@ async function rpProcessRecording(webmBlob) {
     console.error('ASR failed', e);
     rp.isProcessing = false;
     rpUpdateUi();
-    showSnackbar('识别失败，请重试', true);
+    showSnackbar('🎤 识别失败：' + rpVoiceHint(e), true);
     return;
   }
 
@@ -1801,7 +1850,7 @@ function rpBlobToBase64(blob) {
 
 async function rpFetchAsr(wavBlob) {
   const base64 = await rpBlobToBase64(wavBlob);
-  const res = await fetch(rpFnUrl('tencent-asr'), {
+  const res = await fetchVoiceFn('asr', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -1997,7 +2046,8 @@ document.getElementById('gradeChipBtn').onclick = function () {
 
 cloudRefreshBtn.onclick = async function () {
   if (!currentGrade) return;
-  const result = await loadConfigFromCloud(false);
+  showSnackbar('⏳ 正在同步…');
+  const result = await loadConfigWithRetry();
   if (!result.ok) {
     showSnackbar('❌ ' + (result.error || 'Cloud failed'), true);
     return;
@@ -2053,20 +2103,26 @@ setInterval(function () {
   setTimeout(function () {
     var box = document.createElement('div');
     box.id = 'iosInstallHint';
-    box.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:1400;'
+    // 关键：浮在 Safari 底部工具栏**上方**，别把要点的分享按钮挡住
+    box.style.cssText = 'position:fixed;left:12px;right:12px;'
+      + 'bottom:calc(78px + env(safe-area-inset-bottom));z-index:1400;'
       + 'background:#fff;border:1px solid #e6eef8;border-radius:18px;'
-      + 'box-shadow:0 14px 34px rgba(0,20,40,.26);padding:14px 16px;'
-      + 'display:flex;align-items:center;gap:12px;font-family:inherit;';
-    box.innerHTML = '<span style="font-size:24px">📲</span>'
-      + '<div style="flex:1;font-size:.92rem;line-height:1.5;color:#1e2f4b">'
-      + '想要桌面图标？点 Safari 底部的 <b>分享</b> 按钮 ⬆️，选 <b>「添加到主屏幕」</b>'
+      + 'box-shadow:0 14px 34px rgba(0,20,40,.26);padding:12px 14px;'
+      + 'display:flex;align-items:center;gap:10px;font-family:inherit;';
+    box.innerHTML = '<span style="font-size:22px">📲</span>'
+      + '<div style="flex:1;font-size:.88rem;line-height:1.5;color:#1e2f4b">'
+      + '点最底下那个 <b>分享 ⬆️</b>，再选 <b>「添加到主屏幕」</b><br>'
+      + '<a href="install.html" style="color:#2a5298;font-size:.82rem;text-decoration:none;font-weight:700">看不清？看图文步骤 →</a>'
       + '</div>'
       + '<button id="iosHintClose" style="border:none;background:#eef4ff;color:#2a5298;'
-      + 'border-radius:12px;padding:8px 14px;font-weight:700;font-family:inherit;font-size:.9rem;'
-      + 'white-space:nowrap">知道了</button>';
+      + 'border-radius:12px;padding:8px 12px;font-weight:700;font-family:inherit;font-size:.85rem;'
+      + 'white-space:nowrap;align-self:flex-start">知道了</button>'
+      + '<span style="position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);'
+      + 'font-size:18px;color:#f5b301;line-height:1;text-shadow:0 2px 4px rgba(0,0,0,.08)">▼▼▼</span>';
     document.body.appendChild(box);
-    document.getElementById('iosHintClose').onclick = function () {
-      try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {}
+    document.getElementById('iosHintClose').onclick = function (e) {
+      e.stopPropagation();
+      try { localStorage.setItem(KEY, String(Date.now())); } catch (er) {}
       box.remove();
     };
   }, 2200);
