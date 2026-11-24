@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>下载 AI Time（安卓）</title>
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-180.png">
+<link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
+<meta name="theme-color" content="#1E3C72">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    font-family:-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;
+    background:linear-gradient(160deg,#f7fafd,#e8f0f7); color:#1e2f4b; min-height:100vh;
+    padding:20px 16px 40px; padding-top:calc(20px + env(safe-area-inset-top));
+    display:flex; justify-content:center;
+  }
+  .wrap { width:100%; max-width:480px; }
+  header { text-align:center; padding:6px 0 18px; }
+  .appicon { width:84px; height:84px; border-radius:20px; display:block; margin:0 auto 14px; box-shadow:0 10px 24px rgba(30,60,114,.22); }
+  h1 { font-size:1.45rem; color:#1e3c72; }
+  header p { margin-top:8px; color:#6b7c93; font-size:.92rem; line-height:1.6; }
+
+  .card { background:#fff; border-radius:22px; box-shadow:0 8px 22px rgba(30,60,114,.07); padding:20px 18px; margin-bottom:14px; }
+
+  .dlbtn {
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; text-decoration:none; color:#fff; font-weight:800; font-size:1.08rem;
+    background:linear-gradient(145deg,#2a5298,#1e3c72); padding:18px; border-radius:18px;
+    box-shadow:0 12px 26px rgba(30,60,114,.32); transition:.15s;
+  }
+  .dlbtn:active { transform:scale(.98); }
+  .meta { margin-top:12px; font-size:.8rem; color:#91a3bb; text-align:center; line-height:1.8; }
+
+  .warn { background:#fff0f0; border:1px solid #f3c7c2; border-radius:18px; padding:16px; margin-bottom:14px; }
+  .warn h3 { color:#b53b3b; font-size:1rem; margin-bottom:8px; }
+  .warn p { font-size:.88rem; color:#8a4a44; line-height:1.75; }
+  .warn .big { font-size:1.35rem; vertical-align:-2px; }
+  .copybtn { width:100%; margin-top:12px; border:none; background:#fff0f0; color:#b53b3b;
+    padding:13px; border-radius:14px; font-weight:800; font-size:.92rem; font-family:inherit; cursor:pointer; }
+
+  .step { display:flex; gap:12px; }
+  .step + .step { margin-top:16px; padding-top:16px; border-top:1px solid #f0f5fb; }
+  .num { flex-shrink:0; width:26px; height:26px; border-radius:50%; background:linear-gradient(145deg,#2a5298,#1e3c72);
+    color:#fff; font-weight:800; font-size:.85rem; display:flex; align-items:center; justify-content:center; }
+  .step p { font-size:.88rem; color:#5f7189; line-height:1.7; }
+  .step b { color:#1e3c72; }
+
+  .ios { background:#eef4ff; border-radius:16px; padding:14px 16px; font-size:.86rem; color:#2a5298; line-height:1.7; }
+  .ios a { color:#1e3c72; font-weight:800; }
+  .hidden { display:none !important; }
+  footer { text-align:center; color:#91a3bb; font-size:.78rem; margin-top:18px; line-height:1.8; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="wxWarn" class="warn hidden">
+    <h3><span class="big">⚠️</span> 微信里下载不了安装包</h3>
+    <p>微信会拦截 APK 下载（这是微信的限制，任何网站都一样）。请点右上角
+       <b>「···」→「在浏览器打开」</b>，或者复制下面的网址，用手机浏览器打开。</p>
+    <button class="copybtn" id="copyBtn">复制网址</button>
+  </div>
+
+  <header>
+    <img class="appicon" src="icons/apple-touch-icon-180.png" alt="AI Time">
+    <h1>下载 AI Time</h1>
+    <p>安卓手机安装包，装一次以后自动跟着网页更新</p>
+  </header>
+
+  <div class="card">
+    <a class="dlbtn" id="dlBtn" href="download/AI-Time-v1.0.apk" download="AI-Time-v1.0.apk">
+      <span>⬇️</span><span>下载 APK（45 KB）</span>
+    </a>
+    <div class="meta">
+      版本 1.0 · 约 45 KB · 更新于 2026-11-21<br>
+      只支持安卓；iPhone 用「添加到主屏幕」，见下方
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="step">
+      <div class="num">1</div>
+      <p>点上面按钮下载，浏览器会提示"<b>可能有害</b>"或"<b>不受信任</b>"，选 <b>仍要下载</b>。</p>
+    </div>
+    <div class="step">
+      <div class="num">2</div>
+      <p>下载完在<b>通知栏</b>或<b>文件管理器 → Download</b> 里找到 <b>AI-Time-v1.0.apk</b>，点开安装。</p>
+    </div>
+    <div class="step">
+      <div class="num">3</div>
+      <p>系统提示"未知来源应用" → 允许一次（设置里"安装未知应用"），装完桌面出现 <b>AI Time</b> 图标。</p>
+    </div>
+  </div>
+
+  <div class="ios">
+    📱 <b>iPhone / iPad 不能用这个</b>，请用 Safari 打开后点「分享 → 添加到主屏幕」。
+    <a href="install.html">看图文步骤 →</a>
+  </div>
+
+  <footer>
+    装不上？先确认下载的是 <b>.apk</b> 文件（不是 .apk.1 或 .zip）。<br>
+    微信里下到的文件常被改名成 .apk.1，用文件管理器重命名去掉 .1 即可。
+  </footer>
+</div>
+
+<script>
+(function () {
+  var ua = navigator.userAgent || '';
+  var isWeChat = /MicroMessenger/i.test(ua);
+  var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  if (isWeChat) document.getElementById('wxWarn').classList.remove('hidden');
+  if (isIOS) {
+    // iPhone 上把下载按钮换成"添加到桌面"的引导
+    var dl = document.getElementById('dlBtn');
+    dl.href = 'install.html';
+    dl.removeAttribute('download');
+    dl.innerHTML = '<span>📲</span><span>iPhone 请点这里看安装方法</span>';
+  }
+
+  var btn = document.getElementById('copyBtn');
+  if (btn) {
+    btn.onclick = function () {
+      var text = location.href.split('#')[0];
+      var done = function () {
+        btn.textContent = '✅ 已复制，粘到浏览器打开';
+        setTimeout(function () { btn.textContent = '复制网址'; }, 2200);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, fallback);
+      } else { fallback(); }
+      function fallback() {
+        var ta = document.createElement('textarea');
+        ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); done(); } catch (e) { btn.textContent = '长按地址栏复制'; }
+        ta.remove();
+      }
+    };
+  }
+})();
+</script>
+</body>
+</html>

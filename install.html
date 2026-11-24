@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>把 AI Time 装到桌面</title>
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-180.png">
+<link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
+<meta name="theme-color" content="#1E3C72">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    font-family:-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+    background:linear-gradient(160deg,#f7fafd 0%,#e8f0f7 100%);
+    color:#1e2f4b; min-height:100vh; padding:20px 16px 40px;
+    display:flex; justify-content:center;
+    padding-top:calc(20px + env(safe-area-inset-top));
+  }
+  .wrap { width:100%; max-width:520px; }
+
+  header { text-align:center; padding:8px 0 18px; }
+  .appicon { width:88px; height:88px; border-radius:22px; box-shadow:0 10px 24px rgba(30,60,114,.22); display:block; margin:0 auto 14px; }
+  header h1 { font-size:1.6rem; color:#1e3c72; letter-spacing:.01em; }
+  header p { margin-top:8px; color:#6b7c93; font-size:.95rem; line-height:1.6; }
+
+  .tabs { display:flex; gap:8px; background:#e7eef7; padding:5px; border-radius:16px; margin:18px 0 16px; }
+  .tabs button {
+    flex:1; border:none; background:transparent; padding:11px 6px; border-radius:12px;
+    font-size:.92rem; font-weight:700; color:#6b7c93; cursor:pointer; font-family:inherit;
+    transition:.15s;
+  }
+  .tabs button.on { background:#fff; color:#1e3c72; box-shadow:0 3px 10px rgba(30,60,114,.12); }
+
+  .card { background:#fff; border-radius:22px; padding:20px 18px; box-shadow:0 8px 22px rgba(30,60,114,.07); margin-bottom:14px; }
+
+  .step { display:flex; gap:14px; }
+  .step + .step { margin-top:20px; padding-top:20px; border-top:1px solid #f0f5fb; }
+  .num {
+    flex-shrink:0; width:30px; height:30px; border-radius:50%;
+    background:linear-gradient(145deg,#2a5298,#1e3c72); color:#fff;
+    font-weight:800; font-size:.95rem; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 10px rgba(30,60,114,.3);
+  }
+  .body { flex:1; min-width:0; }
+  .body h3 { font-size:1.05rem; color:#1e3c72; margin-bottom:6px; line-height:1.4; }
+  .body p { font-size:.92rem; color:#5f7189; line-height:1.65; }
+  .body b { color:#1e3c72; }
+  .hl { background:#fff6db; color:#8a6300; padding:1px 6px; border-radius:6px; font-weight:700; }
+
+  /* ---- 图示：Safari 底部工具栏 ---- */
+  .mockbar {
+    margin-top:12px; background:#f4f7fb; border:1px solid #e6eef8; border-radius:14px;
+    padding:10px 8px; display:flex; justify-content:space-around; align-items:center;
+  }
+  .mockbar .ic { width:34px; height:34px; display:flex; align-items:center; justify-content:center; color:#9fb0c6; }
+  .mockbar .ic svg { width:22px; height:22px; }
+  .target { position:relative; color:#2a5298 !important; }
+  .target::after {
+    content:''; position:absolute; inset:-6px; border-radius:12px;
+    border:2px solid #f5b301; animation:ring 1.6s ease-out infinite;
+  }
+  @keyframes ring {
+    0%   { transform:scale(.85); opacity:.9; }
+    70%  { transform:scale(1.15); opacity:0; }
+    100% { transform:scale(1.15); opacity:0; }
+  }
+  .pointer { text-align:center; font-size:.8rem; color:#c58b00; font-weight:700; margin-top:6px; }
+
+  /* ---- 图示：分享菜单 ---- */
+  .mockmenu { margin-top:12px; background:#f4f7fb; border:1px solid #e6eef8; border-radius:14px; overflow:hidden; }
+  .menurow { display:flex; align-items:center; gap:10px; padding:12px 14px; font-size:.9rem; color:#8fa0b6; }
+  .menurow + .menurow { border-top:1px solid #eaeff7; }
+  .menurow.pick { background:#eef4ff; color:#1e3c72; font-weight:700; }
+  .menurow .mic { width:22px; text-align:center; font-size:1rem; }
+  .menurow .arrow { margin-left:auto; color:#c58b00; font-weight:800; }
+
+  /* ---- 图示：右上角添加 ---- */
+  .mocktop { margin-top:12px; display:flex; justify-content:flex-end; }
+  .addbtn {
+    background:#eef4ff; color:#2a5298; font-weight:800; font-size:.9rem;
+    padding:8px 18px; border-radius:20px; border:2px solid #f5b301;
+  }
+
+  .note { background:#fff8e8; border:1px solid #f5e0b8; border-radius:14px; padding:12px 14px; font-size:.85rem; color:#7a5a1e; line-height:1.7; margin-top:14px; }
+  .note b { color:#8a6300; }
+
+  .dlbtn { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:12px;
+    text-decoration:none; color:#fff; font-weight:800; font-size:1rem;
+    background:linear-gradient(145deg,#2a5298,#1e3c72); padding:15px; border-radius:16px;
+    box-shadow:0 10px 22px rgba(30,60,114,.3); }
+  .dlbtn:active { transform:scale(.98); }
+
+  .warn { background:#fff0f0; border:1px solid #f3c7c2; border-radius:18px; padding:16px; margin-bottom:16px; }
+  .warn h3 { color:#b53b3b; font-size:1rem; margin-bottom:8px; }
+  .warn p { font-size:.9rem; color:#8a4a44; line-height:1.7; }
+  .warn .big { font-size:1.4rem; vertical-align:-2px; }
+
+  .urlbox {
+    margin-top:12px; background:#1e3c72; color:#fff; border-radius:14px; padding:14px 16px;
+    font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.92rem;
+    word-break:break-all; line-height:1.5; text-align:center;
+  }
+  .copybtn {
+    width:100%; margin-top:10px; border:none; background:#eef4ff; color:#2a5298;
+    padding:13px; border-radius:14px; font-weight:800; font-size:.95rem; font-family:inherit; cursor:pointer;
+  }
+  .copybtn:active { background:#dce9ff; }
+
+  .done { text-align:center; padding:8px 0 4px; }
+  .done .big { font-size:3rem; }
+  .done h2 { font-size:1.25rem; color:#1e3c72; margin:10px 0 6px; }
+  .done p { color:#6b7c93; font-size:.92rem; line-height:1.7; }
+  .openbtn {
+    display:inline-block; margin-top:16px; background:linear-gradient(145deg,#2a5298,#1e3c72); color:#fff;
+    text-decoration:none; padding:14px 34px; border-radius:40px; font-weight:800;
+    box-shadow:0 10px 24px rgba(30,60,114,.35);
+  }
+
+  footer { text-align:center; color:#91a3bb; font-size:.8rem; line-height:1.8; margin-top:22px; }
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="wxWarn" class="warn hidden">
+    <h3><span class="big">⚠️</span> 你现在是在微信里打开的</h3>
+    <p>微信内置浏览器装不了桌面图标。请点右上角 <b>「···」→「在浏览器打开」</b>，
+       或者复制下面的网址，用 <b>Safari</b> 打开。</p>
+  </div>
+
+  <header>
+    <img class="appicon" src="icons/apple-touch-icon-180.png" alt="AI Time">
+    <h1>把 AI Time 装到桌面</h1>
+    <p>装好后点图标就能直接练，没有地址栏、没有广告</p>
+  </header>
+
+  <div id="done" class="card done hidden">
+    <div class="big">✅</div>
+    <h2>已经装好了</h2>
+    <p>你正在从桌面图标打开，它就是 App 的样子。</p>
+    <a class="openbtn" href="./">打开 AI Time</a>
+  </div>
+
+  <div id="main">
+    <nav class="tabs">
+      <button data-os="ios">iPhone / iPad</button>
+      <button data-os="android">安卓</button>
+      <button data-os="other">电脑</button>
+    </nav>
+
+    <!-- ---------------- iPhone / iPad ---------------- -->
+    <section id="panel-ios" class="card">
+      <div class="step">
+        <div class="num">1</div>
+        <div class="body">
+          <h3>用 <b>Safari</b> 打开这个页面</h3>
+          <p>微信、QQ 里打开都不行（它们用的是自己的浏览器）。确认地址栏在顶部、网址是
+             <b>ischoolgrade3.github.io</b>。</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">2</div>
+        <div class="body">
+          <h3>点屏幕<b>底部中间</b>的分享按钮</h3>
+          <p>就是那个<b>方框里一个向上箭头</b>的按钮。</p>
+          <div class="mockbar">
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></span>
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></span>
+            <span class="ic target">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M5 14v5a1 1 0 001 1h12a1 1 0 001-1v-5"/>
+              </svg>
+            </span>
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="14" rx="2"/></svg></span>
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="16" rx="2"/></svg></span>
+          </div>
+          <div class="pointer">▲ 点这个</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">3</div>
+        <div class="body">
+          <h3>往下滑，点 <span class="hl">«添加到主屏幕»</span></h3>
+          <p>菜单中间那一块，图标是一个方框加号。</p>
+          <div class="mockmenu">
+            <div class="menurow"><span class="mic">🔗</span>拷贝</div>
+            <div class="menurow"><span class="mic">🔖</span>添加书签</div>
+            <div class="menurow pick"><span class="mic">➕</span>添加到主屏幕<span class="arrow">← 这个</span></div>
+            <div class="menurow"><span class="mic">🔍</span>在页面上查找</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">4</div>
+        <div class="body">
+          <h3>右上角点 <span class="hl">「添加」</span></h3>
+          <p>名字保持 <b>AI Time</b> 就好，点完桌面上就多了一个蓝色图标。</p>
+          <div class="mocktop"><span class="addbtn">添加</span></div>
+        </div>
+      </div>
+
+      <div class="note">
+        💡 第一次点开图标时如果弹出「是否允许麦克风」，点<b>允许</b>，不然 Role Play 和 Listen&Read 录不了音。
+      </div>
+    </section>
+
+    <!-- ---------------- 安卓 ---------------- -->
+    <section id="panel-android" class="card hidden">
+      <div class="step">
+        <div class="num">1</div>
+        <div class="body">
+          <h3>最省事：直接下载 <b>APK</b> 安装</h3>
+          <p>点下面按钮下载，下完点开，系统提示「未知来源」时允许一次即可。</p>
+          <a class="dlbtn" href="download.html">⬇️ 下载 AI Time APK</a>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <div class="body">
+          <h3>或者用浏览器「添加到主屏幕」</h3>
+          <p>用 Chrome / 华为浏览器 / 小米浏览器打开本页 → 点右上角 <b>「⋮」</b> 菜单 →
+             选 <span class="hl">「添加到主屏幕」</span> 或「安装应用」。</p>
+        </div>
+      </div>
+      <div class="note">
+        💡 微信、QQ 里打开同样不行，点右上角「···」→「在浏览器打开」。
+      </div>
+    </section>
+
+    <!-- ---------------- 电脑 ---------------- -->
+    <section id="panel-other" class="card hidden">
+      <div class="step">
+        <div class="num">1</div>
+        <div class="body">
+          <h3>在手机上打开这个网址</h3>
+          <p>把下面的地址发到手机（微信文件传输助手、QQ、邮件都行），在手机浏览器里打开。</p>
+          <div class="urlbox" id="urlBox">https://ischoolgrade3.github.io/</div>
+          <button class="copybtn" id="copyBtn">复制网址</button>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <div class="body">
+          <h3>然后按手机对应的步骤装</h3>
+          <p>iPhone 用上面的「iPhone / iPad」页，安卓用「安卓」页。</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    装不上或者打不开？先确认网络正常，再把网址复制到 Safari / Chrome 里重试。<br>
+    AI Time · 英语练习
+  </footer>
+</div>
+
+<script>
+(function () {
+  var ua = navigator.userAgent || '';
+  var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var isAndroid = /Android/i.test(ua);
+  var isWeChat = /MicroMessenger/i.test(ua);
+  var isApp = /AITimeApp/i.test(ua);
+  var standalone = window.navigator.standalone === true ||
+    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+
+  // 已经在桌面图标 / App 里打开：直接告诉他装好了
+  if (standalone || isApp) {
+    document.getElementById('main').classList.add('hidden');
+    document.getElementById('done').classList.remove('hidden');
+    return;
+  }
+
+  if (isWeChat) document.getElementById('wxWarn').classList.remove('hidden');
+
+  var tabs = document.querySelectorAll('.tabs button');
+  var panels = { ios: 'panel-ios', android: 'panel-android', other: 'panel-other' };
+
+  function select(os) {
+    tabs.forEach(function (b) { b.classList.toggle('on', b.dataset.os === os); });
+    Object.keys(panels).forEach(function (k) {
+      document.getElementById(panels[k]).classList.toggle('hidden', k !== os);
+    });
+  }
+
+  tabs.forEach(function (b) { b.onclick = function () { select(b.dataset.os); }; });
+  select(isIOS ? 'ios' : (isAndroid ? 'android' : 'other'));
+
+  // 复制网址
+  var copyBtn = document.getElementById('copyBtn');
+  if (copyBtn) {
+    copyBtn.onclick = function () {
+      var text = 'https://ischoolgrade3.github.io/';
+      var done = function () {
+        copyBtn.textContent = '✅ 已复制';
+        setTimeout(function () { copyBtn.textContent = '复制网址'; }, 1800);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(); });
+      } else { fallback(); }
+      function fallback() {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); done(); } catch (e) { copyBtn.textContent = '长按上面地址复制'; }
+        ta.remove();
+      }
+    };
+  }
+})();
+</script>
+</body>
+</html>
