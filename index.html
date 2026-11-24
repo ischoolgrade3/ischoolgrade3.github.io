@@ -602,13 +602,8 @@ async function enterGrade(g) {
   currentView = 'home';
   updateHeader();
   renderCurrentView();
-  // 校区 / Level / 名字 前置到进年级这一步（仍然只用于 Listen & Read 的录音分类）
-  askIdentity(g.name, function (info) {
-    lr.campus = info.campus;
-    lr.level = info.level;
-    lr.studentName = info.name;
-    saveStudentPrefill(g.id, info);
-  }, loadStudentPrefill(g.id));
+  // 校区 / Level / 名字：必须填完才进得去（弹窗没有取消，只有"换个年级"）
+  askIdentityForGrade(g);
   showSnackbar('⏳ 正在加载 ' + (g.name || '') + ' …');
 
   const result = await loadConfigWithRetry();
@@ -639,8 +634,22 @@ async function loadConfigWithRetry() {
   return result;
 }
 
-function backToGradePicker() {
-  if (isPracticeView()) { showSnackbar('先退出练习再切换年级', true); return; }
+// 进年级时强制填 校区 + Level + 名字：不给取消，只给"换个年级"
+function askIdentityForGrade(g) {
+  askIdentity(
+    (g && g.name ? g.name + ' · ' : '') + '先选校区，再选 Level，最后填名字',
+    function (info) {
+      lr.campus = info.campus;
+      lr.level = info.level;
+      lr.studentName = info.name;
+      saveStudentPrefill(g.id, info);
+    },
+    loadStudentPrefill(g.id),
+    { forced: true, onCancel: function () { backToGradePicker(); } }
+  );
+}
+
+function backToGradePicker() {  if (isPracticeView()) { showSnackbar('先退出练习再切换年级', true); return; }
   rpCleanup();
   try { if (lr.recorder && lr.recorder.state === 'recording') lr.recorder.stop(); } catch (e) {}
   saveConfigForCurrentGrade();
@@ -1051,29 +1060,20 @@ function renderListenReadPartsView() {
         const part = parts.find(function (p) { return p.id === c.dataset.partId; });
         if (!part) return;
         if (!part.items || !part.items.length) { showSnackbar('This unit has no content', true); return; }
-        const startPractice = function () {
-          lr.partId = part.id;
-          lr.items = part.items;
-          lr.index = 0;
-          lr.done = {};
-          lr.fails = {};
-          setView('listenReadPractice');
-        };
-        // 进年级时已经选过校区/Level/名字 → 直接开始，不再问
-        if (lr.campus && lr.level && lr.studentName) { startPractice(); return; }
-        askIdentity(part.name, function (info) {
-          lr.campus = info.campus;
-          lr.level = info.level;
-          lr.studentName = info.name;
-          saveStudentPrefill(currentGrade && currentGrade.id, info);
-          startPractice();
-        }, loadStudentPrefill(currentGrade && currentGrade.id));
+        // 校区 / Level / 名字 已经在进年级时填过，这里直接开始，不再弹窗
+        lr.partId = part.id;
+        lr.items = part.items;
+        lr.index = 0;
+        lr.done = {};
+        lr.fails = {};
+        setView('listenReadPractice');
       });
     })(card);
   }
 }
 /* ---------- 选校区 → Level → 名字（无语音） ---------- */
-function askIdentity(subtitle, onOk, prefill) {
+function askIdentity(subtitle, onOk, prefill, opts) {
+  opts = opts || {};
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
@@ -1233,7 +1233,18 @@ function askIdentity(subtitle, onOk, prefill) {
     }
   };
 
-  cancelBtn.onclick = () => { stopNameRecording(true); overlay.remove(); };
+  if (opts.forced) {
+    // 进年级时必须填完：不给"取消"，只给"换个年级"
+    cancelBtn.style.display = 'none';
+    const backLink = document.createElement('button');
+    backLink.type = 'button';
+    backLink.className = 'btn-outline';
+    backLink.textContent = '← 换个年级';
+    backLink.onclick = () => { stopNameRecording(true); overlay.remove(); if (opts.onCancel) opts.onCancel(); };
+    cancelBtn.parentNode.appendChild(backLink);
+  } else {
+    cancelBtn.onclick = () => { stopNameRecording(true); overlay.remove(); };
+  }
   nextBtn.onclick = () => {
     if (step === 1) { if (!campus) { showSnackbar('Please choose a campus', true); return; } showStep(2); }
     else if (step === 2) { if (!level) { showSnackbar('Please choose a level', true); return; } showStep(3); }
