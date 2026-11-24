@@ -599,11 +599,14 @@ async function enterGrade(g) {
   try { localStorage.setItem(LAST_GRADE_KEY, g.id); } catch (e) {}
 
   config = loadConfigForGrade(g.id);
-  currentView = 'home';
   updateHeader();
-  renderCurrentView();
-  // 校区 / Level / 名字：必须填完才进得去（弹窗没有取消，只有"换个年级"）
-  askIdentityForGrade(g);
+  // 先不渲染首页：等校区/Level/名字填完再进，避免点"换个年级"时闪一下
+  viewContainer.innerHTML = '<div class="grade-screen"><p class="sub">选好校区、Level 和名字，就可以开始啦</p></div>';
+  askIdentityForGrade(g, function () {
+    currentView = 'home';
+    updateHeader();
+    renderCurrentView();
+  });
   showSnackbar('⏳ 正在加载 ' + (g.name || '') + ' …');
 
   const result = await loadConfigWithRetry();
@@ -635,7 +638,7 @@ async function loadConfigWithRetry() {
 }
 
 // 进年级时强制填 校区 + Level + 名字：不给取消，只给"换个年级"
-function askIdentityForGrade(g) {
+function askIdentityForGrade(g, onDone) {
   askIdentity(
     (g && g.name ? g.name + ' · ' : '') + '先选校区，再选 Level，最后填名字',
     function (info) {
@@ -643,6 +646,7 @@ function askIdentityForGrade(g) {
       lr.level = info.level;
       lr.studentName = info.name;
       saveStudentPrefill(g.id, info);
+      if (onDone) onDone();
     },
     loadStudentPrefill(g.id),
     { forced: true, onCancel: function () { backToGradePicker(); } }
@@ -656,7 +660,10 @@ function backToGradePicker() {  if (isPracticeView()) { showSnackbar('先退出�
   currentGrade = null;
   SUPABASE_URL = HUB_URL;
   SUPABASE_KEY = HUB_KEY;
-  loadGrades().then(renderGradePicker);
+  // 立刻用本地缓存的名单渲染，不等网络（否则会闪一下上一个年级的页面）
+  const cached = gradesCacheRead();
+  renderGradePicker(cached.length ? cached : DEFAULT_GRADES);
+  loadGrades().then(renderGradePicker).catch(function () {});
 }
 
 let lastConfigFetchTime = 0;
@@ -1369,7 +1376,7 @@ function updateLrItem(autoplay) {
 
   // 换到新的一句：清掉黄灯，并自动播一遍
   if (els.audio && (autoplay || lr.done[item.id])) els.audio.classList.remove('flash');
-  if (autoplay) setTimeout(() => playCurrent(), 150);
+  if (autoplay) playCurrent();   // 同步调用：iOS 里放到 setTimeout 里会丢掉用户手势，放不出声
   requestAnimationFrame(() => fitText(els.text, els.wrap));
 }
 
