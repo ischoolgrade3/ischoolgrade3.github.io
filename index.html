@@ -74,6 +74,15 @@
   .lr-speed-btn { background:#fff; border:2px solid #e2ecf9; border-radius:26px; padding:12px 20px; font-size:1.15rem; font-weight:700; color:#1e3c72; cursor:pointer; display:flex; align-items:center; gap:8px; box-shadow:0 4px 12px rgba(0,0,0,.07); transition:.15s; }
   .lr-speed-btn:hover { background:#eaf2ff; transform:translateY(-2px); }
   .lr-speed-btn:active { transform:scale(.95); }
+  .lr-audio-btn { width:58px; height:58px; border-radius:50%; border:2px solid #e2ecf9; background:#fff; color:#1e3c72;
+    font-size:1.35rem; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 12px rgba(0,0,0,.08); transition:.15s; }
+  .lr-audio-btn:active { transform:scale(.95); }
+  @keyframes audioFlash {
+    0%, 100% { background:#fff; color:#1e3c72; border-color:#f5b301; box-shadow:0 4px 12px rgba(0,0,0,.08), 0 0 0 0 rgba(245,179,1,.6); }
+    50%      { background:#fff8e1; color:#c58b00; border-color:#f5b301; box-shadow:0 4px 12px rgba(0,0,0,.08), 0 0 0 16px rgba(245,179,1,0); }
+  }
+  .lr-audio-btn.flash { border-color:#f5b301; animation:audioFlash 1.1s ease-in-out infinite; }
   .lr-progress { position:absolute; top:20px; left:50%; transform:translateX(-50%); font-size:1.1rem; font-weight:700; color:#5a7391; background:rgba(255,255,255,.75); padding:6px 20px; border-radius:30px; z-index:5; }
   .lr-check { position:absolute; top:14px; right:14px; width:70px; height:70px; border-radius:50%; background:linear-gradient(145deg,#34d399,#16a34a); color:#fff; display:flex; align-items:center; justify-content:center; font-size:2.2rem; box-shadow:0 10px 24px rgba(22,163,74,.45); opacity:0; transform:scale(.4); transition:.28s cubic-bezier(.34,1.56,.64,1); z-index:5; pointer-events:none; }
   .lr-check.show { opacity:1; transform:scale(1); }
@@ -220,6 +229,20 @@ const LS_KEY = 'english_integrated_config';      // 旧版单年级缓存，仅�
 const GRADES_CACHE_KEY = 'aitime_grades_cache';  // 年级名单本地缓存
 const LAST_GRADE_KEY = 'aitime_last_grade';      // 上次选的年级
 function gradeLsKey(id) { return 'aitime_config__' + id; }
+
+// 上次填过的 校区/Level/名字（只用来预填输入框，不参与其他逻辑）
+function studentPrefillKey(gradeId) { return 'aitime_student__' + (gradeId || 'none'); }
+
+function loadStudentPrefill(gradeId) {
+  try {
+    const raw = localStorage.getItem(studentPrefillKey(gradeId));
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+
+function saveStudentPrefill(gradeId, info) {
+  try { localStorage.setItem(studentPrefillKey(gradeId), JSON.stringify(info)); } catch (e) {}
+}
 
 /* 兼容两种 key：
    老格式 anon JWT（eyJ...，需要 apikey + Authorization: Bearer）
@@ -579,6 +602,13 @@ async function enterGrade(g) {
   currentView = 'home';
   updateHeader();
   renderCurrentView();
+  // 校区 / Level / 名字 前置到进年级这一步（仍然只用于 Listen & Read 的录音分类）
+  askIdentity(g.name, function (info) {
+    lr.campus = info.campus;
+    lr.level = info.level;
+    lr.studentName = info.name;
+    saveStudentPrefill(g.id, info);
+  }, loadStudentPrefill(g.id));
   showSnackbar('⏳ 正在加载 ' + (g.name || '') + ' …');
 
   const result = await loadConfigWithRetry();
@@ -1021,22 +1051,29 @@ function renderListenReadPartsView() {
         const part = parts.find(function (p) { return p.id === c.dataset.partId; });
         if (!part) return;
         if (!part.items || !part.items.length) { showSnackbar('This unit has no content', true); return; }
-        askIdentity(part.name, function (info) {
+        const startPractice = function () {
           lr.partId = part.id;
           lr.items = part.items;
           lr.index = 0;
+          lr.done = {};
+          lr.fails = {};
+          setView('listenReadPractice');
+        };
+        // 进年级时已经选过校区/Level/名字 → 直接开始，不再问
+        if (lr.campus && lr.level && lr.studentName) { startPractice(); return; }
+        askIdentity(part.name, function (info) {
           lr.campus = info.campus;
           lr.level = info.level;
           lr.studentName = info.name;
-          lr.done = {}; lr.fails = {};
-          setView('listenReadPractice');
-        });
+          saveStudentPrefill(currentGrade && currentGrade.id, info);
+          startPractice();
+        }, loadStudentPrefill(currentGrade && currentGrade.id));
       });
     })(card);
   }
 }
 /* ---------- 选校区 → Level → 名字（无语音） ---------- */
-function askIdentity(subtitle, onOk) {
+function askIdentity(subtitle, onOk, prefill) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
@@ -1084,6 +1121,7 @@ function askIdentity(subtitle, onOk) {
   const nextBtn = overlay.querySelector('#siNextBtn');
   const cancelBtn = overlay.querySelector('#siCancelBtn');
   const nameInput = overlay.querySelector('#studentNameInput');
+  if (prefill && prefill.name) nameInput.value = prefill.name;   // 上次输入的，直接带出来
 
   function showStep(n) {
     step = n;
@@ -1222,8 +1260,7 @@ function renderListenReadPractice() {
   viewContainer.innerHTML = `
     <div class="lr-screen">
       <div class="lr-speed-group">
-        <button class="lr-speed-btn" id="lrSlowBtn"><i class="fas fa-turtle"></i> Slow</button>
-        <button class="lr-speed-btn" id="lrNormalBtn"><i class="fas fa-rabbit"></i> Normal</button>
+        <button class="lr-audio-btn" id="lrAudioBtn" title="再听一遍"><i class="fas fa-volume-up"></i></button>
       </div>
       <div class="lr-progress" id="lrProgress">1 / 1</div>
       <div class="lr-check" id="lrCheck"><i class="fas fa-check"></i></div>
@@ -1246,13 +1283,13 @@ function renderListenReadPractice() {
     next: document.getElementById('lrNext'),
     rec: document.getElementById('lrRec'),
     finish: document.getElementById('lrFinish'),
-    skip: document.getElementById('lrSkip')
+    skip: document.getElementById('lrSkip'),
+    audio: document.getElementById('lrAudioBtn')
   };
 
-  document.getElementById('lrSlowBtn').onclick = () => playCurrent(true);
-  document.getElementById('lrNormalBtn').onclick = () => playCurrent(false);
-  lrEls.prev.onclick = () => { if (lr.index > 0) { lr.index--; updateLrItem(); } };
-  lrEls.next.onclick = () => { if (lr.index < lr.items.length - 1) { lr.index++; updateLrItem(); } };
+  document.getElementById('lrAudioBtn').onclick = () => playCurrent();
+  lrEls.prev.onclick = () => { if (lr.index > 0) { lr.index--; updateLrItem(true); } };
+  lrEls.next.onclick = () => { if (lr.index < lr.items.length - 1) { lr.index++; updateLrItem(true); } };
   lrEls.rec.onclick = toggleRecording;
   // 错够 3 次才出现的「跳过」
   lrEls.skip.onclick = () => {
@@ -1262,7 +1299,7 @@ function renderListenReadPractice() {
     lr.fails[item.id] = 0;
     showSnackbar('⏭ 已跳过：' + (item.text || '').slice(0, 12));
     if (lr.index < lr.items.length - 1) lr.index++;
-    updateLrItem();
+    updateLrItem(true);
   };
 
   lrEls.finish.onclick = () => {
@@ -1279,7 +1316,7 @@ function renderListenReadPractice() {
     setView('listenReadParts');
   };
 
-  updateLrItem();
+  updateLrItem(true);
 }
 
 function renderItemHtml(item) {
@@ -1295,7 +1332,7 @@ function renderItemHtml(item) {
   }).join('');
 }
 
-function updateLrItem() {
+function updateLrItem(autoplay) {
   const item = lr.items[lr.index];
   if (!item) return;
   const els = lrEls;
@@ -1319,6 +1356,9 @@ function updateLrItem() {
   els.finish.disabled = false;
   els.finish.classList.toggle('ready', allDone);
 
+  // 换到新的一句：清掉黄灯，并自动播一遍
+  if (els.audio && (autoplay || lr.done[item.id])) els.audio.classList.remove('flash');
+  if (autoplay) setTimeout(() => playCurrent(), 150);
   requestAnimationFrame(() => fitText(els.text, els.wrap));
 }
 
@@ -1344,11 +1384,11 @@ function stopPlayback() {
   if ('speechSynthesis' in window) speechSynthesis.cancel();
 }
 
-function playCurrent(slow) {
+function playCurrent() {
   const item = lr.items[lr.index];
   if (!item) return;
   stopPlayback();
-  const rate = slow ? 0.6 : 1.0;
+  const rate = 0.75;   // 统一 0.75 倍速
   if (item.audioUrl) {
     lrAudio = new Audio(item.audioUrl);
     lrAudio.playbackRate = rate;
@@ -1359,7 +1399,7 @@ function playCurrent(slow) {
   if (!('speechSynthesis' in window)) { showSnackbar('No audio uploaded', true); return; }
   const u = new SpeechSynthesisUtterance(item.text || '');
   u.lang = 'en-US';
-  u.rate = slow ? 0.5 : 1.0;
+  u.rate = 0.7;
   speechSynthesis.speak(u);
 }
 
@@ -1453,7 +1493,8 @@ async function handleRecordingDone(blob) {
     } else {
       showSnackbar('💡 这句试了 3 次，可以点「跳过这句」', true);
     }
-    updateLrItem();
+    updateLrItem(false);
+    if (lrEls.audio) lrEls.audio.classList.add('flash');   // 读错 → 音频按钮亮黄灯
     return;
   }
 
