@@ -225,11 +225,12 @@
 <div id="gradeOverlay" class="overlay">
   <div class="login-card" style="max-width:560px;">
     <h2>🎓 选择年级</h2>
-    <p class="sub"></p>
+    <p class="sub">每个年级对应一个独立的 Supabase 库，密码也各自独立</p>
     <div id="gradeList" style="display:flex;flex-direction:column;gap:10px;margin:16px 0;max-height:44vh;overflow:auto;"></div>
     <div class="row" style="justify-content:center;gap:10px;flex-wrap:wrap;">
       <button class="btn btn-primary" id="addGradeBtn">＋ 新增年级</button>
       <button class="btn btn-outline" id="gradeRefreshBtn">刷新列表</button>
+      <button class="btn btn-outline" id="langBtnGate" title="切换语言">中 / EN</button>
     </div>
     <p class="login-err" id="gradeErr"></p>
   </div>
@@ -253,6 +254,7 @@
     <h1 id="appTitle">🛠 AI Time Admin</h1>
     <div class="topbar-right">
       <button class="btn btn-outline" id="switchGradeBtn"><i class="fas fa-exchange-alt"></i> 切换年级</button>
+      <button class="btn btn-outline" id="langBtn" title="切换语言">中 / EN</button>
       <span class="badge" id="statusBadge">☁️ Cloud</span>
       <button class="btn btn-outline" id="pullBtn"><i class="fas fa-cloud-download-alt"></i> Grab Cloud Config</button>
       <button class="btn btn-primary" id="publishBtn"><i class="fas fa-cloud-upload-alt"></i> Publish On Cloud</button>
@@ -335,6 +337,243 @@ function keyLooksValid(key) {
     } catch (e) { /* 忽略，按原样发 */ }
     return rawFetch(input, init);
   };
+})();
+
+/* ============================================================
+   中英文切换（monitor 专用）
+   做法：业务代码不动，渲染完成后按词表把文本节点/placeholder 换成另一种语言。
+   切换后整个界面（含弹窗、提示、按钮）一起变。
+   ============================================================ */
+const I18N_PAIRS = [
+  // 顶部 / 标签页 / 登录
+  ['⚙️ Site Setting', '⚙️ 站点设置'],
+  ['🎙 Student Recording', '🎙 学生录音'],
+  ['☁️ Cloud Config', '☁️ 云端配置'],
+  ['☁️ Publish / Backup', '☁️ 发布 / 备份'],
+  ['Grab Cloud Config', '拉取云端配置'],
+  ['Publish On Cloud', '发布到云端'],
+  ['切换年级', 'Switch grade'],
+  ['Enter', '进入'],
+  ['Please enter admin password for', '请输入管理密码：'],
+  ['Incorrect password', '密码不正确'],
+  ['Verification failed: ', '校验失败：'],
+
+  // 年级选择
+  ['🎓 选择年级', '🎓 Choose grade'],
+  ['每个年级对应一个独立的 Supabase 库，密码也各自独立', 'Each grade has its own Supabase project and its own password'],
+  ['＋ 新增年级', '＋ Add grade'],
+  ['刷新列表', 'Refresh list'],
+  ['删', 'Del'],
+  ['编辑', 'Edit'],
+  ['新增年级', 'Add grade'],
+  ['编辑年级', 'Edit grade'],
+  ['年级名称', 'Grade name'],
+  ['图标（一个 emoji，可留空）', 'Icon (one emoji, optional)'],
+  ['取消', 'Cancel'],
+  ['测试并保存', 'Test & save'],
+  ['正在读取年级名单…', 'Loading grade list…'],
+
+  // 区块标题
+  ['🔐 Security & Admin', '🔐 安全与管理'],
+  ['🖼 Page Backgrounds', '🖼 页面背景'],
+  ['🎛 Home Button Backgrounds', '🎛 首页按钮背景'],
+  ['💬 AI Talk Management', '💬 AI Talk 管理'],
+  ['🎮 Game Management', '🎮 游戏管理'],
+  ['🎧 Listen & Read Management', '🎧 听读管理'],
+  ['🎭 Role Play Management (Tencent Cloud)', '🎭 Role Play 管理（腾讯云）'],
+
+  // 字段
+  ['Admin Password', '管理密码'],
+  ['修改管理密码', 'Change admin password'],
+  ['Home Page Background', '首页背景'],
+  ['Game Page Background', '游戏页背景'],
+  ['Role-Play Page Background', 'Role Play 页背景'],
+  ['Listen & Read Page Background', '听读页背景'],
+  ['Game Button', '游戏按钮'],
+  ['Role-Play Button', 'Role Play 按钮'],
+  ['Listen & Read Button', '听读按钮'],
+  ['AI Talk Button', 'AI Talk 按钮'],
+  ['Name', '名称'],
+  ['Link URL', '链接地址'],
+  ['Button Background Image', '按钮背景图'],
+  ['Game Name', '游戏名称'],
+  ['Embed Code (iframe)', '嵌入代码（iframe）'],
+  ['Text (word / sentence)', '文本（单词 / 句子）'],
+  ['Unit Name', '单元名称'],
+  ['Match Threshold (0 – 1)', '匹配阈值（0–1）'],
+  ['Max Stars', '最大星星数'],
+  ['One-Click Publish', '一键发布'],
+  ['Database setup', '数据库设置'],
+  ['How it works:', '工作原理：'],
+  ['Per-letter colors (pick a color at the bottom, then click a letter)', '逐字母配色（先在底部选颜色，再点字母）'],
+  ['The student side auto-scales text to fit the screen, so long sentences are fine. The palette floats at the bottom for quick access.', '学生端会自动缩放文字以适配屏幕，长句子也没问题。调色板浮在底部方便取用。'],
+  ['Reference audio (played when students click Slow / Normal)', '参考音频（学生端自动以 0.75 倍速播放）'],
+  ['Run the table SQL first. If upgrading from an older version, run:', '先执行建表 SQL；如果是从旧版本升级，再执行：'],
+  ['图片提示（仅学生回合显示）', 'Image hints (student turns only)'],
+
+  // 按钮
+  ['Delete', '删除'],
+  ['Upload', '上传'],
+  ['Upload Audio', '上传音频'],
+  ['Add', '添加'],
+  ['Add Game', '添加游戏'],
+  ['Add Turn', '添加回合'],
+  ['Add Word / Sentence', '添加单词 / 句子'],
+  ['Add AI Talk Button', '添加 AI Talk 按钮'],
+  ['New Part', '新建 Part'],
+  ['New Unit', '新建单元'],
+  ['Delete Part', '删除 Part'],
+  ['Delete Unit', '删除单元'],
+  ['Export JSON', '导出 JSON'],
+  ['Import JSON', '导入 JSON'],
+  ['Reset Default', '恢复默认'],
+  ['Refresh', '刷新'],
+  ['No buttons yet', '还没有按钮'],
+  ['No recordings yet', '还没有录音'],
+  ['All Campuses', '全部校区'],
+  ['All Levels', '全部 Level'],
+  ['All Units', '全部单元'],
+  ['Export', '导出'],
+
+  // 说明文字（会被 <code> 拆成几段，所以逐段翻译）
+  ['密码使用 bcrypt 加密存储在 Supabase 的', 'The password is stored as a bcrypt hash in Supabase\'s '],
+  ['表里，前端无法直接读取。修改后立即生效。', ' table; the front end can never read it. Changes take effect immediately.'],
+  ['首次部署提示：', 'First-time setup: '],
+  ['如果登录时提示 "Verification failed" 或返回', 'If login shows "Verification failed" or returns '],
+  ['，说明', ', it means the '],
+  ['表未创建或默认密码未写入。请在 Supabase SQL Editor 执行迁移 SQL 后再试。', ' table is missing or has no default password. Run the migration SQL in the Supabase SQL Editor, then retry.'],
+  ['每个单元包含多轮对话。', 'Each unit contains several turns.'],
+  ['是 AI 角色（会通过腾讯云 TTS 朗读），', ' is the AI role (spoken via Tencent Cloud TTS), '],
+  ['是学生角色（学生端默认扮演 B）。学生回答后会被 ASR 识别并与 B 台词比较，相似度 ≥ 阈值时判定通过。学生也可以切换到 A 重新答。', ' is the student role (students play B by default). Their answer is transcribed by ASR and compared with the B line; a similarity ≥ threshold passes. Students can switch to A and try again.'],
+  ['相似度阈值。0.62 = 62% 相似算通过。调高更严格（建议 0.7–0.8），调低更宽松。', 'Similarity threshold. 0.62 means 62% similar passes. Raise it to be stricter (0.7–0.8 recommended), lower it to be more lenient.'],
+  ['学生全部通过时能拿到的最大星星数（1–5）。', 'Max stars the student can earn when every turn passes (1–5).'],
+  ['其他可接受答案（每行一个，可留空）', 'Other accepted answers (one per line, optional)'],
+  ['主答案（必填）...', 'Main answer (required)...'],
+  ['e.g. Hello world', '例如：Hello world'],
+  ['单元名称', 'Unit name'],
+  ['每行写一个，例如：\nI am Tom.\nTom is my name.', 'One per line, e.g.:\nI am Tom.\nTom is my name.'],
+  ['Set as role A (AI)', '设为角色 A（AI）'],
+  ['Set as role B (student)', '设为角色 B（学生）'],
+  ['Filter by student name', '按学生名字筛选'],
+  ['Not set', '未设置'],
+  ['重置', 'Reset'],
+  ['是', 'yes'],
+  ['否', 'no']
+];
+
+const I18N_ZH2EN = new Map();
+const I18N_EN2ZH = new Map();
+const hasCJK = function (s) { return /[\u4e00-\u9fa5]/.test(s); };
+I18N_PAIRS.forEach(function (p) {
+  const a = p[0], b = p[1];
+  if (!a || !b || a === b) return;
+  let zh = null, en = null;
+  if (hasCJK(a) && !hasCJK(b)) { zh = a; en = b; }
+  else if (!hasCJK(a) && hasCJK(b)) { zh = b; en = a; }
+  else return;                     // 两边都中文或都英文，判不出方向，跳过
+  I18N_ZH2EN.set(zh, en);
+  I18N_EN2ZH.set(en, zh);
+});
+
+const LANG_KEY = 'aitime_monitor_lang';
+let LANG = 'zh';
+try { LANG = localStorage.getItem(LANG_KEY) === 'en' ? 'en' : 'zh'; } catch (e) {}
+
+function i18nTranslate(core) {
+  if (!core) return core;
+  const hit = LANG === 'en' ? I18N_ZH2EN.get(core) : I18N_EN2ZH.get(core);
+  return hit == null ? core : hit;
+}
+
+function applyLangNode(node) {
+  const raw = node.nodeValue;
+  if (!raw || !raw.trim()) return;
+  const m = raw.match(/^(\s*)([\s\S]*?)(\s*)$/);
+  if (!m) return;
+  const core = m[2];
+  if (!core) return;
+  const next = i18nTranslate(core);
+  if (next !== core) node.nodeValue = m[1] + next + m[3];
+}
+
+function applyLang(root) {
+  root = root || document.body;
+  if (!root) return;
+
+  // 文本节点
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: function (n) {
+      const p = n.parentNode;
+      if (!p) return NodeFilter.FILTER_REJECT;
+      const tag = (p.nodeName || '').toLowerCase();
+      if (tag === 'script' || tag === 'style' || tag === 'code' || tag === 'textarea') return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  const nodes = [];
+  let n;
+  while ((n = walker.nextNode())) nodes.push(n);
+  nodes.forEach(applyLangNode);
+
+  // placeholder / title
+  root.querySelectorAll('[placeholder]').forEach(function (el) {
+    const v = el.getAttribute('placeholder');
+    const t = i18nTranslate(v);
+    if (t && t !== v) el.setAttribute('placeholder', t);
+  });
+  root.querySelectorAll('[title]').forEach(function (el) {
+    const v = el.getAttribute('title');
+    const t = i18nTranslate(v);
+    if (t && t !== v) el.setAttribute('title', t);
+  });
+}
+
+let langQueued = false;
+function scheduleLang() {
+  if (langQueued) return;
+  langQueued = true;
+  requestAnimationFrame(function () {
+    langQueued = false;
+    applyLang(document.body);
+    updateLangBtn();
+  });
+}
+
+function updateLangBtn() {
+  ['langBtn', 'langBtnGate'].forEach(function (id) {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.textContent = LANG === 'zh' ? '中 / EN' : 'EN / 中';
+    btn.title = LANG === 'zh' ? 'Switch to English' : '切换到中文';
+    btn.style.fontWeight = '800';
+  });
+}
+
+function setLang(lang) {
+  LANG = lang === 'en' ? 'en' : 'zh';
+  try { localStorage.setItem(LANG_KEY, LANG); } catch (e) {}
+  applyLang(document.body);
+  updateLangBtn();
+}
+
+function toggleLang() {
+  setLang(LANG === 'zh' ? 'en' : 'zh');
+}
+
+// 渲染完自动翻译（只改有词条的文本，不会死循环）
+(function startI18n() {
+  const start = function () {
+    ['langBtn', 'langBtnGate'].forEach(function (id) {
+      const b = document.getElementById(id);
+      if (b) b.onclick = toggleLang;
+    });
+    applyLang(document.body);
+    updateLangBtn();
+    const obs = new MutationObserver(scheduleLang);
+    obs.observe(document.body, { childList: true, subtree: true, characterData: true });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
 })();
 
 const DEFAULT_CONFIG = {
@@ -767,7 +1006,15 @@ async function testGradeProject(url, key) {
     headers: Object.assign(authHeaders(k), { 'Content-Type': 'application/json' }),
     body: JSON.stringify({ pwd: '__probe__' })
   });
-  if (rpc.status === 404) throw new Error('这个库里没有 verify_admin_password 函数，请先执行 supabase-multigrade.sql');
+  if (rpc.status === 404) {
+    // 不硬拦：有人可能是先登记年级、之后再补 SQL。给个明白话让他自己决定
+    const go = confirm('这个库还没有密码校验函数 verify_admin_password。\n\n'
+      + '原因通常是：这个项目还没跑初始化 SQL（2-new-grade-project.sql），或者跑了但没跑完。\n'
+      + '现在登记的话，这个年级的后台会一直登不进去（学生端倒是能正常用）。\n\n'
+      + '仍然要登记吗？');
+    if (!go) throw new Error('已取消。请先在那个项目里执行 2-new-grade-project.sql，再回来登记。');
+    return true;
+  }
   if (rpc.status === 401 || rpc.status === 403) throw new Error('密码校验函数拒绝了这把 key（HTTP ' + rpc.status + '）');
   return true;
 }
@@ -779,12 +1026,12 @@ function openGradeModal(existing) {
   overlay.innerHTML = ''
     + '<div class="grade-modal">'
     + '<h2>' + (isEdit ? '编辑年级' : '新增年级') + '</h2>'
-    + '<p class="tip">填入这个年级自己的项目地址和 anon public key。保存前会先测一次：能不能读到它的 config 表、有没有密码校验函数。</p>'
+    + '<p class="tip">填入这个年级自己的 Supabase 项目地址和 anon public key。保存前会先测一次：能不能读到它的 config 表、有没有密码校验函数。</p>'
     + '<label>年级名称</label>'
     + '<input id="gmName" placeholder="Grade 4" value="' + esc(existing ? existing.name : '') + '">'
     + '<label>图标（一个 emoji，可留空）</label>'
     + '<input id="gmEmoji" placeholder="📗" maxlength="4" value="' + esc(existing ? (existing.emoji || '') : '') + '">'
-    + '<label>Project URL</label>'
+    + '<label>Supabase Project URL</label>'
     + '<input id="gmUrl" placeholder="https://abcdefgh.supabase.co" value="' + esc(existing ? existing.supabase_url : '') + '">'
     + '<label>anon public key</label>'
     + '<input id="gmKey" placeholder="eyJhbGciOiJIUzI1NiIs…" value="' + esc(existing ? existing.supabase_key : '') + '">'
@@ -1060,24 +1307,6 @@ function renderSettings() {
     + imgFieldHtml({ label:'AI Talk Button', value:config.btnAITalkBgUrl, scope:'config', key:'btnAITalkBgUrl', fixedBase:'btn_aitalk_bg' })
   ));
 
-  let aiTalkHtml = '';
-  config.aiTalkButtons.forEach((b, i) => {
-    aiTalkHtml += ''
-      + '<div class="editor-item">'
-      + '<div class="editor-head">'
-      + '<span>🎭 Role-Play Legacy ' + (i + 1) + '</span>'
-      + '<button class="btn btn-danger btn-mini" data-action="del-aiTalk" data-id="' + esc(b.id) + '"><i class="fas fa-trash"></i> Delete</button>'
-      + '</div>'
-      + '<div class="field"><label>Name</label><input type="text" data-scope="aiTalk" data-id="' + esc(b.id) + '" data-key="name" value="' + esc(b.name) + '"></div>'
-      + '<div class="field"><label>Link URL</label><input type="text" data-scope="aiTalk" data-id="' + esc(b.id) + '" data-key="url" value="' + esc(b.url) + '"></div>'
-      + imgFieldHtml({ label:'Button Background Image', value:b.bgUrl, scope:'aiTalk', id:b.id, fixedBase:'aitalk_' + b.id })
-      + '</div>';
-  });
-  html.push(sectionHtml('aiTalkMgmt', '🎭 Legacy Role-Play Buttons (豆包外部链接)', ''
-    + '<div class="hint" style="margin-bottom:12px;">这些是旧版「打开豆包 bot」按钮。如果你已经使用新 Role Play 对话，可以保留也可以删除。</div>'
-    + (aiTalkHtml || '<p class="empty">No buttons yet</p>')
-    + '<button class="btn btn-outline" data-action="add-aiTalk"><i class="fas fa-plus"></i> Add Legacy Button</button>'
-  ));
 
   let discHtml = '';
   config.discussionButtons.forEach((b, i) => {
@@ -2032,12 +2261,11 @@ function buildSearchIndex() {
   const items = [];
   const sectionTitles = {
     basic:'Security & Admin', pageBg:'Page Backgrounds', btnBg:'Home Button Backgrounds',
-    aiTalkMgmt:'Legacy Role-Play Buttons', discMgmt:'AI Talk Management',
+    discMgmt:'AI Talk Management',
     gameMgmt:'Game Management', lrMgmt:'Listen & Read Management',
     roleplayMgmt:'Role Play Management', publish:'Publish / Backup'
   };
   Object.keys(sectionTitles).forEach(id => items.push({ kind:'section', label:sectionTitles[id], sub:'Settings section', sectionId:id, tab:'settings' }));
-  (config.aiTalkButtons || []).forEach(b => items.push({ kind:'aiTalk', label:b.name || '(Untitled)', sub:'Legacy Role-Play AI', sectionId:'aiTalkMgmt', tab:'settings', anchor:{ scope:'aiTalk', id:b.id } }));
   (config.discussionButtons || []).forEach(b => items.push({ kind:'discussion', label:b.name || '(Untitled)', sub:'AI Talk', sectionId:'discMgmt', tab:'settings', anchor:{ scope:'discussion', id:b.id } }));
   (config.gameParts || []).forEach(p => {
     items.push({ kind:'part', label:p.name || '(Untitled Part)', sub:'Game Part', sectionId:'gameMgmt', tab:'settings', anchor:{ scope:'gamePart', partId:p.id } });
